@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 import pandas as pd
 from md_dataset.models.types import DataSetType
 from md_dataset.models.types import FlowOutPut
@@ -6,11 +7,11 @@ from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 
 
-def md_process(func):
-    def wrapper(*args, **kwargs):
+def md_process(func: Callable) -> Callable:
+    def wrapper(num: int) -> FlowOutPut:
         logger = logging.getLogger(__name__)
         logger.info("pre")
-        results = func(*args, **kwargs)
+        results = func(num)
 
         return FlowOutPut(
             data_sets=[
