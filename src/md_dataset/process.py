@@ -13,17 +13,15 @@ def md_process(func):
         results = func(*args, **kwargs)
 
         return FlowOutPut(
-                data_sets=[
-                    FlowOutPutDataSet(
-                        name="md",
-                        type=DataSetType.INTENSITY,
-                        tables=[
-                            FlowOutPutTable(name="Protein_Intensity",
-                                            data=pd.DataFrame(results)),
-                            ],
-                        ),
+            data_sets=[
+                FlowOutPutDataSet(
+                    name="md",
+                    type=DataSetType.INTENSITY,
+                    tables=[
+                        FlowOutPutTable(name="Protein_Intensity", data=pd.DataFrame(results)),
                     ],
-                )
+                ),
+            ],
+        )
 
     return wrapper
-
