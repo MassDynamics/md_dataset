@@ -29,6 +29,19 @@ cd md_data_set
 python -m pip install .
 ```
 
+To install the package:
+
+```console
+python -m pip install .
+```
+
+To develop the package:
+
+```console
+python -m pip install -e '.[dev]'
+pytest
+```
+
 ## Documentation
 
 Include a link to your project's full documentation here.
@@ -37,4 +50,4 @@ Include a link to your project's full documentation here.
 
 ## Credits
 
-This package was created with [Copier](https://github.com/copier-org/copier) and the [NLeSC/python-template](https://github.com/NLeSC/python-template).
+This initial package was created with [Copier](https://github.com/copier-org/copier) and the [NLeSC/python-template](https://github.com/NLeSC/python-template).
