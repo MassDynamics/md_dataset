@@ -1,6 +1,6 @@
 steps:
   - label: ":python: test"
-    command: .scripts/test
+    command: ./scripts/test
     env:
       CONDA_ENV_NAME: "md_dataset_package"
     agents:
