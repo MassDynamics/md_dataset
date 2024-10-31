@@ -24,12 +24,13 @@ classifiers = [
 ]
 dependencies = [
   "pandas ~= 2.2.3",
+  # "prefect ~= 2.20.9",
   "pydantic ~= 2.9.2"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = [""]
 license = {file = "LICENSE"}
-name = "md_data_set"
+name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
 version = "0.1.0"
@@ -61,8 +62,8 @@ publishing = [
 ]
 
 [project.urls]
-Repository = "https://github.com/MassDynamics/md_data_set"
-Issues = "https://github.com/MassDynamics/md_data_set/issues"
+Repository = "https://github.com/MassDynamics/md_dataset"
+Issues = "https://github.com/MassDynamics/md_dataset/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -70,7 +71,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["src/md_data_set"]
+source = ["src/md_dataset"]
 command_line = "-m pytest"
 
 [tool.tox]
@@ -120,7 +121,7 @@ pydocstyle.convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["md_data_set"]
+known-first-party = ["md_dataset"]
 force-single-line = true
 no-lines-before = ["future","standard-library","third-party","first-party","local-folder"]
 
@@ -128,7 +129,7 @@ no-lines-before = ["future","standard-library","third-party","first-party","loca
 current_version = "0.1.0"
 
 [[tool.bumpversion.files]]
-filename = "src/md_data_set/__init__.py"
+filename = "src/md_dataset/__init__.py"
 
 [[tool.bumpversion.files]]
 filename = "pyproject.toml"

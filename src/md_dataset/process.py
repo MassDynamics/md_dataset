@@ -1,9 +1,9 @@
 import logging
 import pandas as pd
-from md_data_set.models.types import DataSetType
-from md_data_set.models.types import FlowOutPut
-from md_data_set.models.types import FlowOutPutDataSet
-from md_data_set.models.types import FlowOutPutTable
+from md_dataset.models.types import DataSetType
+from md_dataset.models.types import FlowOutPut
+from md_dataset.models.types import FlowOutPutDataSet
+from md_dataset.models.types import FlowOutPutTable
 
 
 def md_process(func):

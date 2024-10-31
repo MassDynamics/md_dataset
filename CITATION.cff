@@ -1,14 +1,14 @@
 # YAML 1.2
 ---
 cff-version: "1.2.0"
-title: "md_data_set"
+title: "md_dataset"
 authors:
   - family-names: Spinks
     given-names: Brendan
     orcid: "https://orcid.org/0000-0000-0000-0000"
 date-released: 2024-10-30
 version: "0.1.0"
-repository-code: "https://github.com/MassDynamics/md_data_set"
+repository-code: "https://github.com/MassDynamics/md_dataset"
 keywords:
   - ""
 message: "If you use this software, please cite it using these metadata."

@@ -1,17 +1,17 @@
 | | |
 | :-- | :--  |
-| code repository              | [![github repo badge](https://img.shields.io/badge/github-repo-000.svg?logo=github&labelColor=gray&color=blue)](https://github.com/MassDynamics/md_data_set) |
-| license                      | [![github license badge](https://img.shields.io/github/license/MassDynamics/md_data_set)](https://github.com/MassDynamics/md_data_set) |
+| code repository              | [![github repo badge](https://img.shields.io/badge/github-repo-000.svg?logo=github&labelColor=gray&color=blue)](https://github.com/MassDynamics/md_dataset) |
+| license                      | [![github license badge](https://img.shields.io/github/license/MassDynamics/md_dataset)](https://github.com/MassDynamics/md_dataset) |
 
 Common package for integrating with Mass Dynamics workflows
 
 ## Installation
 
-To install md_data_set from GitHub repository, do:
+To install md_dataset from GitHub repository, do:
 
 ```console
-git clone git@github.com:MassDynamics/md_data_set.git
-cd md_data_set
+git clone git@github.com:MassDynamics/md_dataset.git
+cd md_dataset
 python -m pip install .
 ```
 

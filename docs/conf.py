@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u"md_data_set"
+project = u"md_dataset"
 copyright = u"2024-10-30 16:07:23, Mass Dynamics"
 author = u"Brendan Spinks"
 
@@ -61,7 +61,7 @@ todo_include_todos = False
 
 # -- Use autoapi.extension to run sphinx-apidoc -------
 
-autoapi_dirs = ['../src/md_data_set']
+autoapi_dirs = ['../src/md_dataset']
 
 # -- Options for HTML output ----------------------------------------------
 
