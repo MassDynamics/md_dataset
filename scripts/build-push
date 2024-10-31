@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+[[ -z "$BUILD_NUMBER" ]] && echo "BUILD_NUMBER must be set" && exit 1
+[[ -z "$DOCKER_FILE" ]] && echo "DOCKER_FILE must be set" && exit 1
+[[ -z "$REPO_NAME" ]] && echo "REPO_NAME must be set" && exit 1
+
+# below variables can be set in buildkite hooks and used in every pipeline
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+REGISTRY=${REGISTRY:-${ACCOUNT_ID}.dkr.ecr.ap-southeast-2.amazonaws.com}
+
+VERSION=`cat VERSION`
+IMAGE_TAG=${REPO_NAME}:${VERSION}-${BUILD_NUMBER}
+
+echo "BUILD IMAGE"
+docker build \
+  --file=$DOCKER_FILE \
+  --build-arg IMAGE_TAG=${IMAGE_TAG} \
+  -t ${IMAGE_TAG} .
+
+echo "TAG IMAGE"
+docker tag "${IMAGE_TAG}" "${REGISTRY}/${IMAGE_TAG}"
+
+echo "PUSH IMAGE"
+aws ecr describe-repositories --repository-names ${REPO_NAME} || \
+  aws ecr create-repository --repository-name ${REPO_NAME} && \
+  aws ecr set-repository-policy --repository-name ${REPO_NAME} --policy-text file://${SCRIPT_DIR}/ecr-repository-policy.json
+
+aws ecr get-login-password \
+  | docker login -u AWS --password-stdin $REGISTRY
+
+docker push "${REGISTRY}/${IMAGE_TAG}"

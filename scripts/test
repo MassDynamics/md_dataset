@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1)) ); then
+  echo "creating conda environment ${CONDA_ENV_NAME}"
+  conda create -y --name $CONDA_ENV_NAME python=3.12
+fi
+
+echo "installing packages into ${CONDA_ENV_NAME}"
+conda run -n $CONDA_ENV_NAME bash -c "python -m pip install -e '.[dev]'"
+
+TZ=UTC conda run -n $CONDA_ENV_NAME bash -c "pytest"
