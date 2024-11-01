@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
   "pandas ~= 2.2.3",
-  # "prefect ~= 2.20.9",
+  "prefect ~= 2.20.9",
   "pydantic ~= 2.9.2"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"

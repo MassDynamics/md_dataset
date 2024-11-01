@@ -8,6 +8,10 @@ from pydantic import conlist
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 
+class JobRunParams(BaseModel):
+    names: list[str]
+
+
 class DataSetType(Enum):
     INTENSITY = "INTENSITY"
 
