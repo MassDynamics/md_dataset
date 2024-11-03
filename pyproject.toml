@@ -105,13 +105,14 @@ ignore = [
     "FIX002", # Resolve TODOs
     "B028",   # No explicit `stacklevel` keyword argument found in warning
     # No docstrings required in the following cases
-    "D100", # Missing module docstring
+    "D100",
     "D101",
     "D102",
     "D103",
-    "D104", # Missing public package docstring
-    "D105", # Missing docstring in magic method
-    "D107", # Missing docstring in `__init__`
+    "D104",
+    "D105",
+    "D106",
+    "D107",
 ]
 pydocstyle.convention = "google"
 
