@@ -1,12 +1,13 @@
 import uuid
 import pytest
-from md_dataset.models.types import JobRunParams
+from md_dataset.models.types import DatasetParams
+from md_dataset.models.types import DatasetType
 from md_dataset.process import md_process
 
 
 @md_process
-def run_process(id_: uuid.UUID, params: JobRunParams):
-    return [1, id_, params]
+def run_process(params: DatasetParams):
+    return [1, params]
 
 
 @pytest.fixture
@@ -20,13 +21,13 @@ def name() -> str:
 
 
 @pytest.fixture
-def params() -> JobRunParams:
-    return JobRunParams(names=["one"])
+def params() -> DatasetParams:
+    return DatasetParams(name="one", source_location="baz/qux", type=DatasetType.INTENSITY)
 
 
-def test_run_process_returns_data(id_: uuid.UUID, name: str, params: JobRunParams):
-    assert run_process(id_, name, params).data()[0].iloc[0] == 1
+def test_run_process_returns_data(params: DatasetParams):
+    assert run_process(params).data()[0].iloc[0] == 1
 
 
-def test_run_process_sets_name(id_: uuid.UUID, name: str, params: JobRunParams):
-    assert run_process(id_, name, params).data_sets[0].name == "run123"
+def test_run_process_sets_name(params: DatasetParams):
+    assert run_process(params).data_sets[0].name == "one"

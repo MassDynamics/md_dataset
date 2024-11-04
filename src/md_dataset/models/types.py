@@ -8,11 +8,13 @@ from pydantic import conlist
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 
-class JobRunParams(BaseModel):
-    names: list[str]
+class DatasetParams(BaseModel):
+    name: str
+    source_location: str
+    type: DatasetType
 
 
-class DataSetType(Enum):
+class DatasetType(Enum):
     INTENSITY = "INTENSITY"
 
 
@@ -24,7 +26,7 @@ class FlowOutPutTable(BaseModel):
 class FlowOutPutDataSet(BaseModel):
     name: str
     tables: list[FlowOutPutTable]
-    type: DataSetType
+    type: DatasetType
 
 
 class FlowOutPut(BaseModel):
