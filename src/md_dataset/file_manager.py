@@ -35,11 +35,12 @@ class FileManager:
                     return False
                 raise
 
-        def __exit__(self,
-                     exc_type: type[BaseException] | None,
-                     exc_val: BaseException | None,
-                     exc_tb: TracebackType | None,
-                     ):
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: TracebackType | None,
+        ):
             logger.debug("exit")
 
     def _file_download(self, bucket: str, path: str) -> BytesIO:

@@ -19,6 +19,7 @@ To develop the package:
 
 ```console
 python -m pip install -e '.[dev]'
+ruff check
 pytest
 ```
 
