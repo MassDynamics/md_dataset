@@ -10,7 +10,7 @@ pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 class DatasetParams(BaseModel):
     name: str
-    source_location: str
+    source_key: str
     type: DatasetType
 
 
