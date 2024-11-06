@@ -1,22 +1,50 @@
 import os
+from functools import wraps
 from typing import Callable
 import boto3
+import boto3.session
 import pandas as pd
+from prefect import flow
+from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetParams
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 
-source_bucket = os.getenv("SOURCE_BUCKET")
+profile = os.getenv("AWS_PROFILE")
+
+
+
+def get_s3_block() -> S3Bucket:
+    results_bucket = os.getenv("RESULTS_BUCKET")
+    if not results_bucket:
+        msg = "RESULTS_BUCKET environment variable not set"
+        raise ValueError(msg)
+    s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
+    s3_block.save("md_process")
+    return s3_block
+
+def get_aws_session() -> boto3.session.Session:
+    if os.getenv("EKS"):
+        return boto3.session.Session()
+    return boto3.session.Session(profile_name=profile)
 
 def get_file_manager() -> None:
-    client = boto3.client("s3")
-    FileManager(client)
+    client = get_aws_session().client("s3")
+    return FileManager(client)
 
 def md_process(func: Callable) -> Callable:
-    def wrapper(params: DatasetParams) -> FlowOutPut:
+    result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
+    @wraps(func)
+    @flow(
+            log_prints=True,
+            persist_result=True,
+            result_storage=result_storage,
+    )
+    def wrapper(params: DatasetParams) -> FlowOutPut:
+        source_bucket = os.getenv("SOURCE_BUCKET")
         source_data = get_file_manager().load_parquet_to_df(bucket = source_bucket, key = params.source_key)
         results = func(source_data)
 

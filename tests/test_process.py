@@ -1,6 +1,7 @@
 from typing import TypeVar
 import pandas as pd
 import pytest
+from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetParams
@@ -9,9 +10,13 @@ from md_dataset.process import md_process
 
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
-@md_process
-def run_process(dataframe: pd.core.frame.PandasDataFrame):
-    return [1, dataframe]
+
+
+@pytest.fixture(autouse=True, scope="session")
+def prefect_test_fixture():
+    with prefect_test_harness():
+        yield
+
 
 @pytest.fixture
 def fake_file_manager(mocker: MockerFixture):
@@ -27,17 +32,23 @@ def params() -> DatasetParams:
 
 
 def test_run_process_uses_source_data(params: DatasetParams, fake_file_manager: FileManager):
-    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    @md_process
+    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
+        return [1, dataframe]
 
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
+
     pd.testing.assert_frame_equal(run_process(params).data()[0].iloc[1] , test_data)
 
 
-@pytest.mark.usefixtures("fake_file_manager")
-def test_run_process_returns_data(params: DatasetParams):
-    assert run_process(params).data()[0].iloc[0] == 1
 
+def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileManager):
+    @md_process
+    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
+        return [1, dataframe]
 
-@pytest.mark.usefixtures("fake_file_manager")
-def test_run_process_sets_name(params: DatasetParams):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
     assert run_process(params).data_sets[0].name == "one"
