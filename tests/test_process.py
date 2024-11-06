@@ -28,19 +28,21 @@ def fake_file_manager(mocker: MockerFixture):
 
 @pytest.fixture
 def params() -> DatasetParams:
-    return DatasetParams(name="one", source_key="baz/qux", type=DatasetType.INTENSITY)
+    return DatasetParams(name="one", tables={item[0]:item[1] for item in [
+            ["Protein_Intensity", "baz/qux"],
+            ["Protein_Metadata", "qux/quux"],
+        ]}, type=DatasetType.INTENSITY)
 
 
 def test_run_process_uses_source_data(params: DatasetParams, fake_file_manager: FileManager):
     @md_process
-    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
-        return [1, dataframe]
+    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> pd.core.frame.PandasDataFrame:
+        return dataframe.iloc[::-1]
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    pd.testing.assert_frame_equal(run_process(params).data()[0].iloc[1] , test_data)
-
+    pd.testing.assert_frame_equal(run_process(params).data(0), test_data.iloc[::-1])
 
 
 def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileManager):
@@ -52,3 +54,15 @@ def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileMan
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     assert run_process(params).data_sets[0].name == "one"
+
+
+def test_run_process_sets_metadata(params: DatasetParams, fake_file_manager: FileManager):
+    @md_process
+    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
+        return dataframe.iloc[::-1]
+
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    pd.testing.assert_frame_equal(run_process(params).data(1), test_metadata)

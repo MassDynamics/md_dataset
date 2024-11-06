@@ -10,7 +10,7 @@ pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 class DatasetParams(BaseModel):
     name: str
-    source_key: str
+    tables: dict
     type: DatasetType
 
 
@@ -32,5 +32,5 @@ class FlowOutPutDataSet(BaseModel):
 class FlowOutPut(BaseModel):
     data_sets: conlist(FlowOutPutDataSet, min_length=1, max_length=1)
 
-    def data(self) -> list:
-        return self.data_sets[0].tables[0].data
+    def data(self, i: int) -> list:
+        return self.data_sets[0].tables[i].data

@@ -3,7 +3,6 @@ from functools import wraps
 from typing import Callable
 import boto3
 import boto3.session
-import pandas as pd
 from prefect import flow
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
@@ -45,8 +44,12 @@ def md_process(func: Callable) -> Callable:
     )
     def wrapper(params: DatasetParams) -> FlowOutPut:
         source_bucket = os.getenv("SOURCE_BUCKET")
-        source_data = get_file_manager().load_parquet_to_df(bucket = source_bucket, key = params.source_key)
+        file_manager = get_file_manager()
+        source_data = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
+
         results = func(source_data)
+
+        metadata = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
 
         return FlowOutPut(
             data_sets=[
@@ -54,9 +57,11 @@ def md_process(func: Callable) -> Callable:
                     name=params.name,
                     type=params.type,
                     tables=[
-                        FlowOutPutTable(name="Protein_Intensity", data=pd.DataFrame(results)),
+                        FlowOutPutTable(name="Protein_Intensity", data=results),
+                        FlowOutPutTable(name="Protein_Metadata", data=metadata),
                     ],
                 ),
+
             ],
         )
 
