@@ -23,10 +23,7 @@ RUN cd /opt/ && wget https://bootstrap.pypa.io/get-pip.py && \
 ENV WORK_DIR="/usr/src/app"
 WORKDIR $WORK_DIR
 
-# INSTALL LIBS
-COPY pyproject.toml  .
-RUN python -m pip install .
-
-COPY src/ ./src
+ARG GIT_HASH
+RUN pip install git+https://github.com/MassDynamics/md_dataset.git@${GIT_HASH}
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"

@@ -35,6 +35,7 @@ steps:
       BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
       DOCKER_FILE: "Dockerfile"
       REPO_NAME: "md_dataset_package"
+      GIT_HASH: "${BUILDKITE_COMMIT}"
     agents:
       ebdeploy: true
     concurrency: 1

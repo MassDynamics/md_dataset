@@ -7,6 +7,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 [[ -z "$BUILD_NUMBER" ]] && echo "BUILD_NUMBER must be set" && exit 1
 [[ -z "$DOCKER_FILE" ]] && echo "DOCKER_FILE must be set" && exit 1
 [[ -z "$REPO_NAME" ]] && echo "REPO_NAME must be set" && exit 1
+[[ -z "$GIT_HASH" ]] && echo "GIT_HASH must be set" && exit 1
 
 # below variables can be set in buildkite hooks and used in every pipeline
 account_id=$(aws sts get-caller-identity --query Account --output text)
@@ -18,7 +19,7 @@ image_tag=${REPO_NAME}:${version}-${BUILD_NUMBER}
 echo "BUILD IMAGE"
 docker build \
   --file=$DOCKER_FILE \
-  --build-arg IMAGE_TAG=${image_tag} \
+  --build-arg GIT_HASH=${GIT_HASH} \
   -t ${image_tag} .
 
 echo "TAG IMAGE"
