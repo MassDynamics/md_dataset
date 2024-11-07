@@ -1,4 +1,3 @@
-from typing import TypeVar
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
@@ -8,9 +7,6 @@ from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetParams
 from md_dataset.models.types import DatasetType
 from md_dataset.process import md_process
-
-pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
-
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -52,7 +48,7 @@ def test_run_process_uses_source_data(params: DatasetParams, fake_file_manager: 
             ).data(0)["col1"].to_numpy()[0] == "foo"
 
 
-def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileManager):
+def test_run_process_sets_name_and_type(params: DatasetParams, fake_file_manager: FileManager):
     @md_process
     def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
         return [1, dataframe]
@@ -60,7 +56,9 @@ def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileMan
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    assert run_process(params).data_sets[0].name == "one"
+    results = run_process(params)
+    assert results.data_sets[0].name == "one"
+    assert results.data_sets[0].type == DatasetType.INTENSITY
 
 
 def test_run_process_sets_flow_output(params: DatasetParams, fake_file_manager: FileManager):

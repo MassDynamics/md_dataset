@@ -1,11 +1,11 @@
 from __future__ import annotations
 from enum import Enum
-from typing import TypeVar
-import pandas as pd
+from typing import TYPE_CHECKING
 from pydantic import BaseModel
 from pydantic import conlist
 
-pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class DatasetParams(BaseModel):
@@ -34,3 +34,4 @@ class FlowOutPut(BaseModel):
 
     def data(self, i: int) -> list:
         return self.data_sets[0].tables[i].data
+
