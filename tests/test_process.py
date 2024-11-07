@@ -2,6 +2,7 @@ from typing import TypeVar
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
+from pydantic import BaseModel
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetParams
@@ -34,15 +35,21 @@ def params() -> DatasetParams:
         ]}, type=DatasetType.INTENSITY)
 
 
+class TestBlahParams(BaseModel):
+    id: int
+    name: str
+
 def test_run_process_uses_source_data(params: DatasetParams, fake_file_manager: FileManager):
     @md_process
-    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> pd.core.frame.PandasDataFrame:
-        return dataframe.iloc[::-1]
+    def run_process(_dataframe: pd.core.frame.PandasDataFrame, blah: TestBlahParams) -> pd.core.frame.PandasDataFrame:
+        return pd.DataFrame({"col1": [blah.name]})
 
-    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    pd.testing.assert_frame_equal(run_process(params).data(0), test_data.iloc[::-1])
+    assert run_process(
+            params, TestBlahParams(id=123, name="foo"),
+            ).data(0)["col1"].to_numpy()[0] == "foo"
 
 
 def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileManager):
@@ -56,13 +63,15 @@ def test_run_process_sets_name(params: DatasetParams, fake_file_manager: FileMan
     assert run_process(params).data_sets[0].name == "one"
 
 
-def test_run_process_sets_metadata(params: DatasetParams, fake_file_manager: FileManager):
+def test_run_process_sets_flow_output(params: DatasetParams, fake_file_manager: FileManager):
     @md_process
-    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> list:
-        return dataframe.iloc[::-1]
+    def run_process(dataframe: pd.core.frame.PandasDataFrame) -> pd.core.frame.PandasDataFrame:
+        return dataframe
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
-    pd.testing.assert_frame_equal(run_process(params).data(1), test_metadata)
+    results = run_process(params)
+    pd.testing.assert_frame_equal(results.data(0), test_data)
+    pd.testing.assert_frame_equal(results.data(1), test_metadata)

@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 from typing import Callable
+from typing import ParamSpec
 import boto3
 import boto3.session
 from prefect import flow
@@ -13,6 +14,7 @@ from md_dataset.models.types import FlowOutPutTable
 
 profile = os.getenv("AWS_PROFILE")
 
+P = ParamSpec("P")
 
 
 def get_s3_block() -> S3Bucket:
@@ -33,6 +35,7 @@ def get_file_manager() -> None:
     client = get_aws_session().client("s3")
     return FileManager(client)
 
+
 def md_process(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -42,12 +45,12 @@ def md_process(func: Callable) -> Callable:
             persist_result=True,
             result_storage=result_storage,
     )
-    def wrapper(params: DatasetParams) -> FlowOutPut:
+    def wrapper(params: DatasetParams, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         source_bucket = os.getenv("SOURCE_BUCKET")
         file_manager = get_file_manager()
         source_data = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
 
-        results = func(source_data)
+        results = func(source_data, *args, **kwargs)
 
         metadata = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
 
