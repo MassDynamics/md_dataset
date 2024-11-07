@@ -35,16 +35,15 @@ def get_file_manager() -> None:
     client = get_aws_session().client("s3")
     return FileManager(client)
 
-
 def md_process(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
-    @wraps(func)
     @flow(
             log_prints=True,
             persist_result=True,
             result_storage=result_storage,
     )
+    @wraps(func)
     def wrapper(params: DatasetParams, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         source_bucket = os.getenv("SOURCE_BUCKET")
         file_manager = get_file_manager()
