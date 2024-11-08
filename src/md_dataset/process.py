@@ -7,7 +7,7 @@ import boto3.session
 from prefect import flow
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import DatasetParams
+from md_dataset.models.types import DatasetInputParams
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
@@ -44,14 +44,11 @@ def md_process(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(params: DatasetParams, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
-        source_bucket = os.getenv("SOURCE_BUCKET")
+    def wrapper(params: DatasetInputParams, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
-        source_data = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
 
-        results = func(source_data, *args, **kwargs)
-
-        metadata = file_manager.load_parquet_to_df(bucket = source_bucket, key = params.tables["Protein_Intensity"])
+        input_params = params.dataset_input_params(file_manager)
+        results = func(input_params, *args, **kwargs)
 
         return FlowOutPut(
             data_sets=[
@@ -60,7 +57,8 @@ def md_process(func: Callable) -> Callable:
                     type=params.type,
                     tables=[
                         FlowOutPutTable(name="Protein_Intensity", data=results),
-                        FlowOutPutTable(name="Protein_Metadata", data=metadata),
+                        FlowOutPutTable(name="Protein_Metadata", \
+                                data=input_params.table_by_name("Protein_Metadata").data),
                     ],
                 ),
 

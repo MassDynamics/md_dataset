@@ -4,12 +4,12 @@ from prefect.testing.utilities import prefect_test_harness
 from pydantic import BaseModel
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import DatasetParams
+from md_dataset.models.types import DatasetInputParams
+from md_dataset.models.types import DatasetInputTable
 from md_dataset.models.types import DatasetType
 from md_dataset.process import md_process
 
 
-# prefect runs will be named 'wrapper'
 @pytest.fixture(autouse=True, scope="session")
 def prefect_test_fixture():
     with prefect_test_harness():
@@ -25,37 +25,38 @@ def fake_file_manager(mocker: MockerFixture):
 
 
 @pytest.fixture
-def params() -> DatasetParams:
-    return DatasetParams(name="one", tables={item[0]:item[1] for item in [
-            ["Protein_Intensity", "baz/qux"],
-            ["Protein_Metadata", "qux/quux"],
-        ]}, type=DatasetType.INTENSITY)
+def params() -> DatasetInputParams:
+    return DatasetInputParams(name="one", tables=[
+            DatasetInputTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
+            DatasetInputTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
+        ], type=DatasetType.INTENSITY)
 
 
 class TestBlahParams(BaseModel):
     id: int
     name: str
 
-def test_run_process_uses_source_data(params: DatasetParams, fake_file_manager: FileManager):
+def test_run_process_uses_config(params: DatasetInputParams, fake_file_manager: FileManager):
     @md_process
-    def run_process_source_data(
-            dataframe: pd.core.frame.PandasDataFrame,
-            blah: TestBlahParams,
+    def run_process_config(
+            params: DatasetInputParams,
         ) -> pd.core.frame.PandasDataFrame:
-        return pd.concat([pd.DataFrame({"col1": [blah.name]}), dataframe])
+        return pd.concat([pd.DataFrame({"col1": [params.config["name"]]}), \
+                params.table_by_name("Protein_Metadata").data])
 
     test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    assert run_process_source_data(
-            params, TestBlahParams(id=123, name="foo"),
+    params.config = TestBlahParams(id=123, name="foo")
+    assert run_process_config(
+            params,
             ).data(0)["col1"].to_numpy()[0] == "foo"
 
 
-def test_run_process_sets_name_and_type(params: DatasetParams, fake_file_manager: FileManager):
+def test_run_process_sets_name_and_type(params: DatasetInputParams, fake_file_manager: FileManager):
     @md_process
-    def run_process_sets_name_and_type(dataframe: pd.core.frame.PandasDataFrame) -> list:
-        return [1, dataframe]
+    def run_process_sets_name_and_type(params: DatasetInputParams) -> list:
+        return [1, params.table_by_name("Protein_Intensity").data]
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -65,15 +66,15 @@ def test_run_process_sets_name_and_type(params: DatasetParams, fake_file_manager
     assert results.data_sets[0].type == DatasetType.INTENSITY
 
 
-def test_run_process_sets_flow_output(params: DatasetParams, fake_file_manager: FileManager):
+def test_run_process_sets_flow_output(params: DatasetInputParams, fake_file_manager: FileManager):
     @md_process
-    def run_process_sets_flow_output(dataframe: pd.core.frame.PandasDataFrame) -> pd.core.frame.PandasDataFrame:
-        return dataframe
+    def run_process_sets_flow_output(params: DatasetInputParams) -> pd.core.frame.PandasDataFrame:
+        return params.table_by_name("Protein_Intensity").data.iloc[::-1]
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
     results = run_process_sets_flow_output(params)
-    pd.testing.assert_frame_equal(results.data(0), test_data)
+    pd.testing.assert_frame_equal(results.data(0), test_data.iloc[::-1])
     pd.testing.assert_frame_equal(results.data(1), test_metadata)
