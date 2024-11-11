@@ -42,7 +42,7 @@ def test_run_process_uses_config(params: DatasetInputParams, fake_file_manager: 
             params: DatasetInputParams,
         ) -> pd.core.frame.PandasDataFrame:
         return pd.concat([pd.DataFrame({"col1": [params.config["name"]]}), \
-                params.table_by_name("Protein_Metadata").data])
+                params.table_data_by_name("Protein_Metadata")])
 
     test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -56,7 +56,7 @@ def test_run_process_uses_config(params: DatasetInputParams, fake_file_manager: 
 def test_run_process_sets_name_and_type(params: DatasetInputParams, fake_file_manager: FileManager):
     @md_process
     def run_process_sets_name_and_type(params: DatasetInputParams) -> list:
-        return [1, params.table_by_name("Protein_Intensity").data]
+        return [1, params.table_data_by_name("Protein_Intensity")]
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data

@@ -28,6 +28,9 @@ class DatasetInputParams(BaseModel):
     def table_by_name(self, name: str) -> DatasetInputTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
 
+    def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
+        return self.table_by_name(name).data
+
     def dataset_input_params(self, file_manager: FileManager) -> DatasetInputParams:
         tables = [
                 DatasetInputTable(**table.model_dump(exclude=["data", "bucket", "key"]), \
