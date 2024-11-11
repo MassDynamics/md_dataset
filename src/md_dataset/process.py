@@ -21,7 +21,7 @@ def get_s3_block() -> S3Bucket:
         msg = "RESULTS_BUCKET environment variable not set"
         raise ValueError(msg)
     s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
-    s3_block.save("mdprocess")
+    s3_block.save("mdprocess", overwrite=True)
     return s3_block
 
 def get_aws_session() -> boto3.session.Session:
