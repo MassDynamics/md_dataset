@@ -12,8 +12,6 @@ from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 
-profile = os.getenv("AWS_PROFILE")
-
 P = ParamSpec("P")
 
 
@@ -23,13 +21,14 @@ def get_s3_block() -> S3Bucket:
         msg = "RESULTS_BUCKET environment variable not set"
         raise ValueError(msg)
     s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
-    s3_block.save("md_process")
+    s3_block.save("mdprocess")
     return s3_block
 
 def get_aws_session() -> boto3.session.Session:
-    if os.getenv("EKS"):
-        return boto3.session.Session()
-    return boto3.session.Session(profile_name=profile)
+    profile = os.getenv("AWS_PROFILE")
+    if os.getenv("AWS_PROFILE"):
+        return boto3.session.Session(profile_name=profile)
+    return boto3.session.Session()
 
 def get_file_manager() -> None:
     client = get_aws_session().client("s3")
