@@ -15,15 +15,17 @@ registry=${registry:-${account_id}.dkr.ecr.ap-southeast-2.amazonaws.com}
 
 version=$(grep -m1 'version =' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
 image_tag=${REPO_NAME}:${version}-${BUILD_NUMBER}
+image_tag_latest=${REPO_NAME}:latest
 
 echo "BUILD IMAGE"
 docker build \
   --file=$DOCKER_FILE \
   --build-arg GIT_HASH=${GIT_HASH} \
-  -t ${image_tag} .
+  -t ${image_tag} -t ${image_tag_latest} .
 
 echo "TAG IMAGE"
 docker tag "${image_tag}" "${registry}/${image_tag}"
+docker tag "${image_tag_latest}" "${registry}/${image_tag_latest}"
 
 echo "PUSH IMAGE"
 aws ecr describe-repositories --repository-names ${REPO_NAME} || \
@@ -34,3 +36,4 @@ aws ecr get-login-password \
   | docker login -u AWS --password-stdin $registry
 
 docker push "${registry}/${image_tag}"
+docker push "${registry}/${image_tag_latest}"
