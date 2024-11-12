@@ -19,7 +19,7 @@ class DatasetInputTable(BaseModel):
     data: pd.core.frame.PandasDataFrame = None
 
 
-class DatasetInputParams(BaseModel):
+class InputDataset(BaseModel):
     name: str
     type: DatasetType
     config: Any = None
@@ -31,14 +31,14 @@ class DatasetInputParams(BaseModel):
     def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
         return self.table_by_name(name).data
 
-    def dataset_input_params(self, file_manager: FileManager) -> DatasetInputParams:
+    def dataset_input_params(self, file_manager: FileManager) -> InputDataset:
         tables = [
                 DatasetInputTable(**table.model_dump(exclude=["data", "bucket", "key"]), \
                         data = file_manager.load_parquet_to_df( \
                             bucket = table.bucket, key = table.key)) \
                 for table in self.tables]
 
-        return DatasetInputParams(**self.model_dump(exclude=["tables"]), tables = tables)
+        return InputDataset(**self.model_dump(exclude=["tables"]), tables = tables)
 
 class DatasetType(Enum):
     INTENSITY = "INTENSITY"
