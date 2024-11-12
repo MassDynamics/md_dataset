@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import InputDataset
-from md_dataset.models.types import DatasetInputTable
+from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import DatasetType
 from md_dataset.process import md_process
 
@@ -27,8 +27,8 @@ def fake_file_manager(mocker: MockerFixture):
 @pytest.fixture
 def params() -> InputDataset:
     return InputDataset(name="one", tables=[
-            DatasetInputTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
-            DatasetInputTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
+            InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
+            InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ], type=DatasetType.INTENSITY)
 
 

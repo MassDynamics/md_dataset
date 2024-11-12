@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
-class DatasetInputTable(BaseModel):
+class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
     key: str = None
@@ -23,17 +23,17 @@ class InputDataset(BaseModel):
     name: str
     type: DatasetType
     config: Any = None
-    tables: list[DatasetInputTable]
+    tables: list[InputDatasetTable]
 
-    def table_by_name(self, name: str) -> DatasetInputTable:
+    def table_by_name(self, name: str) -> InputDatasetTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
 
     def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
         return self.table_by_name(name).data
 
-    def dataset_input_params(self, file_manager: FileManager) -> InputDataset:
+    def populate_tables(self, file_manager: FileManager) -> InputDataset:
         tables = [
-                DatasetInputTable(**table.model_dump(exclude=["data", "bucket", "key"]), \
+                InputDatasetTable(**table.model_dump(exclude=["data", "bucket", "key"]), \
                         data = file_manager.load_parquet_to_df( \
                             bucket = table.bucket, key = table.key)) \
                 for table in self.tables]

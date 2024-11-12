@@ -46,7 +46,7 @@ def md_process(func: Callable) -> Callable:
     def wrapper(params: InputDataset, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
 
-        input_params = params.dataset_input_params(file_manager)
+        input_params = params.populate_tables(file_manager)
         results = func(input_params, *args, **kwargs)
 
         return FlowOutPut(
