@@ -43,21 +43,23 @@ def md_process(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(params: InputDataset, *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+    def wrapper(input_data_sets: list[InputDataset], *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
 
-        input_params = params.populate_tables(file_manager)
-        results = func(input_params, *args, **kwargs)
+        input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
+        # we will need to change this interface
+        results = func(input_data_sets, *args, **kwargs)
 
         return FlowOutPut(
+            # this may need to be constructed by the client
             data_sets=[
                 FlowOutPutDataSet(
-                    name=params.name,
-                    type=params.type,
+                    name=input_data_sets[0].name,
+                    type=input_data_sets[0].type,
                     tables=[
                         FlowOutPutTable(name="Protein_Intensity", data=results),
                         FlowOutPutTable(name="Protein_Metadata", \
-                                data=input_params.table_by_name("Protein_Metadata").data),
+                                data=input_data_sets[0].table_by_name("Protein_Metadata").data),
                     ],
                 ),
 
