@@ -1,13 +1,17 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pydantic import BaseModel
-from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
+from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDataset
 from md_dataset.models.types import InputDatasetTable
-from md_dataset.models.types import DatasetType
 from md_dataset.process import md_process
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -40,7 +44,7 @@ def test_run_process_uses_config(input_data_sets: list[InputDataset], fake_file_
     @md_process
     def run_process_config(
             input_data_sets: list[InputDataset],
-            params: TestBlahParams
+            params: TestBlahParams,
         ) -> pd.core.frame.PandasDataFrame:
         return pd.concat([pd.DataFrame({"col1": [params.name]}), \
                 input_data_sets[0].table_data_by_name("Protein_Metadata")])

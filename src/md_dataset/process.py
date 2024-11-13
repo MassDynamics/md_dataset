@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 from functools import wraps
 from typing import Callable
@@ -7,10 +8,10 @@ import boto3.session
 from prefect import flow
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import InputDataset
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
+from md_dataset.models.types import InputDataset
 
 P = ParamSpec("P")
 
