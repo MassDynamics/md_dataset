@@ -22,7 +22,6 @@ class InputDatasetTable(BaseModel):
 class InputDataset(BaseModel):
     name: str
     type: DatasetType
-    config: Any = None
     tables: list[InputDatasetTable]
 
     def table_by_name(self, name: str) -> InputDatasetTable:
@@ -42,6 +41,7 @@ class InputDataset(BaseModel):
 
 class DatasetType(Enum):
     INTENSITY = "INTENSITY"
+    DOSE_RESPONSE = "DOSE_RESPONSE"
 
 
 class FlowOutPutTable(BaseModel):
