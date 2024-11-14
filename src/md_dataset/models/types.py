@@ -43,6 +43,11 @@ class DatasetType(Enum):
     INTENSITY = "INTENSITY"
     DOSE_RESPONSE = "DOSE_RESPONSE"
 
+class IntensityDataset(InputDataset):
+    type: DatasetType.INTENSITY
+
+class DoseResponseDataset(InputDataset):
+    type: DatasetType.DOSE_RESPONSE
 
 class FlowOutPutTable(BaseModel):
     name: str
