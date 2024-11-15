@@ -26,7 +26,8 @@ dependencies = [
   "prefect ~= 2.20.9",
   "prefect-aws ~= 0.4.20",
   "pyarrow",
-  "pydantic ~= 2.9.2"
+  # "pydantic ~= 2.9.2"
+  "pydantic ~= 1.10.19",
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = [""]

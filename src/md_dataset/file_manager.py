@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class FileManager:
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, default_bucket: str | None):
         self.client = client
+        self.default_bucket = default_bucket
 
     class Downloader:
         def __init__(self, client: Client, bucket: str, key: str):
@@ -46,7 +47,7 @@ class FileManager:
             logger.debug("exit")
 
     def _file_download(self, bucket: str, key: str) -> BytesIO:
-        return FileManager.Downloader(self.client, bucket, key)
+        return FileManager.Downloader(self.client, bucket or self.default_bucket, key)
 
     def load_parquet_to_df(self, bucket: str, key: str) -> pd.core.frame.PandasDataFrame:
         with self._file_download(bucket, key) as content:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 from functools import wraps
-from typing import Callable
+from typing import TYPE_CHECKING
 from typing import ParamSpec
 import boto3
 import boto3.session
@@ -12,6 +12,9 @@ from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 from md_dataset.models.types import InputDataset
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 P = ParamSpec("P")
 
@@ -33,7 +36,7 @@ def get_aws_session() -> boto3.session.Session:
 
 def get_file_manager() -> None:
     client = get_aws_session().client("s3")
-    return FileManager(client)
+    return FileManager(client, os.getenv("SOURCE_BUCKET"))
 
 def md_process(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None

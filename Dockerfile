@@ -23,6 +23,9 @@ RUN cd /opt/ && wget https://bootstrap.pypa.io/get-pip.py && \
 ENV WORK_DIR="/usr/src/app"
 WORKDIR $WORK_DIR
 
+RUN pip install "cython<3.0.0" wheel
+RUN pip install "pyyaml==5.4.1" --no-build-isolation
+
 ARG GIT_HASH
 RUN pip install git+https://github.com/MassDynamics/md_dataset.git@${GIT_HASH}
 
