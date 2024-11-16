@@ -2,7 +2,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import List
 import pandas as pd
 from pydantic import BaseModel
 from pydantic import conlist
@@ -25,7 +24,7 @@ class DatasetType(Enum):
 class InputDataset(BaseModel):
     name: str
     type: DatasetType
-    tables: List[InputDatasetTable]
+    tables: list[InputDatasetTable]
 
     def table_by_name(self, name: str) -> InputDatasetTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
@@ -57,14 +56,14 @@ class FlowOutPutTable(BaseModel):
 
 class FlowOutPutDataSet(BaseModel):
     name: str
-    tables: List[FlowOutPutTable]
+    tables: list[FlowOutPutTable]
     type: DatasetType
 
 
 class FlowOutPut(BaseModel):
     data_sets: conlist(FlowOutPutDataSet, min_items=1, max_items=1)
 
-    def data(self, i: int) -> List:
+    def data(self, i: int) -> list:
         return self.data_sets[0].tables[i].data
 
 FlowOutPut.update_forward_refs()
