@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class FileManager:
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, default_bucket: str | None = None):
         self.client = client
 
     class Downloader:
@@ -27,6 +27,10 @@ class FileManager:
             self.key = key
 
         def __enter__(self):
+            if (self.bucket is None):
+                msg = "Source bucket not provided"
+                raise AttributeError(msg)
+
             bio = BytesIO()
             try:
                 logger.debug("Download: %s", self.key)
