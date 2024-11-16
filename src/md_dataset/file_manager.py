@@ -4,7 +4,6 @@ import logging
 from io import BytesIO
 from typing import TYPE_CHECKING
 from typing import TypeVar
-import botocore
 import pandas as pd
 
 if TYPE_CHECKING:
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 class FileManager:
     def __init__(self, client: Client, default_bucket: str | None = None):
         self.client = client
+        self.default_bucket = default_bucket
 
     class Downloader:
         def __init__(self, client: Client, bucket: str, key: str):
@@ -32,14 +32,9 @@ class FileManager:
                 raise AttributeError(msg)
 
             bio = BytesIO()
-            try:
-                logger.debug("Download: %s", self.key)
-                self.client.download_fileobj(self.bucket, self.key, bio)
-                return bio.getvalue()
-            except botocore.exceptions.ClientError as e:
-                if e.response["Error"]["Code"] == "404":
-                    return False
-                raise
+            logger.debug("Download: %s", self.key)
+            self.client.download_fileobj(self.bucket, self.key, bio)
+            return bio.getvalue()
 
         def __exit__(
             self,
@@ -50,7 +45,7 @@ class FileManager:
             logger.debug("exit")
 
     def _file_download(self, bucket: str, key: str) -> BytesIO:
-        return FileManager.Downloader(self.client, bucket, key)
+        return FileManager.Downloader(self.client, bucket or self.default_bucket, key)
 
     def load_parquet_to_df(self, bucket: str, key: str) -> pd.core.frame.PandasDataFrame:
         with self._file_download(bucket, key) as content:
