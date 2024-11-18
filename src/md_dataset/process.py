@@ -38,7 +38,7 @@ def get_file_manager() -> None:
     client = get_aws_session().client("s3")
     return FileManager(client)
 
-def md_process(func: Callable) -> Callable:
+def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
     @flow(
@@ -51,7 +51,6 @@ def md_process(func: Callable) -> Callable:
         file_manager = get_file_manager()
 
         input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-        # we will need to change this interface
         results = func(input_data_sets, *args, **kwargs)
 
         return FlowOutPut(

@@ -7,7 +7,7 @@ from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDataset
 from md_dataset.models.types import InputDatasetTable
-from md_dataset.process import md_process
+from md_dataset.process import md_py
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -37,7 +37,7 @@ class TestBlahParams(BaseModel):
     name: str
 
 def test_run_process_uses_config(input_data_sets: list[InputDataset], fake_file_manager: FileManager):
-    @md_process
+    @md_py
     def run_process_config(
             input_data_sets: list[InputDataset],
             params: TestBlahParams,
@@ -55,7 +55,7 @@ def test_run_process_uses_config(input_data_sets: list[InputDataset], fake_file_
 
 
 def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset], fake_file_manager: FileManager):
-    @md_process
+    @md_py
     def run_process_sets_name_and_type(input_data_sets: list[InputDataset]) -> list:
         return [1, input_data_sets[0].table_data_by_name("Protein_Intensity")]
 
@@ -68,7 +68,7 @@ def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset], fak
 
 
 def test_run_process_sets_flow_output(input_data_sets: list[InputDataset], fake_file_manager: FileManager):
-    @md_process
+    @md_py
     def run_process_sets_flow_output(input_data_sets: list[InputDataset]) -> pd.core.frame.PandasDataFrame:
         return input_data_sets[0].table_by_name("Protein_Intensity").data.iloc[::-1]
 
