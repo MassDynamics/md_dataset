@@ -24,7 +24,7 @@ steps:
     depends_on: prep
     branches: "!main"
 
-  - label: ":docker: dataset service: build & push image"
+  - label: ":docker: dataset package - python: build & push image"
     key: build_image
     depends_on: ["block_image", "prep"]
     command: scripts/build-push
@@ -40,3 +40,20 @@ steps:
       ebdeploy: true
     concurrency: 1
     concurrency_group: "md_dataset_package/docker"
+
+  - label: ":docker: dataset package - R: build & push image"
+    key: build_image
+    depends_on: ["block_image", "prep"]
+    command: scripts/build-push
+    env:
+      AWS_REGION: "ap-southeast-2"
+      AWS_DEFAULT_REGION: "ap-southeast-2"
+      AWS_PROFILE: "eb-services-cli"
+      BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
+      DOCKER_FILE: "r.Dockerfile"
+      REPO_NAME: "md_dataset_package-r"
+      GIT_HASH: "N/A"
+    agents:
+      ebdeploy: true
+    concurrency: 1
+    concurrency_group: "md_dataset_package-r/docker"
