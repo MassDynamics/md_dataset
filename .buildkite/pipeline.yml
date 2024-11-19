@@ -25,7 +25,7 @@ steps:
     branches: "!main"
 
   - label: ":docker: dataset package - python: build & push image"
-    key: build_image
+    key: build_python_image
     depends_on: ["block_image", "prep"]
     command: scripts/build-push
     env:
@@ -42,8 +42,8 @@ steps:
     concurrency_group: "md_dataset_package/docker"
 
   - label: ":docker: dataset package - R: build & push image"
-    key: build_image
-    depends_on: ["block_image", "prep"]
+    key: build_r_image
+    depends_on: ["build_python_image"]
     command: scripts/build-push
     env:
       AWS_REGION: "ap-southeast-2"
