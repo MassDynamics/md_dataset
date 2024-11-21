@@ -75,6 +75,23 @@ RUN pip install "pyyaml==5.4.1" --no-build-isolation
 # ARG GIT_HASH
 # RUN pip install git+https://github.com/MassDynamics/md_dataset.git@${GIT_HASH}
 
+RUN yum install -y \
+    blas blas-devel \
+    lapack lapack-devel \
+    gcc-gfortran \
+    libquadmath libquadmath-devel \
+    libicu libicu-devel \
+    lzma \
+    zlib zlib-devel \
+    bzip2 bzip2-devel \
+    readline readline-devel \
+    ncurses ncurses-devel \
+    libxcb libXau libXrender \
+    && yum clean all
+
+ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
+
+COPY . .
 RUN python -m pip install .
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
