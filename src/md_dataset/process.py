@@ -5,16 +5,23 @@ from typing import TYPE_CHECKING
 from typing import ParamSpec
 import boto3
 import boto3.session
+import rpy2.robjects as ro
 from prefect import flow
+from prefect import get_run_logger
+from prefect import task
 from prefect_aws.s3 import S3Bucket
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 from md_dataset.models.types import InputDataset
+from md_dataset.models.types import RPreparation
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    import pandas as pd
 
 P = ParamSpec("P")
 
@@ -70,3 +77,63 @@ def md_py(func: Callable) -> Callable:
         )
 
     return wrapper
+
+
+
+@task
+def run_r_task(
+    r_file: str,
+    r_function: str,
+    r_preparation: RPreparation,
+) -> pd.DataFrame:
+    logger = get_run_logger()
+    logger.info("Running R task with function %s in file %s", r_function, r_file)
+
+    r = ro.r
+    r.source(r_file)
+    r_func = getattr(r, r_function)
+
+    with localconverter(ro.default_converter + pandas2ri.converter):
+        r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
+
+    r_out_df = r_func(*r_data_frames, *r_preparation.r_args)
+
+    with localconverter(ro.default_converter + pandas2ri.converter):
+        return ro.conversion.rpy2py(r_out_df)
+
+
+def md_r(r_file: str, r_function: str) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
+
+        @flow(
+                log_prints=True,
+                persist_result=True,
+                result_storage=result_storage,
+                )
+        @wraps(func)
+        def wrapper(input_data_sets: list[InputDataset], *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+            file_manager = get_file_manager()
+
+            input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
+            r_preparation = func(input_data_sets, *args, **kwargs)
+
+            results = run_r_task(r_file, r_function, r_preparation)
+
+            return FlowOutPut(
+                    data_sets=[
+                        FlowOutPutDataSet(
+                            name=input_data_sets[0].name,
+                            type=input_data_sets[0].type,
+                            tables=[
+                                FlowOutPutTable(name="Protein_Intensity", data=results),
+                                FlowOutPutTable(name="Protein_Metadata", \
+                                        data=input_data_sets[0].table_by_name("Protein_Metadata").data),
+                                ],
+                            ),
+
+                        ],
+                    )
+
+        return wrapper
+    return decorator

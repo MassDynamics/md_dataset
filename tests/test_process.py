@@ -41,7 +41,7 @@ def test_run_process_uses_config(input_data_sets: list[InputDataset], fake_file_
     def run_process_config(
             input_data_sets: list[InputDataset],
             params: TestBlahParams,
-        ) -> pd.core.frame.PandasDataFrame:
+        ) -> pd.DataFrame:
         return pd.concat([pd.DataFrame({"col1": [params.name]}), \
                 input_data_sets[0].table_data_by_name("Protein_Metadata")])
 
@@ -69,7 +69,7 @@ def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset], fak
 
 def test_run_process_sets_flow_output(input_data_sets: list[InputDataset], fake_file_manager: FileManager):
     @md_py
-    def run_process_sets_flow_output(input_data_sets: list[InputDataset]) -> pd.core.frame.PandasDataFrame:
+    def run_process_sets_flow_output(input_data_sets: list[InputDataset]) -> pd.DataFrame:
         return input_data_sets[0].table_by_name("Protein_Intensity").data.iloc[::-1]
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})

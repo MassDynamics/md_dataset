@@ -3,14 +3,11 @@ import io
 import logging
 from io import BytesIO
 from typing import TYPE_CHECKING
-from typing import TypeVar
 import pandas as pd
 
 if TYPE_CHECKING:
     from types import TracebackType
     from boto3_type_annotations.s3 import Client
-
-pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +44,7 @@ class FileManager:
     def _file_download(self, bucket: str, key: str) -> BytesIO:
         return FileManager.Downloader(self.client, bucket or self.default_bucket, key)
 
-    def load_parquet_to_df(self, bucket: str, key: str) -> pd.core.frame.PandasDataFrame:
+    def load_parquet_to_df(self, bucket: str, key: str) -> pd.DataFrame:
         with self._file_download(bucket, key) as content:
             logging.debug("load_parquet_to_df: %s", key)
             return pd.read_parquet(io.BytesIO(content), engine="pyarrow")

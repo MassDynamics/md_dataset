@@ -68,6 +68,6 @@ class FlowOutPut(BaseModel):
 
 FlowOutPut.update_forward_refs()
 
-
-
-
+class RPreparation(BaseModel):
+    data_frames: list[pd.core.frame.PandasDataFrame]
+    r_args: list[str]
