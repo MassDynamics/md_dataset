@@ -5,13 +5,10 @@ from typing import TYPE_CHECKING
 from typing import ParamSpec
 import boto3
 import boto3.session
-import rpy2.robjects as ro
 from prefect import flow
 from prefect import get_run_logger
 from prefect import task
 from prefect_aws.s3 import S3Bucket
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
@@ -83,6 +80,10 @@ def run_r_task(
     r_function: str,
     r_preparation: RPreparation,
 ) -> pd.DataFrame:
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
+
     logger = get_run_logger()
     logger.info("Running R task with function %s in file %s", r_function, r_file)
 
