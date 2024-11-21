@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+from prefect.testing.utilities import prefect_test_harness
 from pydantic import BaseModel
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
@@ -9,10 +10,11 @@ from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import RPreparation
 from md_dataset.process import md_r
 
-# @pytest.fixture(autouse=True, scope="session")
-# def prefect_test_fixture():
-#     with prefect_test_harness():
-#         yield
+
+@pytest.fixture(autouse=True, scope="session")
+def prefect_test_fixture():
+    with prefect_test_harness():
+        yield
 
 
 @pytest.fixture

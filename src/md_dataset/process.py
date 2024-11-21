@@ -60,17 +60,14 @@ def md_py(func: Callable) -> Callable:
         input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
         results = func(input_data_sets, *args, **kwargs)
 
+        tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
+
         return FlowOutPut(
-            # this may need to be constructed by the client
             data_sets=[
                 FlowOutPutDataSet(
                     name=input_data_sets[0].name,
                     type=input_data_sets[0].type,
-                    tables=[
-                        FlowOutPutTable(name="Protein_Intensity", data=results),
-                        FlowOutPutTable(name="Protein_Metadata", \
-                                data=input_data_sets[0].table_by_name("Protein_Metadata").data),
-                    ],
+                    tables=tables,
                 ),
 
             ],
