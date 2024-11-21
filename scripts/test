@@ -4,7 +4,7 @@ set -e
 
 if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1)) ); then
   echo "creating conda environment ${CONDA_ENV_NAME}"
-  conda create -y --name $CONDA_ENV_NAME python=3.12
+  conda create -y --name $CONDA_ENV_NAME python=3.11
 fi
 
 echo "installing packages into ${CONDA_ENV_NAME}"
@@ -12,4 +12,4 @@ conda run -n $CONDA_ENV_NAME bash -c "pip install 'cython<3.0.0' wheel"
 conda run -n $CONDA_ENV_NAME bash -c "pip install 'pyyaml==5.4.1' --no-build-isolation"
 conda run -n $CONDA_ENV_NAME bash -c "python -m pip install -e '.[dev]'"
 
-TZ=UTC conda run -n $CONDA_ENV_NAME bash -c "pytest"
+TZ=UTC conda run -n $CONDA_ENV_NAME bash -c "pytest -n auto"

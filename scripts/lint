@@ -4,7 +4,7 @@ set -e
 
 if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1)) ); then
   echo "creating conda environment ${CONDA_ENV_NAME}"
-  conda create -y --name $CONDA_ENV_NAME python=3.12
+  conda create -y --name $CONDA_ENV_NAME python=3.11
 fi
 
 echo "installing packages into ${CONDA_ENV_NAME}"

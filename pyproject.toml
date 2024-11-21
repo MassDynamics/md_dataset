@@ -36,7 +36,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.2.0"
+version = "0.3.0"
 
 [project.optional-dependencies]
 dev = [
@@ -47,6 +47,7 @@ dev = [
     "pytest",
     "pytest-mock",
     "pytest-cov",
+    "pytest-xdist",
     "ruff",
     "sphinx",
     "sphinx_rtd_theme",
