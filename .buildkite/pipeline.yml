@@ -4,14 +4,14 @@ steps:
     env:
       CONDA_ENV_NAME: "md_dataset_package"
     agents:
-      python: true
+      python-r-4.3: true
 
   - label: ":lint-roller: lint"
     command: ./scripts/lint
     env:
       CONDA_ENV_NAME: "md_dataset_package"
     agents:
-      python: true
+      python-r-4.3: true
 
   - wait: ~
     key: prep
