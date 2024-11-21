@@ -2,7 +2,7 @@ FROM 243488295326.dkr.ecr.ap-southeast-2.amazonaws.com/md_dataset_package:0.2.0-
 
 RUN yum -y update
 
-ENV R_VERSION=4.4.0
+ENV R_VERSION=4.3.0
 
 RUN yum -y update && \
     yum -y groupinstall "Development Tools" && \
