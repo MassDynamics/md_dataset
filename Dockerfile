@@ -92,6 +92,6 @@ RUN yum install -y \
 ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
 
 COPY . .
-python -m pip install -e '.[r]'
+RUN python -m pip install -e '.[r]'
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
