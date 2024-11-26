@@ -11,6 +11,13 @@ if TYPE_CHECKING:
 
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
+class InputParams(BaseModel):
+  """The name of the dataset.
+
+  If not set the MD dataset service will create one.
+  """
+  name: str | None
+
 class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
@@ -49,17 +56,29 @@ class IntensityDataset(InputDataset):
 class DoseResponseDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
+class OutputDatasetTable(BaseModel):
+    name: str
+    data: pd.core.frame.PandasDataFrame
+
+class OutputDataset(BaseModel):
+    name: str
+    type: DatasetType
+    tables: list[OutputDatasetTable]
+
+# DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):
     name: str
     data: pd.core.frame.PandasDataFrame
 
 
+# DEPRECATED (from another project)
 class FlowOutPutDataSet(BaseModel):
     name: str
     tables: list[FlowOutPutTable]
     type: DatasetType
 
 
+# DEPRECATED (from another project)
 class FlowOutPut(BaseModel):
     data_sets: conlist(FlowOutPutDataSet, min_items=1, max_items=1)
 

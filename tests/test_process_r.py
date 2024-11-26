@@ -3,6 +3,8 @@ import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pydantic import BaseModel
 from pytest_mock import MockerFixture
+from rpy2.robjects import conversion
+from rpy2.robjects import default_converter
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDataset
@@ -52,7 +54,8 @@ def test_run_process_r_input_dataset(input_data_sets: list[InputDataset], fake_f
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    results = prepare_test_run_r(input_data_sets, TestRParams(message="hello"))
+    with conversion.localconverter(default_converter):
+        results = prepare_test_run_r(input_data_sets, TestRParams(message="hello"))
 
     assert results.data_sets[0].name == "r"
     assert results.data_sets[0].type == DatasetType.INTENSITY
@@ -73,7 +76,8 @@ def test_run_process_r_results(input_data_sets: list[InputDataset], fake_file_ma
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": [1, 2, 3]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
-    results = prepare_test_run_r_output(input_data_sets, TestRParams(message="hello"))
+    with conversion.localconverter(default_converter):
+        results = prepare_test_run_r_output(input_data_sets, TestRParams(message="hello"))
 
     pd.testing.assert_frame_equal(results.data(0).reset_index(drop=True), \
             test_data[test_data.columns[::-1]].reset_index(drop=True))

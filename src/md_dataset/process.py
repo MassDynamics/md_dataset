@@ -14,6 +14,7 @@ from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
 from md_dataset.models.types import InputDataset
+from md_dataset.models.types import InputParams
 from md_dataset.models.types import RPreparation
 
 if TYPE_CHECKING:
@@ -51,11 +52,12 @@ def md_py(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(input_data_sets: list[InputDataset], *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+    def wrapper(input_data_sets: list[InputDataset], params: InputParams, \
+            *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
 
         input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-        results = func(input_data_sets, *args, **kwargs)
+        results = func(input_data_sets, params, *args, **kwargs)
 
         tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
