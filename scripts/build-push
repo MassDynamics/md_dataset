@@ -14,7 +14,8 @@ account_id=$(aws sts get-caller-identity --query Account --output text)
 registry=${registry:-${account_id}.dkr.ecr.ap-southeast-2.amazonaws.com}
 
 version=$(grep -m1 'version =' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
-image_tag=${REPO_NAME}:${version}-${BUILD_NUMBER}
+tag=${version}-${BUILD_NUMBER}
+image_tag=${REPO_NAME}:${tag}
 image_tag_latest=${REPO_NAME}:latest
 
 echo "BUILD IMAGE"
@@ -38,8 +39,9 @@ aws ecr get-login-password \
 docker push "${registry}/${image_tag}"
 docker push "${registry}/${image_tag_latest}"
 
-echo "Git tag ${image_tag}"
-git tag ${image_tag}
-git push origin ${image_tag}
+echo "Git tag ${tag}"
+git tag ${tag}
+git push origin ${tag}
 
+echo "+++ Git tag: ${tag}"
 echo "+++ Image tag: ${image_tag}"
