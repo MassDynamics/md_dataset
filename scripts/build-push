@@ -39,10 +39,10 @@ aws ecr get-login-password \
 docker push "${registry}/${image_tag}"
 docker push "${registry}/${image_tag_latest}"
 
+repo_url="https://$GH_TOKEN@github.com/MassDynamics/md_dataset.git"
 echo "Git tag v${tag}"
-REPO_URL="https://$GH_TOKEN@github.com/MassDynamics/md_dataset.git"
 git tag "v${tag}"
-git push origin "v${tag}"
+git push --tags $repo_url
 
 echo "+++ Git tag: ${tag}"
 echo "+++ Image tag: ${image_tag}"
