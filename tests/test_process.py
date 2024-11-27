@@ -37,7 +37,7 @@ class TestBlahParams(InputParams):
 
 @pytest.fixture
 def input_params() -> TestBlahParams:
-   return TestBlahParams(id=123, name="foo")
+   return TestBlahParams(id=123, dataset_name="foo")
 
 def test_run_process_uses_config(input_data_sets: list[InputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -46,7 +46,7 @@ def test_run_process_uses_config(input_data_sets: list[InputDataset], input_para
             input_data_sets: list[InputDataset],
             params: TestBlahParams,
         ) -> dict:
-        return {"Protein_Intensity": pd.concat([pd.DataFrame({"col1": [params.name]}), \
+        return {"Protein_Intensity": pd.concat([pd.DataFrame({"col1": [params.dataset_name]}), \
                 input_data_sets[0].table_data_by_name("Protein_Metadata")])}
 
     test_data = pd.DataFrame({})

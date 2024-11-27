@@ -11,22 +11,33 @@ if TYPE_CHECKING:
 
 pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
+class DatasetType(Enum):
+    INTENSITY = "INTENSITY"
+    DOSE_RESPONSE = "DOSE_RESPONSE"
+
 class InputParams(BaseModel):
   """The name of the dataset.
 
-  If not set the MD dataset service will create one.
+  Keyword arguments:
+  dataset_name: the name of the OutputDataset to create
+  dataset_type: the name of the OutputDataset to create
+
+  If dataset_name or dataset_type are not set a default will be used.
   """
-  name: str | None
+  dataset_name: str | None
+  dataset_type: DatasetType | None
+
+class IntensityInputParams(InputParams):
+    type: DatasetType = DatasetType.INTENSITY
+
+class DoseResponseInputParams(InputParams):
+    type: DatasetType = DatasetType.DOSE_RESPONSE
 
 class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
     key: str = None
     data: pd.core.frame.PandasDataFrame = None
-
-class DatasetType(Enum):
-    INTENSITY = "INTENSITY"
-    DOSE_RESPONSE = "DOSE_RESPONSE"
 
 class InputDataset(BaseModel):
     name: str
@@ -50,10 +61,10 @@ class InputDataset(BaseModel):
 
 InputDataset.update_forward_refs()
 
-class IntensityDataset(InputDataset):
+class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
 
-class DoseResponseDataset(InputDataset):
+class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
 class OutputDatasetTable(BaseModel):
