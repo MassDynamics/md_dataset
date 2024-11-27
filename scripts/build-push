@@ -38,4 +38,8 @@ aws ecr get-login-password \
 docker push "${registry}/${image_tag}"
 docker push "${registry}/${image_tag_latest}"
 
+echo "Git tag ${image_tag}"
+git tag ${image_tag}
+git push origin ${image_tag}
+
 echo "+++ Image tag: ${image_tag}"
