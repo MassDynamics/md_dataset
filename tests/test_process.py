@@ -57,8 +57,7 @@ def test_run_process_uses_config(input_data_sets: list[InputDataset], input_para
             input_params,
             ).data(0)["col1"].to_numpy()[0] == "foo"
 
-
-def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset],input_params: TestBlahParams, \
+def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
     @md_py
     def run_process_sets_name_and_type(input_data_sets: list[InputDataset], input_params: InputParams) -> dict: # noqa: ARG001
@@ -68,9 +67,21 @@ def test_run_process_sets_name_and_type(input_data_sets: list[InputDataset],inpu
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_data_sets, input_params)
-    assert results.data_sets[0].name == "one"
+    assert results.data_sets[0].name == "foo"
     assert results.data_sets[0].type == DatasetType.INTENSITY
 
+def test_run_process_sets_default_name(input_data_sets: list[InputDataset], \
+        fake_file_manager: FileManager):
+    @md_py
+    def run_process_sets_name_and_type(input_data_sets: list[InputDataset], input_params: InputParams) -> dict: # noqa: ARG001
+        return {"Protein_Intensity": [1, input_data_sets[0].table_data_by_name("Protein_Intensity")]}
+
+    input_params = TestBlahParams(id=123)
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    results = run_process_sets_name_and_type(input_data_sets, input_params)
+    assert results.data_sets[0].name == "one"
 
 def test_run_process_sets_flow_output(input_data_sets: list[InputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):

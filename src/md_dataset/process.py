@@ -64,7 +64,7 @@ def md_py(func: Callable) -> Callable:
         return FlowOutPut(
             data_sets=[
                 FlowOutPutDataSet(
-                    name=input_data_sets[0].name,
+                    name=params.name or input_data_sets[0].name,
                     type=input_data_sets[0].type,
                     tables=tables,
                 ),
