@@ -18,9 +18,9 @@ class DatasetType(Enum):
 class InputParams(BaseModel):
   """The name of the dataset.
 
-  Keyword arguments:
+  Keyword Arguments:
   dataset_name: the name of the OutputDataset to create
-  dataset_type: the name of the OutputDataset to create
+  dataset_type: the type of the OutputDataset to create
 
   If dataset_name or dataset_type are not set a default will be used.
   """
