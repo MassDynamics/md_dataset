@@ -40,9 +40,10 @@ docker push "${registry}/${image_tag}"
 docker push "${registry}/${image_tag_latest}"
 
 repo_url="https://$GH_TOKEN@github.com/MassDynamics/md_dataset.git"
-echo "Git tag v${tag}"
-git tag "v${tag}"
-git push --tags $repo_url
+git_tag="v${tag}"
+echo "Git tag ${git_tag}"
+git tag "${git_tag}"
+git push $repo_url "${git_tag}"
 
-echo "+++ Git tag: ${tag}"
+echo "+++ Git tag: ${git_tag}"
 echo "+++ Image tag: ${image_tag}"
