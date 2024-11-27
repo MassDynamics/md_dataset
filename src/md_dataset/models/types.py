@@ -20,18 +20,10 @@ class InputParams(BaseModel):
 
   Keyword Arguments:
   dataset_name: the name of the OutputDataset to create
-  dataset_type: the type of the OutputDataset to create
 
-  If dataset_name or dataset_type are not set a default will be used.
+  If dataset_name is not set a default will be used.
   """
   dataset_name: str | None
-  dataset_type: DatasetType | None
-
-class IntensityInputParams(InputParams):
-    type: DatasetType = DatasetType.INTENSITY
-
-class DoseResponseInputParams(InputParams):
-    type: DatasetType = DatasetType.DOSE_RESPONSE
 
 class InputDatasetTable(BaseModel):
     name: str
