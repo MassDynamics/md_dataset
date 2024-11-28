@@ -10,6 +10,7 @@ from prefect import get_run_logger
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
+from md_dataset.models.types import DatasetType
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
 from md_dataset.models.types import FlowOutPutTable
@@ -52,20 +53,21 @@ def md_py(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(input_data_sets: list[InputDataset], params: InputParams, \
+    def wrapper(input_data_sets: list[InputDataset], params: InputParams, output_dataset_type: DatasetType, \
             *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
 
         input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-        results = func(input_data_sets, params, *args, **kwargs)
+        results = func(input_data_sets, params, output_dataset_type, *args, **kwargs)
 
+        # validate tables based on output_dataset_type
         tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
         return FlowOutPut(
             data_sets=[
                 FlowOutPutDataSet(
                     name=params.dataset_name or input_data_sets[0].name,
-                    type=input_data_sets[0].type,
+                    type=output_dataset_type,
                     tables=tables,
                 ),
 
