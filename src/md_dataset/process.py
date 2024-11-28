@@ -114,19 +114,20 @@ def md_r(r_file: str, r_function: str) -> Callable:
                 result_storage=result_storage,
                 )
         @wraps(func)
-        def wrapper(input_data_sets: list[InputDataset], *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+        def wrapper(input_data_sets: list[InputDataset] , params: InputParams, output_dataset_type: DatasetType, \
+                *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
 
             input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-            r_preparation = func(input_data_sets, *args, **kwargs)
+            r_preparation = func(input_data_sets, params, output_dataset_type, *args, **kwargs)
 
             results = run_r_task(r_file, r_function, r_preparation)
 
             return FlowOutPut(
                     data_sets=[
                         FlowOutPutDataSet(
-                            name=input_data_sets[0].name,
-                            type=input_data_sets[0].type,
+                            name=params.dataset_name or input_data_sets[0].name,
+                            type=output_dataset_type,
                             tables=[
                                 FlowOutPutTable(name="Protein_Intensity", data=results),
                                 FlowOutPutTable(name="Protein_Metadata", \
