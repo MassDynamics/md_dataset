@@ -121,6 +121,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
             input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
             r_preparation = func(input_data_sets, params, output_dataset_type, *args, **kwargs)
 
+            # R experts help here
             results = run_r_task(r_file, r_function, r_preparation)
 
             return FlowOutPut(
@@ -128,6 +129,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
                         FlowOutPutDataSet(
                             name=params.dataset_name or input_data_sets[0].name,
                             type=output_dataset_type,
+                            # R experts help here
                             tables=[
                                 FlowOutPutTable(name="Protein_Intensity", data=results),
                                 FlowOutPutTable(name="Protein_Metadata", \
