@@ -3,6 +3,7 @@ import os
 from functools import wraps
 from typing import TYPE_CHECKING
 from typing import ParamSpec
+from typing import TypeVar
 import boto3
 import boto3.session
 from prefect import flow
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
 P = ParamSpec("P")
-
+T = TypeVar("T", bound="InputDataset")
 
 def get_s3_block() -> S3Bucket:
     results_bucket = os.getenv("RESULTS_BUCKET")
@@ -53,12 +54,14 @@ def md_py(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(input_data_sets: list[InputDataset], params: InputParams, output_dataset_type: DatasetType, \
+    def wrapper(input_datasets: list[T], params: InputParams, output_dataset_type: DatasetType, \
             *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
         file_manager = get_file_manager()
 
-        input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-        results = func(input_data_sets, params, output_dataset_type, *args, **kwargs)
+        for dataset in input_datasets:
+            dataset.populate_tables(file_manager)
+
+        results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
         # validate tables based on output_dataset_type
         tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
@@ -66,7 +69,7 @@ def md_py(func: Callable) -> Callable:
         return FlowOutPut(
             data_sets=[
                 FlowOutPutDataSet(
-                    name=params.dataset_name or input_data_sets[0].name,
+                    name=params.dataset_name or input_datasets[0].name,
                     type=output_dataset_type,
                     tables=tables,
                 ),
@@ -114,12 +117,14 @@ def md_r(r_file: str, r_function: str) -> Callable:
                 result_storage=result_storage,
                 )
         @wraps(func)
-        def wrapper(input_data_sets: list[InputDataset] , params: InputParams, output_dataset_type: DatasetType, \
+        def wrapper(input_datasets: list[InputDataset] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
 
-            input_data_sets = [dataset.populate_tables(file_manager) for dataset in input_data_sets]
-            r_preparation = func(input_data_sets, params, output_dataset_type, *args, **kwargs)
+            for dataset in input_datasets:
+                dataset.populate_tables(file_manager)
+
+            r_preparation = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
             # R experts help here
             results = run_r_task(r_file, r_function, r_preparation)
@@ -129,7 +134,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
             return FlowOutPut(
                 data_sets=[
                     FlowOutPutDataSet(
-                        name=params.dataset_name or input_data_sets[0].name,
+                        name=params.dataset_name or input_datasets[0].name,
                         type=output_dataset_type,
                         tables=tables,
                     ),

@@ -48,13 +48,30 @@ class InputDataset(BaseModel):
                         data = file_manager.load_parquet_to_df( \
                             bucket = table.bucket, key = table.key)) \
                 for table in self.tables]
-
-        return InputDataset(**self.dict(exclude={"tables"}), tables = tables)
+        self.tables = tables
 
 InputDataset.update_forward_refs()
 
+class IntensitySource(Enum):
+    PROTEIN = "protein"
+    PEPTIDE = "peptide"
+
+class IntensityTableType(Enum):
+    INTENSITY = "intensity"
+    METADATA = "metadata"
+
+class IntensityTable:
+    @classmethod
+    def table_name(cls, source: IntensitySource, intensity_type: IntensityTableType) -> str:
+        return f"{source.value.title()}_{intensity_type.value.title()}"
+
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
+    source: IntensitySource
+
+    def table(self, source: IntensitySource, intensity_type: IntensityTableType) -> InputDatasetTable:
+        return next(filter(lambda table: table.name == IntensityTable.table_name(source, intensity_type), \
+                self.tables), None)
 
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
