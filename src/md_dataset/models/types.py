@@ -54,7 +54,7 @@ class InputDataset(BaseModel):
 
 InputDataset.update_forward_refs()
 
-# rename
+# rename BiomolecularSource
 class IntensitySource(Enum):
     PROTEIN = "protein"
     PEPTIDE = "peptide"
