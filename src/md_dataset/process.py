@@ -124,21 +124,17 @@ def md_r(r_file: str, r_function: str) -> Callable:
             # R experts help here
             results = run_r_task(r_file, r_function, r_preparation)
 
-            return FlowOutPut(
-                    data_sets=[
-                        FlowOutPutDataSet(
-                            name=params.dataset_name or input_data_sets[0].name,
-                            type=output_dataset_type,
-                            # R experts help here
-                            tables=[
-                                FlowOutPutTable(name="Protein_Intensity", data=results),
-                                FlowOutPutTable(name="Protein_Metadata", \
-                                        data=input_data_sets[0].table_by_name("Protein_Metadata").data),
-                                ],
-                            ),
+            tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
-                        ],
-                    )
+            return FlowOutPut(
+                data_sets=[
+                    FlowOutPutDataSet(
+                        name=params.dataset_name or input_data_sets[0].name,
+                        type=output_dataset_type,
+                        tables=tables,
+                    ),
+                ],
+            )
 
         return wrapper
     return decorator
