@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 import pytest
 import requests
+from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.dataset_job import create_or_update_dataset_job_send_http_request
 from md_dataset.dataset_job import dataset_job_params
@@ -14,8 +15,8 @@ from md_dataset.models.types import DatasetType
 class DatasetJobParamsTest(unittest.TestCase):
     def test_returns_parameters_schema(self):
         result = dataset_job_params(
-            flow_name="test_func",
-            flow_module="tests.func",
+            name="test_func",
+            module="tests.func",
         )
 
         assert result["title"] == "Parameters"
@@ -31,10 +32,8 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
 
         result = create_or_update_dataset_job(
             base_url="http://example.com:8001",
-            flow_name="test_func",
-            flow_module="tests.func",
+            job_params=JobParams(function="test_func", module="tests.func", name="job name"),
             deployment_name="deployment name",
-            job_name="job name",
             run_type=DatasetType.INTENSITY,
         )
 
