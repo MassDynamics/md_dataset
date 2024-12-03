@@ -8,8 +8,8 @@ from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import InputParams
 from md_dataset.models.types import IntensityInputDataset
 from md_dataset.models.types import IntensitySource
-from md_dataset.models.types import IntensityTable
 from md_dataset.models.types import IntensityTableType
+from md_dataset.models.types import OutputDataset
 from md_dataset.process import md_py
 
 
@@ -37,10 +37,11 @@ def input_datasets() -> list[IntensityInputDataset]:
 
 class TestBlahParams(InputParams):
     id: int
+    source: IntensitySource
 
 @pytest.fixture
 def input_params() -> TestBlahParams:
-   return TestBlahParams(id=123, dataset_name="foo")
+    return TestBlahParams(dataset_name="foo", id=123, source=IntensitySource.PROTEIN)
 
 def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -61,16 +62,15 @@ def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], in
 
 @md_py
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
-        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
-    dataset = input_datasets[0]
-    return {
-            IntensityTable.table_name(
-                IntensitySource.PROTEIN,
-                IntensityTableType.INTENSITY): [
-                    1,
-                    dataset.table(IntensitySource.PROTEIN, IntensityTableType.INTENSITY),
-                    ],
-                }
+        output_dataset_type: DatasetType) -> dict:
+
+    input_data = input_datasets[0].table(input_params.source, IntensityTableType.INTENSITY)
+
+    output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
+    output.add(IntensityTableType.INTENSITY, [1, input_data])
+
+    return output.data()
+
 def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
@@ -80,25 +80,49 @@ def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDatas
     assert results.data_sets[0].name == "foo"
     assert results.data_sets[0].type == DatasetType.INTENSITY
 
+def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
+        fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
+    assert results.data_sets[0].tables[0].name == "Protein_Intensity"
+
 def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
     input_datasets[0]
-    input_params = TestBlahParams(id=123)
+    input_params = TestBlahParams(id=123, source=IntensitySource.PEPTIDE)
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
     assert results.data_sets[0].name == "one"
 
+def test_run_process_correct_table(input_datasets: list[IntensityInputDataset], \
+        fake_file_manager: FileManager):
+    input_datasets[0]
+    input_params = TestBlahParams(id=123, source=IntensitySource.PEPTIDE)
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
+    assert results.data_sets[0].tables[0].name == "Peptide_Intensity"
+
+@md_py
+def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
+        output_dataset_type: DatasetType) -> dict:
+
+    input_data = input_datasets[0].table(input_params.source, IntensityTableType.INTENSITY)
+    input_metadata = input_datasets[0].table(input_params.source, IntensityTableType.METADATA)
+
+    output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
+    output.add(IntensityTableType.INTENSITY, input_data.data.iloc[::-1])
+    output.add(IntensityTableType.METADATA, input_metadata.data)
+
+    return output.data()
+
 def test_run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
-    @md_py
-    def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
-            output_dataset_type: DatasetType) -> dict: # noqa: ARG001
-        return {
-                "Protein_Intensity": input_datasets[0].table_by_name("Protein_Intensity").data.iloc[::-1],
-                "Protein_Metadata": input_datasets[0].table_by_name("Protein_Metadata").data,
-                }
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})

@@ -117,7 +117,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
                 result_storage=result_storage,
                 )
         @wraps(func)
-        def wrapper(input_datasets: list[InputDataset] , params: InputParams, output_dataset_type: DatasetType, \
+        def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
 

@@ -1,4 +1,6 @@
 from __future__ import annotations
+from abc import ABC
+from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -52,6 +54,7 @@ class InputDataset(BaseModel):
 
 InputDataset.update_forward_refs()
 
+# rename
 class IntensitySource(Enum):
     PROTEIN = "protein"
     PEPTIDE = "peptide"
@@ -76,14 +79,29 @@ class IntensityInputDataset(InputDataset):
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
-class OutputDatasetTable(BaseModel):
-    name: str
-    data: pd.core.frame.PandasDataFrame
 
-class OutputDataset(BaseModel):
-    name: str
-    type: DatasetType
-    tables: list[OutputDatasetTable]
+class OutputDataset(BaseModel, ABC):
+    dataset_type: DatasetType
+    source: IntensitySource
+    tables: list = []
+
+    @classmethod
+    def create(cls, dataset_type: DatasetType, source: IntensitySource) -> OutputDataset:
+        if dataset_type == DatasetType.INTENSITY:
+            return IntensityOutputDataset(dataset_type=dataset_type, source=source)
+        return None
+
+    def add(self, intensity_table_type: IntensityTableType, data: pd.core.frame.PandasDataFrame) -> None:
+        self.tables.append((intensity_table_type, data))
+
+    @abstractmethod
+    def data(self) -> dict:
+        """Determine how the table data is returned based on type."""
+
+
+class IntensityOutputDataset(OutputDataset):
+    def data(self) -> dict:
+        return {IntensityTable.table_name(self.source, table[0]): table[1] for table in self.tables}
 
 # DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):
