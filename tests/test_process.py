@@ -3,11 +3,11 @@ import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
+from md_dataset.models.types import BiomolecularSource
 from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import InputParams
 from md_dataset.models.types import IntensityInputDataset
-from md_dataset.models.types import IntensitySource
 from md_dataset.models.types import IntensityTableType
 from md_dataset.models.types import OutputDataset
 from md_dataset.process import md_py
@@ -29,7 +29,7 @@ def fake_file_manager(mocker: MockerFixture):
 
 @pytest.fixture
 def input_datasets() -> list[IntensityInputDataset]:
-    return [IntensityInputDataset(name="one", source=IntensitySource.PROTEIN, tables=[
+    return [IntensityInputDataset(name="one", source=BiomolecularSource.PROTEIN, tables=[
             InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ])]
@@ -37,11 +37,11 @@ def input_datasets() -> list[IntensityInputDataset]:
 
 class TestBlahParams(InputParams):
     id: int
-    source: IntensitySource
+    source: BiomolecularSource
 
 @pytest.fixture
 def input_params() -> TestBlahParams:
-    return TestBlahParams(dataset_name="foo", id=123, source=IntensitySource.PROTEIN)
+    return TestBlahParams(dataset_name="foo", id=123, source=BiomolecularSource.PROTEIN)
 
 def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -91,7 +91,7 @@ def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset]
 def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
     input_datasets[0]
-    input_params = TestBlahParams(id=123, source=IntensitySource.PEPTIDE)
+    input_params = TestBlahParams(id=123, source=BiomolecularSource.PEPTIDE)
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
@@ -101,7 +101,7 @@ def test_run_process_sets_default_name(input_datasets: list[IntensityInputDatase
 def test_run_process_correct_table(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
     input_datasets[0]
-    input_params = TestBlahParams(id=123, source=IntensitySource.PEPTIDE)
+    input_params = TestBlahParams(id=123, source=BiomolecularSource.PEPTIDE)
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 

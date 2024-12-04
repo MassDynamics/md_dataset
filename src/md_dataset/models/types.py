@@ -54,8 +54,7 @@ class InputDataset(BaseModel):
 
 InputDataset.update_forward_refs()
 
-# rename BiomolecularSource
-class IntensitySource(Enum):
+class BiomolecularSource(Enum):
     PROTEIN = "protein"
     PEPTIDE = "peptide"
 
@@ -65,14 +64,14 @@ class IntensityTableType(Enum):
 
 class IntensityTable:
     @classmethod
-    def table_name(cls, source: IntensitySource, intensity_type: IntensityTableType) -> str:
+    def table_name(cls, source: BiomolecularSource, intensity_type: IntensityTableType) -> str:
         return f"{source.value.title()}_{intensity_type.value.title()}"
 
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
-    source: IntensitySource
+    source: BiomolecularSource
 
-    def table(self, source: IntensitySource, intensity_type: IntensityTableType) -> InputDatasetTable:
+    def table(self, source: BiomolecularSource, intensity_type: IntensityTableType) -> InputDatasetTable:
         return next(filter(lambda table: table.name == IntensityTable.table_name(source, intensity_type), \
                 self.tables), None)
 
@@ -82,11 +81,11 @@ class DoseResponseInputDataset(InputDataset):
 
 class OutputDataset(BaseModel, ABC):
     dataset_type: DatasetType
-    source: IntensitySource
+    source: BiomolecularSource
     tables: list = []
 
     @classmethod
-    def create(cls, dataset_type: DatasetType, source: IntensitySource) -> OutputDataset:
+    def create(cls, dataset_type: DatasetType, source: BiomolecularSource) -> OutputDataset:
         if dataset_type == DatasetType.INTENSITY:
             return IntensityOutputDataset(dataset_type=dataset_type, source=source)
         return None
