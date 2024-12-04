@@ -29,6 +29,8 @@ CPU_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_CPU_REQUESTS", "1000m")
 MEMORY_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_MEMORY_LIMITS", "4Gi")
 CPU_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_CPU_LIMITS", "2000m")
 
+DATASET_SERVICE_API_BASE_URL = os.environm.get("DATASET_SERVICE_API_BASE_URL", "http://md-data-set-web")
+
 # REQUIRED
 DOCKER_IMAGE = os.environ["DOCKER_IMAGE"]
 K8_SERVICE_ACCOUNT_NAME = os.environ["K8_SERVICE_ACCOUNT_NAME"]
@@ -40,53 +42,53 @@ RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
 INITIAL_DATA_BUCKET_NAME = os.environ["INITIAL_DATA_BUCKET_NAME"]
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
-flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
+def deploy() -> None:
 
-env_vars = {
-    "STAGE": STAGE,
-    "PREFECT_HOME": f"{tempfile.gettempdir()}/prefect/",
-    "INITIAL_DATA_BUCKET_NAME": INITIAL_DATA_BUCKET_NAME,
-    "RESULTS_BUCKET": RESULTS_BUCKET,  # prefect results
-    "PREFECT_LOCAL_STORAGE_PATH": f"{tempfile.gettempdir()}/prefect/storage/",
-    "HONEYBADGER_KEY": HONEYBADGER_KEY,
-    "PREFECT_API_URL": PREFECT_API_URL,
-    "AWS_REGION": AWS_REGION,
-    "AWS_DEFAULT_REGION": AWS_REGION,  # boto3, https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html#feature-region-sdk-compat
-}
+    flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
-logger.info("DEPLOYING prefect flow")
+    env_vars = {
+        "STAGE": STAGE,
+        "PREFECT_HOME": f"{tempfile.gettempdir()}/prefect/",
+        "INITIAL_DATA_BUCKET_NAME": INITIAL_DATA_BUCKET_NAME,
+        "RESULTS_BUCKET": RESULTS_BUCKET,  # prefect results
+        "PREFECT_LOCAL_STORAGE_PATH": f"{tempfile.gettempdir()}/prefect/storage/",
+        "HONEYBADGER_KEY": HONEYBADGER_KEY,
+        "PREFECT_API_URL": PREFECT_API_URL,
+        "AWS_REGION": AWS_REGION,
+        "AWS_DEFAULT_REGION": AWS_REGION,  # boto3, https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html#feature-region-sdk-compat
+    }
 
-deployment = flow.deploy(
-    name=DEPLOYMENT_NAME,
-    image=DOCKER_IMAGE,
-    build=False,
-    push=False,
-    work_pool_name=POOL_NAME,
-    work_queue_name=QUEUE_NAME,
-    job_variables={
-        "env": env_vars,
-        "image": DOCKER_IMAGE,
-        "image_pull_policy": KubernetesImagePullPolicy.ALWAYS,
-        "namespace": K8_NAMESPACE,
-        "finished_job_ttl": 10 * 60,
-        "pod_watch_timeout_seconds": 15 * 60,
-        "service_account_name": K8_SERVICE_ACCOUNT_NAME,
-        "cpu_request": CPU_REQUESTS,
-        "memory_request": MEMORY_REQUESTS,
-        "cpu_limit": CPU_LIMITS,
-        "memory_limit": MEMORY_LIMITS,
-    },
-    tags=[f"service={DEPLOYMENT_NAME}", f"job_name={JOB_NAME}", "type=custom"],
-)
+    logger.info("DEPLOYING prefect flow")
 
-DATASET_SERVICE_API_BASE_URL = "http://md-data-set-web"
+    flow.deploy(
+        name=DEPLOYMENT_NAME,
+        image=DOCKER_IMAGE,
+        build=False,
+        push=False,
+        work_pool_name=POOL_NAME,
+        work_queue_name=QUEUE_NAME,
+        job_variables={
+            "env": env_vars,
+            "image": DOCKER_IMAGE,
+            "image_pull_policy": KubernetesImagePullPolicy.ALWAYS,
+            "namespace": K8_NAMESPACE,
+            "finished_job_ttl": 10 * 60,
+            "pod_watch_timeout_seconds": 15 * 60,
+            "service_account_name": K8_SERVICE_ACCOUNT_NAME,
+            "cpu_request": CPU_REQUESTS,
+            "memory_request": MEMORY_REQUESTS,
+            "cpu_limit": CPU_LIMITS,
+            "memory_limit": MEMORY_LIMITS,
+        },
+        tags=[f"service={DEPLOYMENT_NAME}", f"job_name={JOB_NAME}", "type=custom"],
+    )
 
-job = create_or_update_dataset_job(
-    base_url=DATASET_SERVICE_API_BASE_URL,
-    job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME),
-    deployment_name=DEPLOYMENT_NAME,
-    run_type=DatasetType[DATASET_RUN_TYPE],
-)
+    job = create_or_update_dataset_job(
+        base_url=DATASET_SERVICE_API_BASE_URL,
+        job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME),
+        deployment_name=DEPLOYMENT_NAME,
+        run_type=DatasetType[DATASET_RUN_TYPE],
+    )
 
-logger.info("DEPLOYING dataset job")
-logger.info(job)
+    logger.info("DEPLOYING dataset job")
+    logger.info(job)
