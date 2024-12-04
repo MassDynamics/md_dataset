@@ -29,7 +29,7 @@ def fake_file_manager(mocker: MockerFixture):
 
 @pytest.fixture
 def input_datasets() -> list[IntensityInputDataset]:
-    return [IntensityInputDataset(name="one", source=BiomolecularSource.PROTEIN, tables=[
+    return [IntensityInputDataset(name="one", tables=[
             InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ])]

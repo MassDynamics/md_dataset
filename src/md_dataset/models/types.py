@@ -66,7 +66,6 @@ class IntensityTable:
 
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
-    source: BiomolecularSource
 
     def table(self, source: BiomolecularSource, intensity_type: IntensityTableType) -> InputDatasetTable:
         return next(filter(lambda table: table.name == IntensityTable.table_name(source, intensity_type), \
