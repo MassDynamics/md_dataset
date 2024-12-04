@@ -1,6 +1,5 @@
 from __future__ import annotations
 from abc import ABC
-from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -51,8 +50,6 @@ class InputDataset(BaseModel):
                             bucket = table.bucket, key = table.key)) \
                 for table in self.tables]
         self.tables = tables
-
-InputDataset.update_forward_refs()
 
 class BiomolecularSource(Enum):
     PROTEIN = "protein"
@@ -117,8 +114,6 @@ class FlowOutPut(BaseModel):
 
     def data(self, i: int) -> list:
         return self.data_sets[0].tables[i].data
-
-FlowOutPut.update_forward_refs()
 
 class RPreparation(BaseModel):
     data_frames: list[pd.core.frame.PandasDataFrame]
