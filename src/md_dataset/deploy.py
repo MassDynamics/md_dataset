@@ -19,7 +19,6 @@ AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 
 PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://prefect-server:4200/api")
 K8_NAMESPACE = os.environ.get("K8_NAMESPACE", "md")
-K8_SERVICE_ACCOUNT_NAME = os.environ.get("K8_SERVICE_ACCOUNT_NAME")
 POOL_NAME = os.environ.get("POOL_NAME", "kubernetes-workpool")
 QUEUE_NAME = os.environ.get("QUEUE_NAME", "default")
 
@@ -32,6 +31,7 @@ CPU_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_CPU_LIMITS", "2000m")
 
 # REQUIRED
 DOCKER_IMAGE = os.environ["DOCKER_IMAGE"]
+K8_SERVICE_ACCOUNT_NAME = os.environ["K8_SERVICE_ACCOUNT_NAME"]
 JOB_NAME = os.environ["JOB_NAME"]
 FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
