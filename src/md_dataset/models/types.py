@@ -93,13 +93,9 @@ class OutputDataset(BaseModel, ABC):
     def add(self, intensity_table_type: IntensityTableType, data: pd.core.frame.PandasDataFrame) -> None:
         self.tables.append((intensity_table_type, data))
 
-    @abstractmethod
-    def data(self) -> dict:
-        """Determine how the table data is returned based on type."""
-
 
 class IntensityOutputDataset(OutputDataset):
-    def data(self) -> dict:
+    def dict(self) -> dict:
         return {IntensityTable.table_name(self.source, table[0]): table[1] for table in self.tables}
 
 # DEPRECATED (from another project)

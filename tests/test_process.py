@@ -69,7 +69,7 @@ def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], 
     output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
     output.add(IntensityTableType.INTENSITY, [1, input_data])
 
-    return output.data()
+    return output.dict()
 
 def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -119,7 +119,7 @@ def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], in
     output.add(IntensityTableType.INTENSITY, input_data.data.iloc[::-1])
     output.add(IntensityTableType.METADATA, input_metadata.data)
 
-    return output.data()
+    return output.dict()
 
 def test_run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
