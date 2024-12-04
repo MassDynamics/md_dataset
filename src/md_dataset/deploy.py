@@ -42,7 +42,7 @@ RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
 INITIAL_DATA_BUCKET_NAME = os.environ["INITIAL_DATA_BUCKET_NAME"]
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
-def deploy() -> None:
+def main() -> None:
 
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 

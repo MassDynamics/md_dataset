@@ -70,6 +70,9 @@ publishing = [
     "wheel",
 ]
 
+[project.scripts]
+md-datset-deploy = "md_dataset.deploy:main"
+
 [project.urls]
 Repository = "https://github.com/MassDynamics/md_dataset"
 Issues = "https://github.com/MassDynamics/md_dataset/issues"
