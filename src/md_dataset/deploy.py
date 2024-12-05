@@ -14,10 +14,13 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 STAGE = os.environ.get("STAGE", "production")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 
 PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://prefect-server:4200/api")
+os.environ["PREFECT_API_URL"] = PREFECT_API_URL
+
 K8_NAMESPACE = os.environ.get("K8_NAMESPACE", "md")
 POOL_NAME = os.environ.get("POOL_NAME", "kubernetes-workpool")
 QUEUE_NAME = os.environ.get("QUEUE_NAME", "default")
@@ -87,7 +90,7 @@ def main() -> None:
         base_url=DATASET_SERVICE_API_BASE_URL,
         job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME),
         deployment_name=DEPLOYMENT_NAME,
-        run_type=DatasetType[DATASET_RUN_TYPE],
+        run_type=DatasetType[DATASET_RUN_TYPE].value,
     )
 
     logger.info("DEPLOYING dataset job")
