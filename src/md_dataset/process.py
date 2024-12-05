@@ -63,8 +63,9 @@ def md_py(func: Callable) -> Callable:
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
+        table_dict = results.dict()
         # validate tables based on output_dataset_type
-        tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
+        tables = [FlowOutPutTable(name=key, data=table_dict[key]) for key in table_dict]
 
         return FlowOutPut(
             datasets=[

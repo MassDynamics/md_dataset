@@ -47,9 +47,11 @@ def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], in
         fake_file_manager: FileManager):
     @md_py
     def run_process_config( input_datasets: list[IntensityInputDataset], params: TestBlahParams, \
-        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
-        return {"Protein_Intensity": pd.concat([pd.DataFrame({"col1": [params.dataset_name]}), \
-                input_datasets[0].table_data_by_name("Protein_Intensity")])}
+        output_dataset_type: DatasetType) -> OutputDataset: # noqa: ARG001
+        output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
+        output.add(IntensityTableType.INTENSITY,  pd.concat([pd.DataFrame({"col1": [params.dataset_name]}), \
+-                input_datasets[0].table_data_by_name("Protein_Intensity")]))
+        return output
 
     test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -62,14 +64,14 @@ def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], in
 
 @md_py
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
-        output_dataset_type: DatasetType) -> dict:
+        output_dataset_type: DatasetType) -> OutputDataset:
 
     input_data = input_datasets[0].table(input_params.source, IntensityTableType.INTENSITY)
 
     output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
     output.add(IntensityTableType.INTENSITY, [1, input_data])
 
-    return output.dict()
+    return output
 
 def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -110,7 +112,7 @@ def test_run_process_correct_table(input_datasets: list[IntensityInputDataset], 
 
 @md_py
 def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
-        output_dataset_type: DatasetType) -> dict:
+        output_dataset_type: DatasetType) -> OutputDataset:
 
     input_data = input_datasets[0].table(input_params.source, IntensityTableType.INTENSITY)
     input_metadata = input_datasets[0].table(input_params.source, IntensityTableType.METADATA)
@@ -119,7 +121,7 @@ def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], in
     output.add(IntensityTableType.INTENSITY, input_data.data.iloc[::-1])
     output.add(IntensityTableType.METADATA, input_metadata.data)
 
-    return output.dict()
+    return output
 
 def test_run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
