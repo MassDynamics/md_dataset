@@ -47,7 +47,7 @@ def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], in
         fake_file_manager: FileManager):
     @md_py
     def run_process_config( input_datasets: list[IntensityInputDataset], params: TestBlahParams, \
-        output_dataset_type: DatasetType) -> OutputDataset: # noqa: ARG001
+        output_dataset_type: DatasetType) -> OutputDataset:
         output = OutputDataset.create(dataset_type=output_dataset_type, source=input_params.source)
         output.add(IntensityTableType.INTENSITY,  pd.concat([pd.DataFrame({"col1": [params.dataset_name]}), \
 -                input_datasets[0].table_data_by_name("Protein_Intensity")]))
