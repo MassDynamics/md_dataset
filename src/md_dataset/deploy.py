@@ -1,5 +1,4 @@
 import importlib
-import logging
 import os
 import tempfile
 from prefect import get_run_logger
@@ -12,7 +11,6 @@ STAGE = os.environ.get("STAGE", "production")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 
 PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://prefect-server:4200/api")
-logger.warn(f"Prefect url: {PREFECT_API_URL}")
 os.environ["PREFECT_API_URL"] = PREFECT_API_URL
 
 K8_NAMESPACE = os.environ.get("K8_NAMESPACE", "md")
@@ -42,6 +40,7 @@ DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 def main() -> None:
 
     logger = get_run_logger()
+    logger.warning("Prefect url: %s", PREFECT_API_URL)
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
     env_vars = {
