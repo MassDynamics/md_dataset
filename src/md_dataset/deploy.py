@@ -2,30 +2,24 @@ import importlib
 import logging
 import os
 import tempfile
+from prefect import get_run_logger
 from prefect.infrastructure import KubernetesImagePullPolicy
 from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.models.types import DatasetType
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-logger = logging.getLogger(__name__)
-
-
 STAGE = os.environ.get("STAGE", "production")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 
 PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://prefect-server:4200/api")
+logger.warn(f"Prefect url: {PREFECT_API_URL}")
 os.environ["PREFECT_API_URL"] = PREFECT_API_URL
 
 K8_NAMESPACE = os.environ.get("K8_NAMESPACE", "md")
 POOL_NAME = os.environ.get("POOL_NAME", "kubernetes-workpool")
 QUEUE_NAME = os.environ.get("QUEUE_NAME", "default")
 
-HONEYBADGER_KEY = os.environ.get("HONEYBADGER_KEY", None)
+HONEYBADGER_KEY = os.environ.get("HONEYBADGER_KEY", "")
 
 MEMORY_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_MEMORY_REQUESTS", "2Gi")
 CPU_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_CPU_REQUESTS", "1000m")
@@ -47,6 +41,7 @@ DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
 
+    logger = get_run_logger()
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
     env_vars = {
