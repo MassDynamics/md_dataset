@@ -109,10 +109,10 @@ class FlowOutPutDataSet(BaseModel):
 
 # DEPRECATED (from another project)
 class FlowOutPut(BaseModel):
-    data_sets: conlist(FlowOutPutDataSet, min_items=1, max_items=1)
+    datasets: conlist(FlowOutPutDataSet, min_items=1, max_items=1)
 
     def data(self, i: int) -> list:
-        return self.data_sets[0].tables[i].data
+        return self.datasets[0].tables[i].data
 
 class RPreparation(BaseModel):
     data_frames: list[pd.core.frame.PandasDataFrame]

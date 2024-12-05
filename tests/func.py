@@ -10,6 +10,6 @@ class TestBlahParams(InputParams):
     source: BiomolecularSource
 
 @md_py
-def test_func(input_data_sets: list[InputDataset], params: TestBlahParams, \
+def test_func(input_datasets: list[InputDataset], params: TestBlahParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
     return {}

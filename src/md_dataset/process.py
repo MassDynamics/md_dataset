@@ -67,7 +67,7 @@ def md_py(func: Callable) -> Callable:
         tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
         return FlowOutPut(
-            data_sets=[
+            datasets=[
                 FlowOutPutDataSet(
                     name=params.dataset_name or input_datasets[0].name,
                     type=output_dataset_type,
@@ -132,7 +132,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
             tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
             return FlowOutPut(
-                data_sets=[
+                datasets=[
                     FlowOutPutDataSet(
                         name=params.dataset_name or input_datasets[0].name,
                         type=output_dataset_type,

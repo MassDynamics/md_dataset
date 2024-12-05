@@ -77,8 +77,8 @@ def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDatas
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
-    assert results.data_sets[0].name == "foo"
-    assert results.data_sets[0].type == DatasetType.INTENSITY
+    assert results.datasets[0].name == "foo"
+    assert results.datasets[0].type == DatasetType.INTENSITY
 
 def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset], input_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -86,7 +86,7 @@ def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset]
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
-    assert results.data_sets[0].tables[0].name == "Protein_Intensity"
+    assert results.datasets[0].tables[0].name == "Protein_Intensity"
 
 def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
@@ -96,7 +96,7 @@ def test_run_process_sets_default_name(input_datasets: list[IntensityInputDatase
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
-    assert results.data_sets[0].name == "one"
+    assert results.datasets[0].name == "one"
 
 def test_run_process_correct_table(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
@@ -106,7 +106,7 @@ def test_run_process_correct_table(input_datasets: list[IntensityInputDataset], 
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     results = run_process_sets_name_and_type(input_datasets, input_params, DatasetType.INTENSITY)
-    assert results.data_sets[0].tables[0].name == "Peptide_Intensity"
+    assert results.datasets[0].tables[0].name == "Peptide_Intensity"
 
 @md_py
 def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], input_params: InputParams, \
