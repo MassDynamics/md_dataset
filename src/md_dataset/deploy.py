@@ -1,11 +1,21 @@
 import importlib
+import logging
 import os
 import tempfile
-from prefect import get_run_logger
 from prefect.infrastructure import KubernetesImagePullPolicy
 from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.models.types import DatasetType
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
 
 STAGE = os.environ.get("STAGE", "production")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
@@ -38,9 +48,8 @@ INITIAL_DATA_BUCKET_NAME = os.environ["INITIAL_DATA_BUCKET_NAME"]
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
-
-    logger = get_run_logger()
     logger.warning("Prefect url: %s", PREFECT_API_URL)
+
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
     env_vars = {
