@@ -71,7 +71,7 @@ publishing = [
 ]
 
 [project.scripts]
-md-datset-deploy = "md_dataset.deploy:main"
+md-dataset-deploy = "md_dataset.deploy:main"
 
 [project.urls]
 Repository = "https://github.com/MassDynamics/md_dataset"
