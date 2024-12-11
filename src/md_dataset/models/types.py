@@ -51,24 +51,20 @@ class InputDataset(BaseModel):
                 for table in self.tables]
         self.tables = tables
 
-class BiomolecularSource(Enum):
-    PROTEIN = "protein"
-    PEPTIDE = "peptide"
-
 class IntensityTableType(Enum):
     INTENSITY = "intensity"
     METADATA = "metadata"
 
 class IntensityTable:
     @classmethod
-    def table_name(cls, source: BiomolecularSource, intensity_type: IntensityTableType) -> str:
-        return f"{source.value.title()}_{intensity_type.value.title()}"
+    def table_name(cls, intensity_type: IntensityTableType) -> str:
+        return f"Protein_{intensity_type.value.title()}"
 
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
 
-    def table(self, source: BiomolecularSource, intensity_type: IntensityTableType) -> InputDatasetTable:
-        return next(filter(lambda table: table.name == IntensityTable.table_name(source, intensity_type), \
+    def table(self, intensity_type: IntensityTableType) -> InputDatasetTable:
+        return next(filter(lambda table: table.name == IntensityTable.table_name(intensity_type), \
                 self.tables), None)
 
 class DoseResponseInputDataset(InputDataset):
@@ -77,13 +73,12 @@ class DoseResponseInputDataset(InputDataset):
 
 class OutputDataset(BaseModel, ABC):
     dataset_type: DatasetType
-    source: BiomolecularSource
     tables: list = []
 
     @classmethod
-    def create(cls, dataset_type: DatasetType, source: BiomolecularSource) -> OutputDataset:
+    def create(cls, dataset_type: DatasetType) -> OutputDataset:
         if dataset_type == DatasetType.INTENSITY:
-            return IntensityOutputDataset(dataset_type=dataset_type, source=source)
+            return IntensityOutputDataset(dataset_type=dataset_type)
         return None
 
     def add(self, intensity_table_type: IntensityTableType, data: pd.core.frame.PandasDataFrame) -> None:
@@ -92,7 +87,7 @@ class OutputDataset(BaseModel, ABC):
 
 class IntensityOutputDataset(OutputDataset):
     def dict(self) -> dict:
-        return {IntensityTable.table_name(self.source, table[0]): table[1] for table in self.tables}
+        return {IntensityTable.table_name(table[0]): table[1] for table in self.tables}
 
 # DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):
