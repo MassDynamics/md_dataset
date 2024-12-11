@@ -70,7 +70,6 @@ class IntensityInputDataset(InputDataset):
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
-
 class OutputDataset(BaseModel, ABC):
     dataset_type: DatasetType
     tables: list = []

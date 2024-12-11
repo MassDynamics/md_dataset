@@ -5,5 +5,9 @@ process <- function(intensity_dataframe, metadata_dataframe, message) {
     Test = c("First"),
     Message = c(message)
   )
-  return(list("output"=reversed, "more_output"=more_output))
+
+  return_object <- (list(output=reversed, more_output=more_output))
+  names(return_object) <- c("Protein_Intensity", "Protein_Metadata")
+
+  return(return_object)
 }

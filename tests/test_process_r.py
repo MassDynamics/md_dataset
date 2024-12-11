@@ -76,8 +76,11 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
     with conversion.localconverter(default_converter):
         results = prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
 
+    assert results.datasets[0].tables[0].name == "Protein_Intensity"
     pd.testing.assert_frame_equal(results.data(0).reset_index(drop=True), \
             test_data[test_data.columns[::-1]])
+
+    assert results.datasets[0].tables[1].name == "Protein_Metadata"
     pd.testing.assert_frame_equal(results.data(1).reset_index(drop=True), \
             pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
 

@@ -103,7 +103,9 @@ def run_r_task(
 
     r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
     logger.info("R func output")
-    logger.info(r_out_list)
+    logger.info(type(r_out_list.items()))
+    value = [(key, type(value)) for key, value in r_out_list.items()]
+    logger.info(value)
 
     with localconverter(ro.default_converter + pandas2ri.converter):
         return {key: ro.conversion.rpy2py(value) for key, value in r_out_list.items()}
