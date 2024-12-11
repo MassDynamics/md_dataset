@@ -21,7 +21,6 @@ from md_dataset.models.types import RPreparation
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    import pandas as pd
 
 P = ParamSpec("P")
 T = TypeVar("T", bound="InputDataset")
