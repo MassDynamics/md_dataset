@@ -87,7 +87,7 @@ def run_r_task(
     r_file: str,
     r_function: str,
     r_preparation: RPreparation,
-) -> pd.DataFrame:
+) -> dict:
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
@@ -102,10 +102,10 @@ def run_r_task(
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
 
-    r_out_df = r_func(*r_data_frames, *r_preparation.r_args)
+    r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
 
     with localconverter(ro.default_converter + pandas2ri.converter):
-        return ro.conversion.rpy2py(r_out_df)
+        return {key: ro.conversion.rpy2py(value) for key, value in r_out_list.items()}
 
 
 def md_r(r_file: str, r_function: str) -> Callable:
@@ -127,7 +127,6 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             r_preparation = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-            # R experts help here
             results = run_r_task(r_file, r_function, r_preparation)
 
             tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
