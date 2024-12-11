@@ -77,5 +77,7 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
         results = prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
 
     pd.testing.assert_frame_equal(results.data(0).reset_index(drop=True), \
-            test_data[test_data.columns[::-1]].reset_index(drop=True))
+            test_data[test_data.columns[::-1]])
+    pd.testing.assert_frame_equal(results.data(1).reset_index(drop=True), \
+            pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
 
