@@ -64,10 +64,11 @@ def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], te
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> OutputDataset:
 
-    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
+    input_datasets[0].table(IntensityTableType.INTENSITY)
 
     output = OutputDataset.create(dataset_type=output_dataset_type)
-    output.add(IntensityTableType.INTENSITY, [1, input_data])
+    output.add(IntensityTableType.INTENSITY, [params.id])
+    output.add(IntensityTableType.METADATA, [])
 
     return output
 
@@ -87,6 +88,7 @@ def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset]
 
     results = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
     assert results.datasets[0].tables[0].name == "Protein_Intensity"
+    assert results.datasets[0].tables[1].name == "Protein_Metadata"
 
 def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
@@ -100,7 +102,7 @@ def test_run_process_sets_default_name(input_datasets: list[IntensityInputDatase
 
 @md_py
 def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> OutputDataset:
+        output_dataset_type: DatasetType) -> OutputDataset: # noqa: ARG001
 
     input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
     input_metadata = input_datasets[0].table(IntensityTableType.METADATA)
