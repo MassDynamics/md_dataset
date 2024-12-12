@@ -132,7 +132,12 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_preparation)
 
+            print(f"class results: {type(results)}")
+
             tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
+
+            print(f"Tables 0 name: {tables[0].name}")
+            print(f"Table 0 type: {type(tables[0].data)}")
 
             return FlowOutPut(
                 datasets=[
