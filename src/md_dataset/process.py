@@ -112,7 +112,6 @@ def run_r_task(
 
 
 def md_r(r_file: str, r_function: str) -> Callable:
-    logger = get_run_logger()
     def decorator(func: Callable) -> Callable:
         result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -125,7 +124,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
-
+            logger = get_run_logger()
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
