@@ -48,7 +48,7 @@ INITIAL_DATA_BUCKET_NAME = os.environ["INITIAL_DATA_BUCKET_NAME"]
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
-    logger.warning("Prefect url: %s", PREFECT_API_URL)
+    logger.info("Prefect url: %s", PREFECT_API_URL)
 
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
