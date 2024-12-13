@@ -103,7 +103,7 @@ def run_r_task(
 
     r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
     logger.info("R func output")
-    logger.info(type(r_out_list.items()))
+    logger.info(type(r_out_list))
     value = [(key, type(value)) for key, value in r_out_list.items()]
     logger.info(value)
 
