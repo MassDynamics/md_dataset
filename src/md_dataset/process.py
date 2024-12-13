@@ -112,6 +112,7 @@ def run_r_task(
 
 
 def md_r(r_file: str, r_function: str) -> Callable:
+    logger = get_run_logger()
     def decorator(func: Callable) -> Callable:
         result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -132,12 +133,15 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_preparation)
 
-            logger.info(f"class results: {type(results)}")
+            logger.info("class results: {type(results)}")
+            logger.info(type(results))
 
             tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
 
-            logger.info(f"Tables 0 name: {tables[0].name}")
-            logger.info(f"Table 0 type: {type(tables[0].data)}")
+            logger.info("Tables 0 name")
+            logger.info(tables[0].name)
+            logger.info("Table 0 type")
+            logger.info(type(tables[0].data))
 
             return FlowOutPut(
                 datasets=[
