@@ -101,19 +101,35 @@ def run_r_task(
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
 
-    logger.info("r_func")
-    logger.info(r_func)
     r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
-    logger.info("R func output")
-    logger.info(type(r_out_list.items()))
+
     value_type = [(key, type(value)) for key, value in r_out_list.items()]
     logger.info(value_type)
+    logger.info("R items")
     value = list(r_out_list.items())
     logger.info(value)
+    logger.info("R representation")
+    value_r = [(key, value.r_repr()) for key, value in r_out_list.items()]
+    logger.info(value_r)
 
     with localconverter(ro.default_converter + pandas2ri.converter):
-        return {key: ro.conversion.rpy2py(value) for key, value in r_out_list.items()}
+        return recursive_conversion(r_out_list)
 
+def recursive_conversion(r_object) -> dict: # noqa: ANN001
+    import rpy2.robjects as ro
+    logger = get_run_logger()
+
+    if isinstance(r_object, ro.vectors.ListVector):
+        logger.info("Type ListVector")
+        return {key: recursive_conversion(value) for key, value in r_object.items()}
+    if isinstance(r_object, ro.vectors.DataFrame):
+        logger.info("Type DataFrame")
+        return ro.conversion.rpy2py(r_object)
+    if isinstance(r_object, ro.vectors.Vector):
+        logger.info("Type Vector")
+        return list(r_object)
+    logger.info("Type Unkown")
+    return ro.conversion.rpy2py(r_object)
 
 def md_r(r_file: str, r_function: str) -> Callable:
     def decorator(func: Callable) -> Callable:
