@@ -108,11 +108,8 @@ def run_r_task(
     logger.info("R items")
     value = list(r_out_list.items())
     logger.info(value)
-    logger.info("R representation")
-    value_r = [(key, value.r_repr()) for key, value in r_out_list.items()]
-    logger.info(value_r)
 
-    with localconverter(ro.default_converter + pandas2ri.converter):
+    with (ro.default_converter + pandas2ri.converter).context():
         return recursive_conversion(r_out_list)
 
 def recursive_conversion(r_object) -> dict: # noqa: ANN001
@@ -124,12 +121,12 @@ def recursive_conversion(r_object) -> dict: # noqa: ANN001
         return {key: recursive_conversion(value) for key, value in r_object.items()}
     if isinstance(r_object, ro.vectors.DataFrame):
         logger.info("Type DataFrame")
-        return ro.conversion.rpy2py(r_object)
+        return ro.conversion.get_conversion().rpy2py(r_object)
     if isinstance(r_object, ro.vectors.Vector):
         logger.info("Type Vector")
         return list(r_object)
     logger.info("Type Unkown")
-    return ro.conversion.rpy2py(r_object)
+    return ro.conversion.get_conversion().rpy2py(r_object)
 
 def md_r(r_file: str, r_function: str) -> Callable:
     def decorator(func: Callable) -> Callable:
