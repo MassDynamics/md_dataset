@@ -110,7 +110,7 @@ def run_r_task(
     logger.info(value)
 
     with (ro.default_converter + pandas2ri.converter).context():
-        return recursive_conversion(r_out_list)
+        return ro.conversion.get_conversion().rpy2py(r_out_list)
 
 def recursive_conversion(r_object) -> dict: # noqa: ANN001
     import rpy2.robjects as ro
@@ -141,7 +141,6 @@ def md_r(r_file: str, r_function: str) -> Callable:
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
-            logger = get_run_logger()
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
@@ -149,22 +148,15 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_preparation)
 
-            logger.info("class results: {type(results)}")
-            logger.info(type(results))
-
-            tables = [FlowOutPutTable(name=key, data=results[key]) for key in results]
-
-            logger.info("Tables 0 name")
-            logger.info(tables[0].name)
-            logger.info("Table 0 type")
-            logger.info(type(tables[0].data))
-
             return FlowOutPut(
                 datasets=[
                     FlowOutPutDataSet(
                         name=params.dataset_name or input_datasets[0].name,
                         type=output_dataset_type,
-                        tables=tables,
+                        tables=[
+                            FlowOutPutTable(name="Protein_Intensity", data=results),
+                            FlowOutPutTable(name="Protein_Metadata", data=input_datasets[0].tables[1].data),
+                            ],
                     ),
                 ],
             )
