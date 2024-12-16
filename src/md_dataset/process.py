@@ -105,7 +105,17 @@ def run_r_task(
     r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
 
     with (ro.default_converter + pandas2ri.converter).context():
-        return {key: ro.conversion.get_conversion().rpy2py(value) for key, value in r_out_list.items()}
+        return recursive_conversion(r_out_list)
+
+def recursive_conversion(r_object) -> dict: # noqa: ANN001
+    import rpy2.robjects as ro
+    logger = get_run_logger()
+
+    if isinstance(r_object, ro.vectors.ListVector):
+        logger.info("Convert ListVector")
+        return {key: recursive_conversion(value) for key, value in r_object.items()}
+    logger.info(f"Convert: {type(r_object)}")
+    return ro.conversion.get_conversion().rpy2py(r_object)
 
 def md_r(r_file: str, r_function: str) -> Callable:
     def decorator(func: Callable) -> Callable:

@@ -74,3 +74,18 @@ steps:
       ebdeploy: true
     concurrency: 1
     concurrency_group: "md_dataset_py/docker"
+
+  - label: ":github: tag"
+    key: tag_package
+    depends_on: ["block_image", "prep"]
+    command: scripts/tag
+    env:
+      AWS_REGION: "ap-southeast-2"
+      AWS_DEFAULT_REGION: "ap-southeast-2"
+      AWS_PROFILE: "eb-services-cli"
+      BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
+      GIT_HASH: "${BUILDKITE_COMMIT}"
+    agents:
+      ebdeploy: true
+    concurrency: 1
+    concurrency_group: "md_dataset/tag"

@@ -2,12 +2,9 @@
 
 set -e
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
 [[ -z "$BUILD_NUMBER" ]] && echo "BUILD_NUMBER must be set" && exit 1
 [[ -z "$DOCKER_FILE" ]] && echo "DOCKER_FILE must be set" && exit 1
 [[ -z "$REPO_NAME" ]] && echo "REPO_NAME must be set" && exit 1
-[[ -z "$GIT_HASH" ]] && echo "GIT_HASH must be set" && exit 1
 
 # below variables can be set in buildkite hooks and used in every pipeline
 account_id=$(aws sts get-caller-identity --query Account --output text)
@@ -38,12 +35,3 @@ aws ecr get-login-password \
 
 docker push "${registry}/${image_tag}"
 docker push "${registry}/${image_tag_latest}"
-
-repo_url="https://$GH_TOKEN@github.com/MassDynamics/md_dataset.git"
-git_tag="v${tag}"
-echo "Git tag ${git_tag}"
-git tag "${git_tag}"
-git push $repo_url "${git_tag}"
-
-echo "+++ Git tag: ${git_tag}"
-echo "+++ Image tag: ${image_tag}"
