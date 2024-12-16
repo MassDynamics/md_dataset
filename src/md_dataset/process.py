@@ -114,7 +114,7 @@ def recursive_conversion(r_object) -> dict: # noqa: ANN001
     if isinstance(r_object, ro.vectors.ListVector):
         logger.info("Convert ListVector")
         return {key: recursive_conversion(value) for key, value in r_object.items()}
-    logger.info(f"Convert: {type(r_object)}")
+    logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)
 
 def md_r(r_file: str, r_function: str) -> Callable:
