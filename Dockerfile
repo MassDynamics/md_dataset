@@ -72,9 +72,6 @@ WORKDIR $WORK_DIR
 RUN pip install "cython<3.0.0" wheel
 RUN pip install "pyyaml==5.4.1" --no-build-isolation
 
-# ARG GIT_HASH
-# RUN pip install git+https://github.com/MassDynamics/md_dataset.git@${GIT_HASH}
-
 RUN yum install -y \
     blas blas-devel \
     lapack lapack-devel \
