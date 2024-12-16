@@ -43,7 +43,7 @@ steps:
 
   - label: ":docker: dataset python"
     key: build_python_image
-    depends_on: ["build_base_iamge"]
+    depends_on: ["build_base_image"]
     command: scripts/build-push
     env:
       AWS_REGION: "ap-southeast-2"
@@ -60,7 +60,7 @@ steps:
 
   - label: ":docker: dataset R"
     key: build_r_image
-    depends_on: ["build_base_iamge"]
+    depends_on: ["build_base_image"]
     command: scripts/build-push
     env:
       AWS_REGION: "ap-southeast-2"
