@@ -44,7 +44,7 @@ def get_aws_session() -> boto3.session.Session:
 
 def get_file_manager() -> None:
     client = get_aws_session().client("s3")
-    return FileManager(client)
+    return FileManager(client=client, default_bucket=os.getenv("RESULTS_BUCKET"))
 
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None

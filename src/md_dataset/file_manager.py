@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class FileManager:
-    def __init__(self, client: Client, default_bucket: str | None = None):
+    def __init__(self, client: Client, default_bucket: str):
         self.client = client
         self.default_bucket = default_bucket
 
