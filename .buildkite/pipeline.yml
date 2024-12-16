@@ -73,11 +73,11 @@ steps:
     agents:
       ebdeploy: true
     concurrency: 1
-    concurrency_group: "md_dataset_py/docker"
+    concurrency_group: "md_dataset_r/docker"
 
   - label: ":github: tag"
     key: tag_package
-    depends_on: ["build_base_image"]
+    depends_on: ["build_python_image", "build_r_image"]
     command: scripts/tag
     env:
       AWS_REGION: "ap-southeast-2"

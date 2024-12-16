@@ -14,4 +14,3 @@ git tag "${git_tag}"
 git push $repo_url "${git_tag}"
 
 echo "+++ Git tag: ${git_tag}"
-echo "+++ Image tag: ${image_tag}"
