@@ -101,6 +101,10 @@ line-length = 120
 output-format = "concise"
 extend-exclude = ["docs"]
 
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-decorators = ["pydantic.validate_call", "attrs.define"]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "sqlalchemy.orm.DeclarativeBase"]
+
 [tool.ruff.lint]
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"

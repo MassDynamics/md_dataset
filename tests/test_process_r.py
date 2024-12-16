@@ -1,5 +1,7 @@
 import pandas as pd
 import pytest
+import prefect
+import uuid
 from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from rpy2.robjects import conversion
@@ -51,10 +53,12 @@ def test_run_process_r_input_dataset_default_name(input_datasets: list[InputData
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     with conversion.localconverter(default_converter):
-        results = prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
+        result = prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
 
-    assert results.datasets[0].name == "r"
-    assert results.datasets[0].type == DatasetType.INTENSITY
+    assert result['name'] == "r"
+    assert result['type'] == DatasetType.INTENSITY
+    assert result['run_id'] != None
+    assert type(result['run_id']) == uuid.UUID
 
 def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[InputDataset], \
         fake_file_manager: FileManager):
@@ -62,11 +66,10 @@ def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     with conversion.localconverter(default_converter):
-        results = prepare_test_run_r(input_datasets, TestRParams(dataset_name="test some r code", \
+        result = prepare_test_run_r(input_datasets, TestRParams(dataset_name="test some r code", \
                 message="hello"), DatasetType.INTENSITY)
 
-    assert results.datasets[0].name == "test some r code"
-    assert results.datasets[0].type == DatasetType.INTENSITY
+    assert result['name'] == "test some r code"
 
 def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": ["x", "y", "z"], "col2": ["a", "b", "c"]})
@@ -74,13 +77,19 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
     with conversion.localconverter(default_converter):
-        results = prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
+        result= prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
 
-    assert results.datasets[0].tables[0].name == "Protein_Intensity"
-    pd.testing.assert_frame_equal(results.data(0).reset_index(drop=True), \
-            test_data[test_data.columns[::-1]])
+    assert result['tables'][0]['name'] == "Protein_Intensity"
+    assert result['tables'][0]['path'] == f"job_runs/{result['run_id']}/intensity.parquet"
 
-    assert results.datasets[0].tables[1].name == "Protein_Metadata"
-    pd.testing.assert_frame_equal(results.data(1).reset_index(drop=True), \
-            pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
+    assert result['tables'][1]['name'] == "Protein_Metadata"
+    assert result['tables'][1]['path'] == f"job_runs/{result['run_id']}/metadata.parquet"
 
+    fake_file_manager.save_tables.assert_called_once()
+    args, _ = fake_file_manager.save_tables.call_args
+
+    assert isinstance(args[0], list)
+    assert len(args[0]) == 2
+
+    pd.testing.assert_frame_equal(args[0][0].reset_index(drop=True), test_data[test_data.columns[::-1]])
+    pd.testing.assert_frame_equal(args[0][1].reset_index(drop=True), pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))

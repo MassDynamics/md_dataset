@@ -6,6 +6,7 @@ from typing import ParamSpec
 from typing import TypeVar
 import boto3
 import boto3.session
+import prefect
 from prefect import flow
 from prefect import get_run_logger
 from prefect import task
@@ -52,7 +53,6 @@ def md_py(func: Callable) -> Callable:
             log_prints=True,
             persist_result=True,
             result_storage=result_storage,
-            result_serializer="compressed/pickle",
     )
     @wraps(func)
     def wrapper(input_datasets: list[T], params: InputParams, output_dataset_type: DatasetType, \
@@ -82,7 +82,6 @@ def md_py(func: Callable) -> Callable:
     return wrapper
 
 
-
 @task
 def run_r_task(
     r_file: str,
@@ -105,30 +104,8 @@ def run_r_task(
 
     r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
 
-    value_type = [(key, type(value)) for key, value in r_out_list.items()]
-    logger.info(value_type)
-    logger.info("R items")
-    value = list(r_out_list.items())
-    logger.info(value)
-
     with (ro.default_converter + pandas2ri.converter).context():
         return {key: ro.conversion.get_conversion().rpy2py(value) for key, value in r_out_list.items()}
-
-def recursive_conversion(r_object) -> dict: # noqa: ANN001
-    import rpy2.robjects as ro
-    logger = get_run_logger()
-
-    if isinstance(r_object, ro.vectors.ListVector):
-        logger.info("Type ListVector")
-        return {key: recursive_conversion(value) for key, value in r_object.items()}
-    if isinstance(r_object, ro.vectors.DataFrame):
-        logger.info("Type DataFrame")
-        return ro.conversion.get_conversion().rpy2py(r_object)
-    if isinstance(r_object, ro.vectors.Vector):
-        logger.info("Type Vector")
-        return list(r_object)
-    logger.info("Type Unkown")
-    return ro.conversion.get_conversion().rpy2py(r_object)
 
 def md_r(r_file: str, r_function: str) -> Callable:
     def decorator(func: Callable) -> Callable:
@@ -138,11 +115,10 @@ def md_r(r_file: str, r_function: str) -> Callable:
                 log_prints=True,
                 persist_result=True,
                 result_storage=result_storage,
-                result_serializer="compressed/pickle",
                 )
         @wraps(func)
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
-                *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+                *args: P.args, **kwargs: P.kwargs) -> dict:
             file_manager = get_file_manager()
             get_run_logger()
             for dataset in input_datasets:
@@ -151,14 +127,15 @@ def md_r(r_file: str, r_function: str) -> Callable:
             r_preparation = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
             results = run_r_task(r_file, r_function, r_preparation)
-            dataset = Dataset.build(name=params.dataset_name or input_datasets[0].name, \
+
+            flow_run = prefect.context.get_run_context().flow_run
+
+            dataset = Dataset.from_run(run_id=flow_run.id, name=params.dataset_name or input_datasets[0].name, \
                     dataset_type=output_dataset_type, tables=results)
 
-            return FlowOutPut(
-                datasets=[
-                    dataset.output(),
-                ],
-            )
+            file_manager.save_tables(dataset.tables())
+
+            return dataset.dict()
 
         return wrapper
     return decorator

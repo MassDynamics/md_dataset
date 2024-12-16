@@ -1,5 +1,6 @@
 from __future__ import annotations
-from abc import ABC
+import abc
+import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -70,7 +71,8 @@ class IntensityInputDataset(InputDataset):
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
-class OutputDataset(BaseModel, ABC):
+# DEPRECATED
+class OutputDataset(BaseModel, abc.ABC):
     dataset_type: DatasetType
     tables: list = []
 
@@ -89,19 +91,45 @@ class IntensityOutputDataset(OutputDataset):
     def dict(self) -> dict:
         return {IntensityTable.table_name(table[0]): table[1] for table in self.tables}
 
-class Dataset(BaseModel, ABC):
+class Dataset(BaseModel, abc.ABC):
+    run_id: uuid.UUID
     name: str
     dataset_type: DatasetType
 
+    @abc.abstractmethod
+    def tables(self) -> list:
+        pass
+
     @classmethod
-    def build(cls, name: str, dataset_type: DatasetType, tables: dict) -> OutputDataset:
+    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: dict) -> OutputDataset:
         if dataset_type == DatasetType.INTENSITY:
-            return IntensityDataset(name=name, dataset_type=dataset_type, **tables)
+            return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, **tables)
         return None
 
 class IntensityDataset(Dataset):
     intensity: pd.core.frame.PandasDataFrame
     metadata: pd.core.frame.PandasDataFrame
+
+    def tables(self) -> list:
+        return [self.intensity, self.metadata]
+
+    def dict(self) -> dict:
+        return {
+                "name": self.name,
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {
+                        "name": "Protein_Intensity",
+                        "path": f"job_runs/{self.run_id}/intensity.parquet",
+
+                    },{
+                        "name": "Protein_Metadata",
+                        "path": f"job_runs/{self.run_id}/metadata.parquet",
+                    },
+                ],
+            }
+
 
     def output(self) -> FlowOutPut:
         return FlowOutPutDataSet(
@@ -112,6 +140,8 @@ class IntensityDataset(Dataset):
                     FlowOutPutTable(name="Protein_Metadata", data=self.metadata),
                     ],
                 )
+
+IntensityDataset.update_forward_refs()
 
 # DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):

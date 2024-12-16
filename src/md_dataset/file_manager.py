@@ -48,3 +48,17 @@ class FileManager:
         with self._file_download(bucket, key) as content:
             logging.debug("load_parquet_to_df: %s", key)
             return pd.read_parquet(io.BytesIO(content), engine="pyarrow")
+
+    def save_tables(self, tables: list[pd.DataFrame]) -> None:
+        for table in tables:
+            self.save_df_to_parquet(table)
+
+    def save_df_to_parquet(self, df: pd.DataFrame, path: str) -> None:
+        pq_buffer = io.BytesIO()
+        df.to_parquet(pq_buffer, engine="pyarrow", compression="gzip", index=False)
+        self.client.put_object(
+            Body=(pq_buffer.getvalue()),
+            Bucket=self.default_bucket,
+            Key=path,
+        )
+
