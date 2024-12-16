@@ -82,5 +82,5 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
 
     assert results.datasets[0].tables[1].name == "Protein_Metadata"
     pd.testing.assert_frame_equal(results.data(1).reset_index(drop=True), \
-            test_metadata)
+            pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
 

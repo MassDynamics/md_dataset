@@ -11,6 +11,7 @@ from prefect import get_run_logger
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
+from md_dataset.models.types import Dataset
 from md_dataset.models.types import DatasetType
 from md_dataset.models.types import FlowOutPut
 from md_dataset.models.types import FlowOutPutDataSet
@@ -110,7 +111,7 @@ def run_r_task(
     logger.info(value)
 
     with (ro.default_converter + pandas2ri.converter).context():
-        return ro.conversion.get_conversion().rpy2py(r_out_list)
+        return {key: ro.conversion.get_conversion().rpy2py(value) for key, value in r_out_list.items()}
 
 def recursive_conversion(r_object) -> dict: # noqa: ANN001
     import rpy2.robjects as ro
@@ -141,23 +142,19 @@ def md_r(r_file: str, r_function: str) -> Callable:
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
             file_manager = get_file_manager()
+            get_run_logger()
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
             r_preparation = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
             results = run_r_task(r_file, r_function, r_preparation)
+            dataset = Dataset.build(name=params.dataset_name or input_datasets[0].name, \
+                    dataset_type=output_dataset_type, tables=results)
 
             return FlowOutPut(
                 datasets=[
-                    FlowOutPutDataSet(
-                        name=params.dataset_name or input_datasets[0].name,
-                        type=output_dataset_type,
-                        tables=[
-                            FlowOutPutTable(name="Protein_Intensity", data=results),
-                            FlowOutPutTable(name="Protein_Metadata", data=input_datasets[0].tables[1].data),
-                            ],
-                    ),
+                    dataset.output(),
                 ],
             )
 

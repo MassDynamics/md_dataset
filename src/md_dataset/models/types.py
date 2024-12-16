@@ -80,6 +80,7 @@ class OutputDataset(BaseModel, ABC):
             return IntensityOutputDataset(dataset_type=dataset_type)
         return None
 
+
     def add(self, intensity_table_type: IntensityTableType, data: pd.core.frame.PandasDataFrame) -> None:
         self.tables.append((intensity_table_type, data))
 
@@ -87,6 +88,30 @@ class OutputDataset(BaseModel, ABC):
 class IntensityOutputDataset(OutputDataset):
     def dict(self) -> dict:
         return {IntensityTable.table_name(table[0]): table[1] for table in self.tables}
+
+class Dataset(BaseModel, ABC):
+    name: str
+    dataset_type: DatasetType
+
+    @classmethod
+    def build(cls, name: str, dataset_type: DatasetType, tables: dict) -> OutputDataset:
+        if dataset_type == DatasetType.INTENSITY:
+            return IntensityDataset(name=name, dataset_type=dataset_type, **tables)
+        return None
+
+class IntensityDataset(Dataset):
+    intensity: pd.core.frame.PandasDataFrame
+    metadata: pd.core.frame.PandasDataFrame
+
+    def output(self) -> FlowOutPut:
+        return FlowOutPutDataSet(
+                name=self.name,
+                type=self.dataset_type,
+                tables=[
+                    FlowOutPutTable(name="Protein_Intensity", data=self.intensity),
+                    FlowOutPutTable(name="Protein_Metadata", data=self.metadata),
+                    ],
+                )
 
 # DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):
