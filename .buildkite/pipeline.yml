@@ -77,7 +77,7 @@ steps:
 
   - label: ":github: tag"
     key: tag_package
-    depends_on: ["block_image", "prep"]
+    depends_on: ["build_base_image"]
     command: scripts/tag
     env:
       AWS_REGION: "ap-southeast-2"
