@@ -49,9 +49,9 @@ class FileManager:
             logging.debug("load_parquet_to_df: %s", key)
             return pd.read_parquet(io.BytesIO(content), engine="pyarrow")
 
-    def save_tables(self, tables: list[pd.DataFrame]) -> None:
-        for table in tables:
-            self.save_df_to_parquet(table)
+    def save_tables(self, tables: list[tuple[str, pd.core.frame.PandasDataFrame]]) -> None:
+        for path, data in tables:
+            self.save_df_to_parquet(path=path, df=data)
 
     def save_df_to_parquet(self, df: pd.DataFrame, path: str) -> None:
         pq_buffer = io.BytesIO()

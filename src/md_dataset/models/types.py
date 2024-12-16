@@ -110,8 +110,9 @@ class IntensityDataset(Dataset):
     intensity: pd.core.frame.PandasDataFrame
     metadata: pd.core.frame.PandasDataFrame
 
-    def tables(self) -> list:
-        return [self.intensity, self.metadata]
+    def tables(self) -> list[tuple[str, pd.core.frame.PandasDataFrame]]:
+        return [(self._path(IntensityTableType.INTENSITY), self.intensity), \
+                (self._path(IntensityTableType.METADATA), self.metadata)]
 
     def dict(self) -> dict:
         return {
@@ -121,14 +122,17 @@ class IntensityDataset(Dataset):
                 "tables": [
                     {
                         "name": "Protein_Intensity",
-                        "path": f"job_runs/{self.run_id}/intensity.parquet",
+                        "path": self._path(IntensityTableType.INTENSITY),
 
                     },{
                         "name": "Protein_Metadata",
-                        "path": f"job_runs/{self.run_id}/metadata.parquet",
+                        "path": self._path(IntensityTableType.METADATA),
                     },
                 ],
             }
+
+    def _path(self, table_type: IntensityTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 
     def output(self) -> FlowOutPut:
@@ -141,7 +145,6 @@ class IntensityDataset(Dataset):
                     ],
                 )
 
-IntensityDataset.update_forward_refs()
 
 # DEPRECATED (from another project)
 class FlowOutPutTable(BaseModel):

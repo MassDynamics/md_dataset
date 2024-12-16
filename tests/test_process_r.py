@@ -90,7 +90,10 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
     assert isinstance(args[0], list)
     assert len(args[0]) == 2 # noqa: PLR2004
 
-    pd.testing.assert_frame_equal(args[0][0].reset_index(drop=True), \
+    assert args[0][0][0] == f"job_runs/{result['run_id']}/intensity.parquet"
+    pd.testing.assert_frame_equal(args[0][0][1].reset_index(drop=True), \
             test_data[test_data.columns[::-1]])
-    pd.testing.assert_frame_equal(args[0][1].reset_index(drop=True), \
+
+    assert args[0][1][0] == f"job_runs/{result['run_id']}/metadata.parquet"
+    pd.testing.assert_frame_equal(args[0][1][1].reset_index(drop=True), \
             pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
