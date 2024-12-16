@@ -21,7 +21,7 @@ image_tag_latest=${REPO_NAME}:latest
 echo "BUILD IMAGE"
 docker build \
   --file=$DOCKER_FILE \
-  --build-arg BASE_TAG=${image_tag} \
+  --build-arg BASE_TAG=${tag} \
   -t ${image_tag} -t ${image_tag_latest} .
 
 echo "TAG IMAGE"
