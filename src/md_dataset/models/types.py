@@ -135,7 +135,6 @@ class IntensityDataset(Dataset):
     def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
-
     def output(self) -> FlowOutPut:
         return FlowOutPutDataSet(
                 name=self.name,
