@@ -101,9 +101,10 @@ class Dataset(BaseModel, abc.ABC):
         pass
 
     @classmethod
-    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: dict) -> OutputDataset:
+    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> OutputDataset:
         if dataset_type == DatasetType.INTENSITY:
-            return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, **tables)
+            return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+                    intensity=tables[0], metadata=tables[1])
         return None
 
 class IntensityDataset(Dataset):

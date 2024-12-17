@@ -102,10 +102,10 @@ def run_r_task(
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
 
-    r_out_list = r_func(*r_data_frames, *r_preparation.r_args)
+    r_out = r_func(*r_data_frames, *r_preparation.r_args)
 
     with (ro.default_converter + pandas2ri.converter).context():
-        return recursive_conversion(r_out_list)
+        return [ro.conversion.rpy2py(r_df) for r_df in r_out]
 
 def recursive_conversion(r_object) -> dict: # noqa: ANN001
     import rpy2.robjects as ro
