@@ -68,7 +68,7 @@ def md_py(func: Callable) -> Callable:
 
         file_manager.save_tables(dataset.tables())
 
-        return dataset.dict()
+        return dataset.dump()
 
     return wrapper
 
@@ -136,7 +136,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             file_manager.save_tables(dataset.tables())
 
-            return dataset.dict()
+            return dataset.dump()
 
         return wrapper
     return decorator

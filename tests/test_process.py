@@ -1,3 +1,4 @@
+import uuid
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
@@ -95,9 +96,11 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 
     result = run_process_data(input_datasets, test_params, DatasetType.INTENSITY)
 
+    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
 
+    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 

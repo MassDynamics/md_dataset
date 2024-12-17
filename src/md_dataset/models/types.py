@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 import pandas as pd
 from pydantic import BaseModel
+from pydantic import PrivateAttr
 from pydantic import validator
 
 if TYPE_CHECKING:
@@ -92,6 +93,7 @@ class Dataset(BaseModel, abc.ABC):
 class IntensityDataset(Dataset):
     intensity: pd.DataFrame
     metadata: pd.DataFrame
+    _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
         arbitrary_types_allowed = True  # Allow pandas DataFrame type
@@ -107,22 +109,26 @@ class IntensityDataset(Dataset):
         return [(self._path(IntensityTableType.INTENSITY), self.intensity), \
                 (self._path(IntensityTableType.METADATA), self.metadata)]
 
-    def dict(self) -> dict:
-        return {
-                "name": self.name,
-                "type": self.dataset_type,
-                "run_id": self.run_id,
-                "tables": [
-                    {
-                        "name": "Protein_Intensity",
-                        "path": self._path(IntensityTableType.INTENSITY),
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "name": self.name,
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "Protein_Intensity",
+                            "path": self._path(IntensityTableType.INTENSITY),
 
-                    },{
-                        "name": "Protein_Metadata",
-                        "path": self._path(IntensityTableType.METADATA),
-                    },
-                ],
+                        },{
+                            "id": str(uuid.uuid4()),
+                            "name": "Protein_Metadata",
+                            "path": self._path(IntensityTableType.METADATA),
+                        },
+                    ],
             }
+        return self._dump_cache
 
     def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"

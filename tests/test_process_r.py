@@ -78,9 +78,11 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
     with conversion.localconverter(default_converter):
         result= prepare_test_run_r(input_datasets, TestRParams(message="hello"), DatasetType.INTENSITY)
 
+    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
 
+    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 
