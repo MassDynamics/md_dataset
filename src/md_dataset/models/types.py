@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 import pandas as pd
 from pydantic import BaseModel
-from pydantic import conlist
 
 if TYPE_CHECKING:
     from md_dataset.file_manager import FileManager
@@ -71,26 +70,6 @@ class IntensityInputDataset(InputDataset):
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
 
-# DEPRECATED
-class OutputDataset(BaseModel, abc.ABC):
-    dataset_type: DatasetType
-    tables: list = []
-
-    @classmethod
-    def create(cls, dataset_type: DatasetType) -> OutputDataset:
-        if dataset_type == DatasetType.INTENSITY:
-            return IntensityOutputDataset(dataset_type=dataset_type)
-        return None
-
-
-    def add(self, intensity_table_type: IntensityTableType, data: pd.core.frame.PandasDataFrame) -> None:
-        self.tables.append((intensity_table_type, data))
-
-
-class IntensityOutputDataset(OutputDataset):
-    def dict(self) -> dict:
-        return {IntensityTable.table_name(table[0]): table[1] for table in self.tables}
-
 class Dataset(BaseModel, abc.ABC):
     run_id: uuid.UUID
     name: str
@@ -101,7 +80,7 @@ class Dataset(BaseModel, abc.ABC):
         pass
 
     @classmethod
-    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> OutputDataset:
+    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> Dataset:
         if dataset_type == DatasetType.INTENSITY:
             return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
                     intensity=tables[0], metadata=tables[1])
@@ -134,37 +113,6 @@ class IntensityDataset(Dataset):
 
     def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
-
-    def output(self) -> FlowOutPut:
-        return FlowOutPutDataSet(
-                name=self.name,
-                type=self.dataset_type,
-                tables=[
-                    FlowOutPutTable(name="Protein_Intensity", data=self.intensity),
-                    FlowOutPutTable(name="Protein_Metadata", data=self.metadata),
-                    ],
-                )
-
-
-# DEPRECATED (from another project)
-class FlowOutPutTable(BaseModel):
-    name: str
-    data: pd.core.frame.PandasDataFrame
-
-
-# DEPRECATED (from another project)
-class FlowOutPutDataSet(BaseModel):
-    name: str
-    tables: list[FlowOutPutTable]
-    type: DatasetType
-
-
-# DEPRECATED (from another project)
-class FlowOutPut(BaseModel):
-    datasets: conlist(FlowOutPutDataSet, min_items=1, max_items=1)
-
-    def data(self, i: int) -> list:
-        return self.datasets[0].tables[i].data
 
 class RPreparation(BaseModel):
     data_frames: list[pd.core.frame.PandasDataFrame]

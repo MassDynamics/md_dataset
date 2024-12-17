@@ -8,7 +8,6 @@ from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import InputParams
 from md_dataset.models.types import IntensityInputDataset
 from md_dataset.models.types import IntensityTableType
-from md_dataset.models.types import OutputDataset
 from md_dataset.process import md_py
 
 
@@ -41,85 +40,87 @@ class TestBlahParams(InputParams):
 def test_params() -> TestBlahParams:
     return TestBlahParams(dataset_name="foo", id=123)
 
-def test_run_process_uses_config(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
-        fake_file_manager: FileManager):
-    @md_py
-    def run_process_config( input_datasets: list[IntensityInputDataset], params: TestBlahParams, \
-        output_dataset_type: DatasetType) -> OutputDataset:
-        output = OutputDataset.create(dataset_type=output_dataset_type)
-        output.add(IntensityTableType.INTENSITY,  pd.concat([pd.DataFrame({"col1": [params.dataset_name]}), \
-                 input_datasets[0].table_data_by_name("Protein_Intensity")]))
-        return output
-
-    test_data = pd.DataFrame({})
-    fake_file_manager.load_parquet_to_df.return_value = test_data
-
-    assert run_process_config(
-            input_datasets,
-            test_params,
-            DatasetType.INTENSITY,
-            ).data(0)["col1"].to_numpy()[0] == "foo"
-
 @md_py
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> OutputDataset:
+        output_dataset_type: DatasetType) -> list: # noqa: ARG001
 
-    input_datasets[0].table(IntensityTableType.INTENSITY)
-
-    output = OutputDataset.create(dataset_type=output_dataset_type)
-    output.add(IntensityTableType.INTENSITY, [params.id])
-    output.add(IntensityTableType.METADATA, [])
-
-    return output
+    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
+    input_metadata = input_datasets[0].table(IntensityTableType.METADATA)
+    return [input_data, input_metadata]
 
 def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    results = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert results.datasets[0].name == "foo"
-    assert results.datasets[0].type == DatasetType.INTENSITY
+    result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
+    assert result["name"] == "foo"
+    assert result["type"] == DatasetType.INTENSITY
 
-def test_run_process_sets_table_name(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+def test_run_process_has_tables(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    results = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert results.datasets[0].tables[0].name == "Protein_Intensity"
-    assert results.datasets[0].tables[1].name == "Protein_Metadata"
+    result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][1]["name"] == "Protein_Metadata"
 
 def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
-    input_datasets[0]
     test_params = TestBlahParams(id=123)
-    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    results = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert results.datasets[0].name == "one"
+    result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
+    assert result["name"] == "one"
 
 @md_py
-def run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> OutputDataset: # noqa: ARG001
+def run_process_data(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> list: # noqa: ARG001
 
     input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
     input_metadata = input_datasets[0].table(IntensityTableType.METADATA)
 
-    output = OutputDataset.create(dataset_type=output_dataset_type)
-    output.add(IntensityTableType.INTENSITY, input_data.data.iloc[::-1])
-    output.add(IntensityTableType.METADATA, input_metadata.data)
+    return [input_data.data.iloc[::-1], input_metadata.data]
 
-    return output
-
-def test_run_process_sets_flow_output(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
 
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
-    results = run_process_sets_flow_output(input_datasets, test_params, DatasetType.INTENSITY)
-    pd.testing.assert_frame_equal(results.data(0), test_data.iloc[::-1])
-    pd.testing.assert_frame_equal(results.data(1), test_metadata)
+    result = run_process_data(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
+
+    assert result["tables"][1]["name"] == "Protein_Metadata"
+    assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
+
+    fake_file_manager.save_tables.assert_called_once()
+    args, _ = fake_file_manager.save_tables.call_args
+
+    assert isinstance(args[0], list)
+    assert len(args[0]) == 2 # noqa: PLR2004
+
+    assert args[0][0][0] == f"job_runs/{result['run_id']}/intensity.parquet"
+    pd.testing.assert_frame_equal(args[0][0][1], test_data.iloc[::-1])
+
+    assert args[0][1][0] == f"job_runs/{result['run_id']}/metadata.parquet"
+    pd.testing.assert_frame_equal(args[0][1][1], test_metadata)
+
+@md_py
+def run_process_invalid(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> list: # noqa: ARG001
+
+    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
+    return [input_data]
+
+def test_run_process_invalid(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+        fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    run_process_invalid(input_datasets, test_params, DatasetType.INTENSITY)

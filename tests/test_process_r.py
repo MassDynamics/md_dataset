@@ -20,7 +20,7 @@ class TestRParams(InputParams):
 
 @md_r(r_file="./tests/test_process.r", r_function="process")
 def prepare_test_run_r(input_datasets: list[InputDataset], params: TestRParams, \
-        output_dataset_type: DatasetType) -> RPreparation: # noqa: ARG001:
+        output_dataset_type: DatasetType) -> RPreparation: # noqa: ARG001
     return RPreparation(data_frames = [ \
             input_datasets[0].table_data_by_name("Protein_Intensity"), \
             input_datasets[0].table_data_by_name("Protein_Metadata")], \

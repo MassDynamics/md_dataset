@@ -14,9 +14,6 @@ from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import Dataset
 from md_dataset.models.types import DatasetType
-from md_dataset.models.types import FlowOutPut
-from md_dataset.models.types import FlowOutPutDataSet
-from md_dataset.models.types import FlowOutPutTable
 from md_dataset.models.types import InputDataset
 from md_dataset.models.types import InputParams
 from md_dataset.models.types import RPreparation
@@ -56,7 +53,7 @@ def md_py(func: Callable) -> Callable:
     )
     @wraps(func)
     def wrapper(input_datasets: list[T], params: InputParams, output_dataset_type: DatasetType, \
-            *args: P.args, **kwargs: P.kwargs) -> FlowOutPut:
+            *args: P.args, **kwargs: P.kwargs) -> dict:
         file_manager = get_file_manager()
 
         for dataset in input_datasets:
@@ -64,20 +61,14 @@ def md_py(func: Callable) -> Callable:
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-        table_dict = results.dict()
-        # validate tables based on output_dataset_type
-        tables = [FlowOutPutTable(name=key, data=table_dict[key]) for key in table_dict]
+        flow_run = prefect.context.get_run_context().flow_run
 
-        return FlowOutPut(
-            datasets=[
-                FlowOutPutDataSet(
-                    name=params.dataset_name or input_datasets[0].name,
-                    type=output_dataset_type,
-                    tables=tables,
-                ),
+        dataset = Dataset.from_run(run_id=flow_run.id, name=params.dataset_name or input_datasets[0].name, \
+                dataset_type=output_dataset_type, tables=results)
 
-            ],
-        )
+        file_manager.save_tables(dataset.tables())
+
+        return dataset.dict()
 
     return wrapper
 
