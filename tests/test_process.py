@@ -42,11 +42,12 @@ def test_params() -> TestBlahParams:
 
 @md_py
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> list: # noqa: ARG001
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
-    input_metadata = input_datasets[0].table(IntensityTableType.METADATA)
-    return [input_data, input_metadata]
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA)
+    return {IntensityTableType.INTENSITY.value: intensity_table.data, \
+            IntensityTableType.METADATA.value: metadata_table.data}
 
 def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -77,12 +78,13 @@ def test_run_process_sets_default_name(input_datasets: list[IntensityInputDatase
 
 @md_py
 def run_process_data(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> list: # noqa: ARG001
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
-    input_metadata = input_datasets[0].table(IntensityTableType.METADATA)
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA)
 
-    return [input_data.data.iloc[::-1], input_metadata.data]
+    return {IntensityTableType.INTENSITY.value: intensity_table.data.iloc[::-1], \
+            IntensityTableType.METADATA.value: metadata_table.data}
 
 def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -113,14 +115,19 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 
 @md_py
 def run_process_invalid(input_datasets: list[IntensityInputDataset], params: InputParams, \
-        output_dataset_type: DatasetType) -> list: # noqa: ARG001
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    input_data = input_datasets[0].table(IntensityTableType.INTENSITY)
-    return [input_data]
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
+    return {IntensityTableType.INTENSITY.value: intensity_table.data}
 
 def test_run_process_invalid(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    run_process_invalid(input_datasets, test_params, DatasetType.INTENSITY)
+    with pytest.raises(Exception) as exception_info:
+        run_process_invalid(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert "1 validation error for IntensityDataset" in str(exception_info.value)
+    assert "metadata" in str(exception_info.value)
+    assert "field required" in str(exception_info.value)

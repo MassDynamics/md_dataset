@@ -129,6 +129,7 @@ ignore = [
     "D105",
     "D106",
     "D107",
+    "N805"
 ]
 pydocstyle.convention = "google"
 

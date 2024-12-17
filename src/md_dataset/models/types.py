@@ -3,14 +3,14 @@ import abc
 import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
-from typing import TypeVar
+from typing import ClassVar
 import pandas as pd
 from pydantic import BaseModel
+from pydantic import validator
 
 if TYPE_CHECKING:
     from md_dataset.file_manager import FileManager
 
-pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 class DatasetType(Enum):
     INTENSITY = "INTENSITY"
@@ -30,7 +30,10 @@ class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
     key: str = None
-    data: pd.core.frame.PandasDataFrame = None
+    data: pd.DataFrame = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
 class InputDataset(BaseModel):
     name: str
@@ -40,7 +43,7 @@ class InputDataset(BaseModel):
     def table_by_name(self, name: str) -> InputDatasetTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
 
-    def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
+    def table_data_by_name(self, name: str) -> pd.DataFrame:
         return self.table_by_name(name).data
 
     def populate_tables(self, file_manager: FileManager) -> InputDataset:
@@ -83,14 +86,24 @@ class Dataset(BaseModel, abc.ABC):
     def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> Dataset:
         if dataset_type == DatasetType.INTENSITY:
             return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
-                    intensity=tables[0], metadata=tables[1])
+                    **tables)
         return None
 
 class IntensityDataset(Dataset):
-    intensity: pd.core.frame.PandasDataFrame
-    metadata: pd.core.frame.PandasDataFrame
+    intensity: pd.DataFrame
+    metadata: pd.DataFrame
 
-    def tables(self) -> list[tuple[str, pd.core.frame.PandasDataFrame]]:
+    class Config:
+        arbitrary_types_allowed = True  # Allow pandas DataFrame type
+
+    @validator("intensity", "metadata", pre=True, always=True)
+    def validate_dataframe(cls, value: pd.DataFrame | dict | list, field: ClassVar) -> pd.DataFrame:
+        if not isinstance(value, pd.DataFrame):
+            msg = f"{field.name} must be a pandas DataFrame"
+            raise TypeError(msg)
+        return value
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
         return [(self._path(IntensityTableType.INTENSITY), self.intensity), \
                 (self._path(IntensityTableType.METADATA), self.metadata)]
 
@@ -114,6 +127,10 @@ class IntensityDataset(Dataset):
     def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
+
 class RPreparation(BaseModel):
-    data_frames: list[pd.core.frame.PandasDataFrame]
+    data_frames: list[pd.DataFrame]
     r_args: list[str]
+
+    class Config:
+        arbitrary_types_allowed = True  # Allow pandas DataFrame type
