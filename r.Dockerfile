@@ -9,4 +9,5 @@ FROM 243488295326.dkr.ecr.ap-southeast-2.amazonaws.com/md_dataset_package_base:$
 
 RUN pip install --no-cache-dir --upgrade pip
 COPY --from=build /usr/src/app/dist/md_dataset-*-py3-none-any.whl /tmp/
-RUN pip install --no-cache-dir /tmp/md_dataset-*-py3-none-any.whl[r]
+RUN pip install --no-cache-dir /tmp/md_dataset-*-py3-none-any.whl && \
+    pip install --no-cache-dir 'md-dataset[r]'
