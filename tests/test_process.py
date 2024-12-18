@@ -117,7 +117,7 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
     pd.testing.assert_frame_equal(args[0][1][1], test_metadata)
 
 @md_py
-def run_process_invalid(input_datasets: list[IntensityInputDataset], params: InputParams, \
+def run_process_missing_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
     intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
@@ -129,8 +129,29 @@ def test_run_process_invalid(input_datasets: list[IntensityInputDataset], test_p
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     with pytest.raises(Exception) as exception_info:
-        run_process_invalid(input_datasets, test_params, DatasetType.INTENSITY)
+        run_process_missing_metadata(input_datasets, test_params, DatasetType.INTENSITY)
 
     assert "1 validation error for IntensityDataset" in str(exception_info.value)
     assert "metadata" in str(exception_info.value)
-    assert "field required" in str(exception_info.value)
+    assert "The field 'metadata' must be set and cannot be None." in str(exception_info.value)
+
+@md_py
+def run_process_invalid_dataframe(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
+    return {IntensityTableType.INTENSITY.value: intensity_table.data, \
+            IntensityTableType.METADATA.value: {"a": "dict"}}
+
+def test_run_process_invalid_type(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+        fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    with pytest.raises(Exception) as exception_info:
+        run_process_invalid_dataframe(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert "1 validation error for IntensityDataset" in str(exception_info.value)
+    assert "metadata" in str(exception_info.value)
+    assert "The field 'metadata' must be a pandas DataFrame, but got dict" in \
+            str(exception_info.value)

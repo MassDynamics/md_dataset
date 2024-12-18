@@ -20,6 +20,10 @@ class DatasetJobParamsTest(unittest.TestCase):
         )
 
         assert result["title"] == "Parameters"
+        assert result["required"] == ["input_datasets", "params", "output_dataset_type"]
+        assert result["properties"]["input_datasets"]["title"] == "input_datasets"
+        assert result["properties"]["input_datasets"]["type"] == "array"
+        assert result["properties"]["input_datasets"]["items"] == {"$ref": "#/definitions/InputDataset"}
 
 
 class CreateOrUpdateDatasetJobTest(unittest.TestCase):

@@ -4,10 +4,13 @@ import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import TypeVar
 import pandas as pd
 from pydantic import BaseModel
 from pydantic import PrivateAttr
 from pydantic import validator
+
+pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 if TYPE_CHECKING:
     from md_dataset.file_manager import FileManager
@@ -31,7 +34,7 @@ class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
     key: str = None
-    data: pd.DataFrame = None
+    data: pd.core.frame.PandasDataFrame = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -44,7 +47,7 @@ class InputDataset(BaseModel):
     def table_by_name(self, name: str) -> InputDatasetTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
 
-    def table_data_by_name(self, name: str) -> pd.DataFrame:
+    def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
         return self.table_by_name(name).data
 
     def populate_tables(self, file_manager: FileManager) -> InputDataset:
@@ -91,21 +94,24 @@ class Dataset(BaseModel, abc.ABC):
         return None
 
 class IntensityDataset(Dataset):
-    intensity: pd.DataFrame
-    metadata: pd.DataFrame
+    intensity: pd.core.frame.PandasDataFrame
+    metadata: pd.core.frame.PandasDataFrame
     _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
         arbitrary_types_allowed = True  # Allow pandas DataFrame type
 
     @validator("intensity", "metadata", pre=True, always=True)
-    def validate_dataframe(cls, value: pd.DataFrame | dict | list, field: ClassVar) -> pd.DataFrame:
+    def validate_dataframe(cls, value: pd.core.frame.PandasDataFrame | None, \
+            field: ClassVar) -> pd.core.frame.PandasDataFrame:
+        if value is None:
+            raise ValueError(f"The field '{field.name}' must be set and cannot be None.")
         if not isinstance(value, pd.DataFrame):
-            msg = f"{field.name} must be a pandas DataFrame"
+            msg = f"The field '{field.name}' must be a pandas DataFrame, but got {type(value).__name__}."
             raise TypeError(msg)
         return value
 
-    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+    def tables(self) -> list[tuple[str, pd.core.frame.PandasDataFrame]]:
         return [(self._path(IntensityTableType.INTENSITY), self.intensity), \
                 (self._path(IntensityTableType.METADATA), self.metadata)]
 
@@ -135,7 +141,7 @@ class IntensityDataset(Dataset):
 
 
 class RPreparation(BaseModel):
-    data_frames: list[pd.DataFrame]
+    data_frames: list[pd.core.frame.PandasDataFrame]
     r_args: list[str]
 
     class Config:
