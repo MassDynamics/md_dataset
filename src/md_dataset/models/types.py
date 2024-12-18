@@ -105,7 +105,8 @@ class IntensityDataset(Dataset):
     def validate_dataframe(cls, value: pd.core.frame.PandasDataFrame | None, \
             field: ClassVar) -> pd.core.frame.PandasDataFrame:
         if value is None:
-            raise ValueError(f"The field '{field.name}' must be set and cannot be None.")
+            msg = f"The field '{field.name}' must be set and cannot be None."
+            raise ValueError(msg)
         if not isinstance(value, pd.DataFrame):
             msg = f"The field '{field.name}' must be a pandas DataFrame, but got {type(value).__name__}."
             raise TypeError(msg)
