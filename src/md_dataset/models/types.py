@@ -115,8 +115,11 @@ class IntensityDataset(Dataset):
         return value
 
     def tables(self) -> list[tuple[str, pd.core.frame.PandasDataFrame]]:
-        return [(self._path(IntensityTableType.INTENSITY), self.intensity), \
+        tables = [(self._path(IntensityTableType.INTENSITY), self.intensity), \
                 (self._path(IntensityTableType.METADATA), self.metadata)]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(IntensityTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
 
     def dump(self) -> dict:
         if self._dump_cache is None:

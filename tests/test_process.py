@@ -196,3 +196,13 @@ def test_run_process_returns_table_runtime_metadata(input_datasets: list[Intensi
     assert uuid.UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+
+    fake_file_manager.save_tables.assert_called_once()
+    args, _ = fake_file_manager.save_tables.call_args
+
+    assert isinstance(args[0], list)
+    assert len(args[0]) == 3 # noqa: PLR2004
+
+    assert args[0][2][0] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+    pd.testing.assert_frame_equal(args[0][1][1], pd.DataFrame({"col1": [4, 5, 6], \
+            "col2": ["x", "y", "z"]}))
