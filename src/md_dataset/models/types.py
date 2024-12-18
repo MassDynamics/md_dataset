@@ -61,6 +61,7 @@ class InputDataset(BaseModel):
 class IntensityTableType(Enum):
     INTENSITY = "intensity"
     METADATA = "metadata"
+    RUNTIME_METADATA = "runtime_metadata"
 
 class IntensityTable:
     @classmethod
@@ -96,6 +97,7 @@ class Dataset(BaseModel, abc.ABC):
 class IntensityDataset(Dataset):
     intensity: pd.core.frame.PandasDataFrame
     metadata: pd.core.frame.PandasDataFrame
+    runtime_metadata: pd.core.frame.PandasDataFrame = None
     _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
@@ -135,6 +137,12 @@ class IntensityDataset(Dataset):
                         },
                     ],
             }
+            if self.runtime_metadata is not None:
+                self._dump_cache["tables"].append({
+                    "id": str(uuid.uuid4()),
+                    "name": "Protein_RuntimeMetadata",
+                    "path": self._path(IntensityTableType.RUNTIME_METADATA),
+                })
         return self._dump_cache
 
     def _path(self, table_type: IntensityTableType) -> str:

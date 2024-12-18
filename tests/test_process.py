@@ -155,3 +155,44 @@ def test_run_process_invalid_type(input_datasets: list[IntensityInputDataset], t
     assert "metadata" in str(exception_info.value)
     assert "The field 'metadata' must be a pandas DataFrame, but got dict" in \
             str(exception_info.value)
+
+def test_run_process_returns_table_data(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+        fake_file_manager: FileManager):
+
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    result = run_process_data(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
+
+    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
+    assert result["tables"][1]["name"] == "Protein_Metadata"
+    assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
+
+@md_py
+def run_process_data_with_runtime_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA)
+
+    return {IntensityTableType.INTENSITY.value: intensity_table.data, \
+            IntensityTableType.METADATA.value: metadata_table.data, \
+            IntensityTableType.RUNTIME_METADATA.value: pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})}
+
+def test_run_process_returns_table_runtime_metadata(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    result = run_process_data_with_runtime_metadata(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert uuid.UUID(result["tables"][2]["id"], version=4) is not None
+    assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
+    assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
