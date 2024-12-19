@@ -89,6 +89,7 @@ def main() -> None:
         tags=[f"service={DEPLOYMENT_NAME}", f"job_name={JOB_NAME}", "type=custom"],
     )
 
+    logger.info("DEPLOYING dataset job")
     job = create_or_update_dataset_job(
         base_url=DATASET_SERVICE_API_BASE_URL,
         job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME),
@@ -96,5 +97,4 @@ def main() -> None:
         run_type=DatasetType[DATASET_RUN_TYPE].value,
     )
 
-    logger.info("DEPLOYING dataset job")
     logger.info(job)
