@@ -16,7 +16,7 @@ from md_dataset.models.types import Dataset
 from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDataset
 from md_dataset.models.types import InputParams
-from md_dataset.models.types import RPreparation
+from md_dataset.models.types import RFuncArgs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -77,7 +77,7 @@ def md_py(func: Callable) -> Callable:
 def run_r_task(
     r_file: str,
     r_function: str,
-    r_preparation: RPreparation,
+    r_preparation: RFuncArgs,
 ) -> dict:
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
@@ -125,9 +125,9 @@ def md_r(r_file: str, r_function: str) -> Callable:
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
-            r_preparation = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+            r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-            results = run_r_task(r_file, r_function, r_preparation)
+            results = run_r_task(r_file, r_function, r_args)
 
             flow_run = prefect.context.get_run_context().flow_run
 

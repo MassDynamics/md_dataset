@@ -95,6 +95,7 @@ class Dataset(BaseModel, abc.ABC):
         return None
 
 class IntensityDataset(Dataset):
+    # should match enum IntensityTableType
     intensity: pd.core.frame.PandasDataFrame
     metadata: pd.core.frame.PandasDataFrame
     runtime_metadata: pd.core.frame.PandasDataFrame = None
@@ -152,7 +153,7 @@ class IntensityDataset(Dataset):
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 
-class RPreparation(BaseModel):
+class RFuncArgs(BaseModel):
     data_frames: list[pd.core.frame.PandasDataFrame]
     r_args: list[str]
 

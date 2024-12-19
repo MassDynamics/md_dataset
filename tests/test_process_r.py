@@ -10,7 +10,7 @@ from md_dataset.models.types import DatasetType
 from md_dataset.models.types import InputDataset
 from md_dataset.models.types import InputDatasetTable
 from md_dataset.models.types import InputParams
-from md_dataset.models.types import RPreparation
+from md_dataset.models.types import RFuncArgs
 from md_dataset.process import md_r
 
 
@@ -20,8 +20,8 @@ class TestRParams(InputParams):
 
 @md_r(r_file="./tests/test_process.r", r_function="process")
 def prepare_test_run_r(input_datasets: list[InputDataset], params: TestRParams, \
-        output_dataset_type: DatasetType) -> RPreparation: # noqa: ARG001
-    return RPreparation(data_frames = [ \
+        output_dataset_type: DatasetType) -> RFuncArgs: # noqa: ARG001
+    return RFuncArgs(data_frames = [ \
             input_datasets[0].table_data_by_name("Protein_Intensity"), \
             input_datasets[0].table_data_by_name("Protein_Metadata")], \
             r_args=[params.message])
