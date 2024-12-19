@@ -33,13 +33,30 @@ steps:
       AWS_DEFAULT_REGION: "ap-southeast-2"
       AWS_PROFILE: "eb-services-cli"
       BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
-      DOCKER_FILE: "Dockerfile"
+      DOCKER_FILE: "base.Dockerfile"
       REPO_NAME: "md_dataset_package_base"
       GIT_HASH: "${BUILDKITE_COMMIT}"
     agents:
       ebdeploy: true
     concurrency: 1
     concurrency_group: "md_dataset_base/docker"
+
+  - label: ":docker: dataset base r image"
+    key: build_base_r_image
+    depends_on: ["build_base_image"]
+    command: scripts/build-push
+    env:
+      AWS_REGION: "ap-southeast-2"
+      AWS_DEFAULT_REGION: "ap-southeast-2"
+      AWS_PROFILE: "eb-services-cli"
+      BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
+      DOCKER_FILE: "base.r.Dockerfile"
+      REPO_NAME: "md_dataset_package_r_base"
+      GIT_HASH: "${BUILDKITE_COMMIT}"
+    agents:
+      ebdeploy: true
+    concurrency: 1
+    concurrency_group: "md_dataset_r_base/docker"
 
   - label: ":docker: dataset python"
     key: build_python_image
@@ -60,7 +77,7 @@ steps:
 
   - label: ":docker: dataset R"
     key: build_r_image
-    depends_on: ["build_base_image"]
+    depends_on: ["build_base_r_image"]
     command: scripts/build-push
     env:
       AWS_REGION: "ap-southeast-2"
