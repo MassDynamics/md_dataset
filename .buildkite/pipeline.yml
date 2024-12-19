@@ -50,7 +50,7 @@ steps:
       AWS_DEFAULT_REGION: "ap-southeast-2"
       AWS_PROFILE: "eb-services-cli"
       BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
-      DOCKER_FILE: "base.r.Dockerfile"
+      DOCKER_FILE: "r.base.Dockerfile"
       REPO_NAME: "md_dataset_package_r_base"
       GIT_HASH: "${BUILDKITE_COMMIT}"
     agents:
