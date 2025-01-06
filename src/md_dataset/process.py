@@ -6,9 +6,9 @@ from typing import ParamSpec
 from typing import TypeVar
 import boto3
 import boto3.session
-import prefect
 from prefect import flow
 from prefect import get_run_logger
+from prefect import runtime
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
@@ -54,6 +54,11 @@ def md_py(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(input_datasets: list[T], params: InputParams, output_dataset_type: DatasetType, \
             *args: P.args, **kwargs: P.kwargs) -> dict:
+        logger = get_run_logger()
+        logger.info("Running Deployment: %s", runtime.deployment.name)
+        logger.info("Version: %s", runtime.deployment.version)
+        logger.info("Parameters: %s", runtime.deployment.parameters)
+
         file_manager = get_file_manager()
 
         for dataset in input_datasets:
@@ -61,9 +66,7 @@ def md_py(func: Callable) -> Callable:
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-        flow_run = prefect.context.get_run_context().flow_run
-
-        dataset = Dataset.from_run(run_id=flow_run.id, name=params.dataset_name or input_datasets[0].name, \
+        dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or input_datasets[0].name, \
                 dataset_type=output_dataset_type, tables=results)
 
         file_manager.save_tables(dataset.tables())
@@ -120,8 +123,13 @@ def md_r(r_file: str, r_function: str) -> Callable:
         @wraps(func)
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
                 *args: P.args, **kwargs: P.kwargs) -> dict:
+            logger = get_run_logger()
+            logger.info("Running Deployment: %s", runtime.deployment.name)
+            logger.info("Version: %s", runtime.deployment.version)
+            logger.info("Parameters: %s", runtime.deployment.parameters)
+
             file_manager = get_file_manager()
-            get_run_logger()
+
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
@@ -129,9 +137,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_args)
 
-            flow_run = prefect.context.get_run_context().flow_run
-
-            dataset = Dataset.from_run(run_id=flow_run.id, name=params.dataset_name or input_datasets[0].name, \
+            dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or input_datasets[0].name, \
                     dataset_type=output_dataset_type, tables=results)
 
             file_manager.save_tables(dataset.tables())
