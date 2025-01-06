@@ -43,6 +43,12 @@ def get_file_manager() -> None:
     client = get_aws_session().client("s3")
     return FileManager(client=client, default_bucket=os.getenv("RESULTS_BUCKET"))
 
+def get_deployment_image() -> str:
+    infrastructure = runtime.flow_run.infrastructure_document
+    if infrastructure and "image" in infrastructure.dict():
+        return infrastructure.dict()["image"]
+    return "unknown"
+
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -57,7 +63,7 @@ def md_py(func: Callable) -> Callable:
         logger = get_run_logger()
         logger.info("Running Deployment: %s", runtime.deployment.name)
         logger.info("Version: %s", runtime.deployment.version)
-        logger.info("Parameters: %s", runtime.deployment.parameters)
+        logger.info("Image: %s", get_deployment_image())
 
         file_manager = get_file_manager()
 
@@ -126,7 +132,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
             logger = get_run_logger()
             logger.info("Running Deployment: %s", runtime.deployment.name)
             logger.info("Version: %s", runtime.deployment.version)
-            logger.info("Parameters: %s", runtime.deployment.parameters)
+            logger.info("Image: %s", get_deployment_image())
 
             file_manager = get_file_manager()
 
