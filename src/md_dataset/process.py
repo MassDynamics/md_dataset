@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import os
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -10,6 +11,7 @@ from prefect import flow
 from prefect import get_run_logger
 from prefect import runtime
 from prefect import task
+from prefect.client import get_client
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
 from md_dataset.models.types import Dataset
@@ -43,10 +45,24 @@ def get_file_manager() -> None:
     client = get_aws_session().client("s3")
     return FileManager(client=client, default_bucket=os.getenv("RESULTS_BUCKET"))
 
-def get_deployment_image() -> str:
-    infrastructure = runtime.flow_run.infrastructure_document
-    if infrastructure and "image" in infrastructure.dict():
-        return infrastructure.dict()["image"]
+async def get_deployment_image() -> str:
+    flow_run_id = runtime.flow_run.id
+
+    async with get_client() as client:
+        # Fetch flow run details
+        flow_run = await client.read_flow_run(flow_run_id)
+
+        # Get deployment ID from the flow run
+        deployment_id = flow_run.deployment_id
+
+        if deployment_id:
+            # Fetch deployment details
+            deployment = await client.read_deployment(deployment_id)
+
+            # Get infrastructure details (e.g., Docker image)
+            infrastructure = deployment.infrastructure
+            if infrastructure and hasattr(infrastructure, "image"):
+                return infrastructure.image
     return "unknown"
 
 def md_py(func: Callable) -> Callable:
@@ -63,7 +79,7 @@ def md_py(func: Callable) -> Callable:
         logger = get_run_logger()
         logger.info("Running Deployment: %s", runtime.deployment.name)
         logger.info("Version: %s", runtime.deployment.version)
-        logger.info("Image: %s", get_deployment_image())
+        logger.info("Image: %s", asyncio.run(get_deployment_image()))
 
         file_manager = get_file_manager()
 
@@ -132,7 +148,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
             logger = get_run_logger()
             logger.info("Running Deployment: %s", runtime.deployment.name)
             logger.info("Version: %s", runtime.deployment.version)
-            logger.info("Image: %s", get_deployment_image())
+            logger.info("Image: %s", asyncio.run(get_deployment_image()))
 
             file_manager = get_file_manager()
 

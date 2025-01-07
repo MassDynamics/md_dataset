@@ -23,10 +23,10 @@ class DatasetType(Enum):
 class InputParams(BaseModel):
   """The name of the dataset.
 
-  Keyword Arguments:
-  dataset_name: the name of the OutputDataset to create
-
-  If dataset_name is not set a default will be used.
+  Attributes:
+  ----------
+  dataset_name : str
+    The name of the Dataset to create
   """
   dataset_name: str | None
 
@@ -95,7 +95,17 @@ class Dataset(BaseModel, abc.ABC):
         return None
 
 class IntensityDataset(Dataset):
-    # should match enum IntensityTableType
+    """An intentisy dataset.
+
+    Attributes:
+    ----------
+    intensity :  PandasDataFrame
+        The dataframe containing intensity values
+    metadata : PandasDataFrame
+        Information about the dataset
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime
+    """
     intensity: pd.core.frame.PandasDataFrame
     metadata: pd.core.frame.PandasDataFrame
     runtime_metadata: pd.core.frame.PandasDataFrame = None
