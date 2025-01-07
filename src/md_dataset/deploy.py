@@ -53,6 +53,7 @@ def main() -> None:
     flow = getattr(importlib.import_module(FLOW_PACKAGE), FLOW)
 
     env_vars = {
+        "IMAGE": DOCKER_IMAGE,
         "STAGE": STAGE,
         "PREFECT_HOME": f"{tempfile.gettempdir()}/prefect/",
         "INITIAL_DATA_BUCKET_NAME": INITIAL_DATA_BUCKET_NAME,
