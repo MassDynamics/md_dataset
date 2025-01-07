@@ -44,7 +44,7 @@ def get_file_manager() -> None:
     return FileManager(client=client, default_bucket=os.getenv("RESULTS_BUCKET"))
 
 def get_deployment_image() -> str:
-    os.getenv("IMAGE", "unknown")
+    return os.getenv("IMAGE", "unknown")
 
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
