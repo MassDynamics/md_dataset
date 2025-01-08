@@ -33,15 +33,14 @@ def get_s3_block() -> S3Bucket:
     s3_block.save("mdprocess", overwrite=True)
     return s3_block
 
-def get_aws_session() -> boto3.session.Session:
-    profile = os.getenv("AWS_PROFILE")
-    if os.getenv("AWS_PROFILE"):
-        return boto3.session.Session(profile_name=profile)
-    return boto3.session.Session()
+def get_s3_client() -> boto3.session.Session:
+    if os.environ.get("USE_LOCALSTACK", "false").lower() == "true":
+        session = boto3.session.Session()
+        return session.client(service_name="s3", endpoint_url=os.environ.get("AWS_ENDPOINT_URL"))
+    return boto3.session.Session().client("s3")
 
 def get_file_manager() -> None:
-    client = get_aws_session().client("s3")
-    return FileManager(client=client, default_bucket=os.getenv("RESULTS_BUCKET"))
+    return FileManager(client=get_s3_client(), default_bucket=os.getenv("RESULTS_BUCKET"))
 
 def get_deployment_image() -> str:
     return os.getenv("IMAGE", "unknown")
