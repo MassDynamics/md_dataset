@@ -110,7 +110,7 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 
 def test_run_process_support_md_names(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
-    test_params = TestBlahParams(id=123, names=['one', 'two'])
+    test_params = TestBlahParams(id=123, names=["one", "two"])
     test_data = pd.DataFrame({})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 

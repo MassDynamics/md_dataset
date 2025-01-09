@@ -67,7 +67,8 @@ def test_run_process_r_input_dataset_md_support(input_datasets: list[InputDatase
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     with conversion.localconverter(default_converter):
-        result = prepare_test_run_r(input_datasets, TestRParams(message="hello", names=["r", "sup"]), DatasetType.INTENSITY)
+        result = prepare_test_run_r(input_datasets, TestRParams(message="hello", names=["r", "sup"]), \
+                DatasetType.INTENSITY)
 
     assert result["name"] == "r"
 
