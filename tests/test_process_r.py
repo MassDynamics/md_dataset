@@ -16,6 +16,7 @@ from md_dataset.process import md_r
 
 class TestRParams(InputParams):
     message: str
+    names: list[str] = None
 
 
 @md_r(r_file="./tests/test_process.r", r_function="process")
@@ -57,6 +58,18 @@ def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[
                 message="hello"), DatasetType.INTENSITY)
 
     assert result["name"] == "test some r code"
+    assert result["type"] == DatasetType.INTENSITY
+    assert result["run_id"] is not None
+    assert isinstance(result["run_id"], uuid.UUID)
+
+def test_run_process_r_input_dataset_md_support(input_datasets: list[InputDataset], fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    with conversion.localconverter(default_converter):
+        result = prepare_test_run_r(input_datasets, TestRParams(message="hello", names=["r", "sup"]), DatasetType.INTENSITY)
+
+    assert result["name"] == "r"
 
 def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": ["x", "y", "z"], "col2": ["a", "b", "c"]})

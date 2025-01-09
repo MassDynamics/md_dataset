@@ -22,9 +22,9 @@ class InputParams(BaseModel):
   Attributes:
   ----------
   dataset_name : str
-    The name of the Dataset to create
+    The name of the Dataset to create, if None we use legacy names from MD dataset service
   """
-  dataset_name: str | None
+  dataset_name: str = None
 
 class InputDatasetTable(BaseModel):
     name: str
