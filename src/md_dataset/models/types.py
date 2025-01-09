@@ -3,14 +3,10 @@ import abc
 import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
-from typing import ClassVar
-from typing import TypeVar
 import pandas as pd
 from pydantic import BaseModel
 from pydantic import PrivateAttr
-from pydantic import validator
-
-pd.core.frame.PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
+from pydantic import model_validator
 
 if TYPE_CHECKING:
     from md_dataset.file_manager import FileManager
@@ -34,7 +30,7 @@ class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
     key: str = None
-    data: pd.core.frame.PandasDataFrame = None
+    data: pd.DataFrame = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -47,7 +43,7 @@ class InputDataset(BaseModel):
     def table_by_name(self, name: str) -> InputDatasetTable:
         return next(filter(lambda table: table.name == name, self.tables), None)
 
-    def table_data_by_name(self, name: str) -> pd.core.frame.PandasDataFrame:
+    def table_data_by_name(self, name: str) -> pd.DataFrame:
         return self.table_by_name(name).data
 
     def populate_tables(self, file_manager: FileManager) -> InputDataset:
@@ -106,26 +102,34 @@ class IntensityDataset(Dataset):
     runtime_metadata : PandasDataFrame
         Information about the dataset at runtime
     """
-    intensity: pd.core.frame.PandasDataFrame
-    metadata: pd.core.frame.PandasDataFrame
-    runtime_metadata: pd.core.frame.PandasDataFrame = None
+    intensity: pd.DataFrame
+    metadata: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
     _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
-        arbitrary_types_allowed = True  # Allow pandas DataFrame type
+        arbitrary_types_allowed = True
 
-    @validator("intensity", "metadata", pre=True, always=True)
-    def validate_dataframe(cls, value: pd.core.frame.PandasDataFrame | None, \
-            field: ClassVar) -> pd.core.frame.PandasDataFrame:
-        if value is None:
-            msg = f"The field '{field.name}' must be set and cannot be None."
-            raise ValueError(msg)
-        if not isinstance(value, pd.DataFrame):
-            msg = f"The field '{field.name}' must be a pandas DataFrame, but got {type(value).__name__}."
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["intensity", "metadata"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
             raise TypeError(msg)
-        return value
+        return values
 
-    def tables(self) -> list[tuple[str, pd.core.frame.PandasDataFrame]]:
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
         tables = [(self._path(IntensityTableType.INTENSITY), self.intensity), \
                 (self._path(IntensityTableType.METADATA), self.metadata)]
         if self.runtime_metadata is not None:
@@ -164,8 +168,19 @@ class IntensityDataset(Dataset):
 
 
 class RFuncArgs(BaseModel):
-    data_frames: list[pd.core.frame.PandasDataFrame]
+    data_frames: list[pd.DataFrame]
     r_args: list[str]
 
     class Config:
-        arbitrary_types_allowed = True  # Allow pandas DataFrame type
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_data_frames(cls, values: dict) -> dict:
+        data_frames = values.get("data_frames")
+        if not isinstance(data_frames, list):
+            msg = "data_frames must be a list."
+            raise TypeError(msg)
+        if not all(isinstance(df, pd.DataFrame) for df in data_frames):
+            msg = "All items in data_frames must be pandas DataFrame objects."
+            raise TypeError(msg)
+        return values

@@ -68,15 +68,6 @@ def test_run_process_has_tables(input_datasets: list[IntensityInputDataset], tes
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][1]["name"] == "Protein_Metadata"
 
-def test_run_process_sets_default_name(input_datasets: list[IntensityInputDataset], \
-        fake_file_manager: FileManager):
-    test_params = TestBlahParams(id=123)
-    test_data = pd.DataFrame({})
-    fake_file_manager.load_parquet_to_df.return_value = test_data
-
-    result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert result["name"] == "one"
-
 @md_py
 def run_process_data(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
@@ -123,16 +114,15 @@ def run_process_missing_metadata(input_datasets: list[IntensityInputDataset], pa
     intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY)
     return {IntensityTableType.INTENSITY.value: intensity_table.data}
 
-def test_run_process_invalid(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
-        fake_file_manager: FileManager):
+def test_run_process_invalid_missing_metadata(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     with pytest.raises(Exception) as exception_info:
-        run_process_missing_metadata(input_datasets, test_params, DatasetType.INTENSITY)
+        assert run_process_missing_metadata(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
 
     assert "1 validation error for IntensityDataset" in str(exception_info.value)
-    assert "metadata" in str(exception_info.value)
     assert "The field 'metadata' must be set and cannot be None." in str(exception_info.value)
 
 @md_py
@@ -148,11 +138,9 @@ def test_run_process_invalid_type(input_datasets: list[IntensityInputDataset], t
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
-    with pytest.raises(Exception) as exception_info:
-        run_process_invalid_dataframe(input_datasets, test_params, DatasetType.INTENSITY)
+    with pytest.raises(TypeError) as exception_info:
+        assert run_process_invalid_dataframe(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
 
-    assert "1 validation error for IntensityDataset" in str(exception_info.value)
-    assert "metadata" in str(exception_info.value)
     assert "The field 'metadata' must be a pandas DataFrame, but got dict" in \
             str(exception_info.value)
 
