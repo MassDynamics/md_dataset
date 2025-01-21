@@ -67,12 +67,21 @@ class IntensityTable:
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
 
-    def table(self, intensity_type: IntensityTableType) -> InputDatasetTable:
-        return next(filter(lambda table: table.name == IntensityTable.table_name(intensity_type), \
+    def table(self, table_type: IntensityTableType) -> InputDatasetTable:
+        return next(filter(lambda table: table.name == IntensityTable.table_name(table_type), \
                 self.tables), None)
+
+class DoseResponseTableType(Enum):
+    OUTPUT_CURVES = "output_curves"
+    OUTPUT_VOLCANOES = "output_volcanoes"
+    INPUT_DRC = "input_drc"
+    RUNTIME_METADATA = "runtime_metadata"
 
 class DoseResponseInputDataset(InputDataset):
     type: DatasetType = DatasetType.DOSE_RESPONSE
+
+    def table(self, table_type: DoseResponseTableType) -> InputDatasetTable:
+        return next(filter(lambda table: table.name == table_type.value, self.tables), None)
 
 class Dataset(BaseModel, abc.ABC):
     run_id: uuid.UUID
