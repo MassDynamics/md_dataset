@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
@@ -28,7 +28,7 @@ def fake_file_manager(mocker: MockerFixture):
 
 @pytest.fixture
 def input_datasets() -> list[IntensityInputDataset]:
-    return [IntensityInputDataset(name="one", tables=[
+    return [IntensityInputDataset(id=UUID("11111111-1111-1111-1111-111111111111"), name="one", tables=[
             InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ])]
@@ -88,11 +88,11 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 
     result = run_process_data(input_datasets, test_params, DatasetType.INTENSITY)
 
-    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
+    assert UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
 
-    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
+    assert UUID(result["tables"][1]["id"], version=4) is not None
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 
@@ -163,11 +163,11 @@ def test_run_process_returns_table_data(input_datasets: list[IntensityInputDatas
 
     result = run_process_data(input_datasets, test_params, DatasetType.INTENSITY)
 
-    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
+    assert UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
 
-    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
+    assert UUID(result["tables"][1]["id"], version=4) is not None
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 
@@ -191,7 +191,7 @@ def test_run_process_returns_table_runtime_metadata(input_datasets: list[Intensi
 
     result = run_process_data_with_runtime_metadata(input_datasets, test_params, DatasetType.INTENSITY)
 
-    assert uuid.UUID(result["tables"][2]["id"], version=4) is not None
+    assert UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
 

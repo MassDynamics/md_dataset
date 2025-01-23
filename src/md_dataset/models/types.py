@@ -36,7 +36,9 @@ class InputDatasetTable(BaseModel):
         arbitrary_types_allowed = True
 
 class InputDataset(BaseModel):
+    id: uuid.UUID
     name: str
+    job_run_params: dict = {}
     type: DatasetType
     tables: list[InputDatasetTable]
 

@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID
 import pandas as pd
 import pytest
 from prefect.testing.utilities import prefect_test_harness
@@ -43,7 +43,7 @@ def fake_file_manager(mocker: MockerFixture):
 
 @pytest.fixture
 def input_datasets() -> list[InputDataset]:
-    return [InputDataset(name="r", tables=[
+    return [InputDataset(id=UUID("11111111-1111-1111-1111-111111111111"), name="r", tables=[
             InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ], type=DatasetType.INTENSITY)]
@@ -60,7 +60,7 @@ def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[
     assert result["name"] == "test some r code"
     assert result["type"] == DatasetType.INTENSITY
     assert result["run_id"] is not None
-    assert isinstance(result["run_id"], uuid.UUID)
+    assert isinstance(result["run_id"], UUID)
 
 def test_run_process_r_input_dataset_md_support(input_datasets: list[InputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
@@ -81,11 +81,11 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
         result= prepare_test_run_r(input_datasets, TestRParams(dataset_name="name", \
                 message="hello"), DatasetType.INTENSITY)
 
-    assert uuid.UUID(result["tables"][0]["id"], version=4) is not None
+    assert UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
     assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/intensity.parquet"
 
-    assert uuid.UUID(result["tables"][1]["id"], version=4) is not None
+    assert UUID(result["tables"][1]["id"], version=4) is not None
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 
