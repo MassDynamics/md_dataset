@@ -5,7 +5,7 @@ import tempfile
 from prefect.infrastructure import KubernetesImagePullPolicy
 from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
-from md_dataset.models.types import DatasetType
+from md_dataset.models.dataset import DatasetType
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

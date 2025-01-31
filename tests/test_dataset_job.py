@@ -9,7 +9,7 @@ from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.dataset_job import create_or_update_dataset_job_send_http_request
 from md_dataset.dataset_job import dataset_job_params
 from md_dataset.dataset_job import name_to_slug
-from md_dataset.models.types import DatasetType
+from md_dataset.models.dataset import DatasetType
 
 
 class DatasetJobParamsTest(unittest.TestCase):

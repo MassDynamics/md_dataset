@@ -4,11 +4,11 @@ import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import DatasetType
-from md_dataset.models.types import InputDatasetTable
-from md_dataset.models.types import InputParams
-from md_dataset.models.types import IntensityInputDataset
-from md_dataset.models.types import IntensityTableType
+from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import InputDatasetTable
+from md_dataset.models.dataset import InputParams
+from md_dataset.models.dataset import IntensityInputDataset
+from md_dataset.models.dataset import IntensityTableType
 from md_dataset.process import md_py
 
 
