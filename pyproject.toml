@@ -23,8 +23,8 @@ classifiers = [
 dependencies = [
   "boto3 ~=1.35.54",
   "pandas ~= 2.2.3",
-  "prefect ~= 2.20.15",
-  "prefect-aws ~= 0.4.20",
+  "prefect ~= 3.1.15",
+  "prefect-aws ~= 0.5.3",
   "pyarrow",
   "pydantic ~= 2.10.4"
 ]
@@ -34,7 +34,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.4.2"
+version = "0.5.0"
 
 [project.optional-dependencies]
 r = [
@@ -49,6 +49,7 @@ dev = [
     "pytest-mock",
     "pytest-cov",
     "pytest-xdist",
+    "prefect-docker ~= 0.6.2",
     "ruff",
     "sphinx",
     "sphinx_rtd_theme",
