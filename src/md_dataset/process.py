@@ -12,14 +12,14 @@ from prefect import runtime
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import Dataset
-from md_dataset.models.types import DatasetType
-from md_dataset.models.types import InputDataset
-from md_dataset.models.types import InputParams
-from md_dataset.models.types import RFuncArgs
+from md_dataset.models.dataset import Dataset
+from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import InputDataset
+from md_dataset.models.dataset import InputParams
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from md_dataset.models.r import RFuncArgs
 
 P = ParamSpec("P")
 T = TypeVar("T", bound="InputDataset")

@@ -6,11 +6,11 @@ from pytest_mock import MockerFixture
 from rpy2.robjects import conversion
 from rpy2.robjects import default_converter
 from md_dataset.file_manager import FileManager
-from md_dataset.models.types import DatasetType
-from md_dataset.models.types import InputDataset
-from md_dataset.models.types import InputDatasetTable
-from md_dataset.models.types import InputParams
-from md_dataset.models.types import RFuncArgs
+from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import InputDataset
+from md_dataset.models.dataset import InputDatasetTable
+from md_dataset.models.dataset import InputParams
+from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
 
 

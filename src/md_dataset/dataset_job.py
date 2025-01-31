@@ -2,7 +2,7 @@ import re
 from typing import NamedTuple
 import requests
 from prefect.utilities.callables import parameter_schema
-from md_dataset.models.types import DatasetType
+from md_dataset.models.dataset import DatasetType
 
 
 def create_or_update_dataset_job_send_http_request(

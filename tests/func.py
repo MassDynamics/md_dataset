@@ -1,6 +1,6 @@
-from md_dataset.models.types import DatasetType
-from md_dataset.models.types import InputDataset
-from md_dataset.models.types import InputParams
+from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import InputDataset
+from md_dataset.models.dataset import InputParams
 from md_dataset.process import md_py
 
 

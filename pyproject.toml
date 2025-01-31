@@ -34,7 +34,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.5.0"
+version = "0.5.1"
 
 [project.optional-dependencies]
 r = [
@@ -50,7 +50,7 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "prefect-docker ~= 0.6.2",
-    "ruff",
+    "ruff ~= 0.9.4",
     "sphinx",
     "sphinx_rtd_theme",
     "sphinx-autoapi",
@@ -112,8 +112,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["ALL"]
 ignore = [
-    "ANN101", # Missing type annotation for `self` in method
-    "ANN102", # Missing type annotation for `cls` in classmethod
     "ANN204", # Missing return type annotation for special (dunder) method
     "FBT",    # Using boolean function arguments
     "TD",     # TODOs
