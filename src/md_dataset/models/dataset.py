@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class DatasetType(Enum):
     INTENSITY = "INTENSITY"
     DOSE_RESPONSE = "DOSE_RESPONSE"
+    PAIRWISE = "PAIRWISE"
 
 class InputParams(BaseModel):
   """The name of the dataset.
@@ -99,6 +100,9 @@ class Dataset(BaseModel, abc.ABC):
         if dataset_type == DatasetType.INTENSITY:
             return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
                     **tables)
+        if dataset_type == DatasetType.PAIRWISE:
+            return PairwiseDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+                    **tables)
         return None
 
 class IntensityDataset(Dataset):
@@ -175,4 +179,76 @@ class IntensityDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: IntensityTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+class PairwiseTableType(Enum):
+    RESULTS = "results"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class PairwiseDataset(Dataset):
+    """A Pairwise dataset.
+
+    Attributes:
+    ----------
+    results :  PandasDataFrame
+        The dataframe containing the pairwise results
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime
+    """
+    results: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["intensity"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [(self._path(PairwiseTableType.RESULTS), self.results)]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(PairwiseTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "name": self.name,
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "output_comparisons",
+                            "path": self._path(PairwiseTableType.RESULTS),
+                        },
+                    ],
+            }
+            if self.runtime_metadata is not None:
+                self._dump_cache["tables"].append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(PairwiseTableType.RUNTIME_METADATA),
+                })
+        return self._dump_cache
+
+    def _path(self, table_type: PairwiseTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
