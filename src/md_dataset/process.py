@@ -20,6 +20,8 @@ from md_dataset.models.types import RFuncArgs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from uuid import UUID
+    from md_dataset.models.r import RFuncArgs
 
 P = ParamSpec("P")
 T = TypeVar("T", bound="InputDataset")
@@ -77,6 +79,35 @@ def md_py(func: Callable) -> Callable:
 
     return wrapper
 
+
+def md_converter(func: Callable) -> Callable:
+    result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
+
+    @flow(
+            log_prints=True,
+            persist_result=True,
+            result_storage=result_storage,
+    )
+    @wraps(func)
+    def wrapper(experiment_id: UUID, params: InputParams, \
+            *args: P.args, **kwargs: P.kwargs) -> dict:
+        logger = get_run_logger()
+        logger.info("Running Deployment: %s", runtime.deployment.name)
+        logger.info("Version: %s", runtime.deployment.version)
+        logger.info("Image: %s", get_deployment_image())
+
+        file_manager = get_file_manager()
+
+        results = func(experiment_id, params, *args, **kwargs)
+
+        dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or params.names[0], \
+                dataset_type=DatasetType.INTENSITY, tables=results)
+
+        file_manager.save_tables(dataset.tables())
+
+        return dataset.dump()
+
+    return wrapper
 
 @task
 def run_r_task(
