@@ -205,13 +205,13 @@ class PairwiseDataset(Dataset):
 
     @model_validator(mode="before")
     def validate_dataframes(cls, values: dict) -> dict:
-        required_fields = ["intensity"]
+        required_fields = ["results"]
         for field_name in required_fields:
             value = values.get(field_name)
             if value is None:
                 msg = f"The field '{field_name}' must be set and cannot be None."
                 raise ValueError(msg)
-            if not isinstance(value, pd.DataFrame):
+            if not isinstance(value, pd.gsDataFrame):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
 
