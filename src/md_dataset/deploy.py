@@ -2,7 +2,6 @@ import importlib
 import logging
 import os
 import tempfile
-from prefect.infrastructure import KubernetesImagePullPolicy
 from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.models.dataset import DatasetType
@@ -77,7 +76,7 @@ def main() -> None:
         job_variables={
             "env": env_vars,
             "image": DOCKER_IMAGE,
-            "image_pull_policy": KubernetesImagePullPolicy.ALWAYS,
+            "image_pull_policy": "ALWAYS",
             "namespace": K8_NAMESPACE,
             "finished_job_ttl": 10 * 60,
             "pod_watch_timeout_seconds": 15 * 60,
