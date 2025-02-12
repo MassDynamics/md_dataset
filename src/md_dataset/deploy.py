@@ -76,7 +76,7 @@ def main() -> None:
         job_variables={
             "env": env_vars,
             "image": DOCKER_IMAGE,
-            "image_pull_policy": "ALWAYS",
+            "image_pull_policy": "Always",
             "namespace": K8_NAMESPACE,
             "finished_job_ttl": 10 * 60,
             "pod_watch_timeout_seconds": 15 * 60,
