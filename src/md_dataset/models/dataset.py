@@ -211,7 +211,7 @@ class PairwiseDataset(Dataset):
             if value is None:
                 msg = f"The field '{field_name}' must be set and cannot be None."
                 raise ValueError(msg)
-            if not isinstance(value, pd.gsDataFrame):
+            if not isinstance(value, pd.DataFrame):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
 
