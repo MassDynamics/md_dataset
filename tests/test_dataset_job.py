@@ -14,16 +14,18 @@ from md_dataset.models.dataset import DatasetType
 
 class DatasetJobParamsTest(unittest.TestCase):
     def test_returns_parameters_schema(self):
-        result = dataset_job_params(
+        params, description = dataset_job_params(
             name="test_func",
             module="tests.func",
         )
 
-        assert result["title"] == "Parameters"
-        assert result["required"] == ["input_datasets", "params", "output_dataset_type"]
-        assert result["properties"]["input_datasets"]["title"] == "input_datasets"
-        assert result["properties"]["input_datasets"]["type"] == "array"
-        assert result["properties"]["input_datasets"]["items"] == {"$ref": "#/definitions/InputDataset"}
+        assert params["title"] == "Parameters"
+        assert params["required"] == ["input_datasets", "params", "output_dataset_type"]
+        assert params["properties"]["input_datasets"]["title"] == "input_datasets"
+        assert params["properties"]["input_datasets"]["type"] == "array"
+        assert params["properties"]["input_datasets"]["items"] == {"$ref": "#/definitions/InputDataset"}
+
+        assert description=="A nice description."
 
 
 class CreateOrUpdateDatasetJobTest(unittest.TestCase):
@@ -46,6 +48,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         expected_payload = {
             "name": "job name",
             "slug": "job_name",
+            "description": "A nice description.",
             "flow_and_deployment_name": "test_func/deployment name",
             "run_type": DatasetType.INTENSITY,
         }
@@ -82,6 +85,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         result = create_or_update_dataset_job_send_http_request(
             base_url="http://example.com",
             job_name="job name",
+            description="description",
             flow_and_deployment_name="flow and deployment name",
             run_type=DatasetType.INTENSITY,
             params={"param1": "value1"},
@@ -92,6 +96,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         expected_payload = {
             "name": "job name",
             "slug": "job_name",
+            "description": "description",
             "flow_and_deployment_name": "flow and deployment name",
             "run_type": DatasetType.INTENSITY,
             "params": {"param1": "value1"},
@@ -112,6 +117,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             create_or_update_dataset_job_send_http_request(
                 base_url="http://example.com",
                 job_name="job name",
+                description="description",
                 flow_and_deployment_name="flow and deployment name",
                 run_type="INTENSITY",
                 params={"param1": "value1"},
