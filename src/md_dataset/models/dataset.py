@@ -3,8 +3,10 @@ import abc
 import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
+from typing import Literal
 import pandas as pd
 from pydantic import BaseModel
+from pydantic import Field
 from pydantic import PrivateAttr
 from pydantic import model_validator
 
@@ -26,6 +28,16 @@ class InputParams(BaseModel):
     The name of the Dataset to create, if None we use legacy names from MD dataset service
   """
   dataset_name: str = None
+
+class ConverterInputParams(InputParams):
+  entity_type: Literal[
+      "peptide",
+      "protein",
+  ] = Field(
+      title="Entity Type",
+      description="Entity type of the intensity dataset",
+      default="protein",
+  )
 
 class InputDatasetTable(BaseModel):
     name: str
@@ -95,6 +107,10 @@ class Dataset(BaseModel, abc.ABC):
     def tables(self) -> list:
         pass
 
+    @abc.abstractmethod
+    def dump(self, entity_type: str | None = None) -> dict:
+        pass
+
     @classmethod
     def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> Dataset:
         if dataset_type == DatasetType.INTENSITY:
@@ -103,7 +119,7 @@ class Dataset(BaseModel, abc.ABC):
         if dataset_type == DatasetType.PAIRWISE:
             return PairwiseDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
                     **tables)
-        return None
+        return None # TODO raise
 
 class IntensityDataset(Dataset):
     """An intentisy dataset.
@@ -151,7 +167,7 @@ class IntensityDataset(Dataset):
             tables.append((self._path(IntensityTableType.RUNTIME_METADATA), self.runtime_metadata))
         return tables
 
-    def dump(self) -> dict:
+    def dump(self, entity_type: str | None = "protein") -> dict:
         if self._dump_cache is None:
             self._dump_cache =  {
                     "name": self.name,
@@ -160,12 +176,12 @@ class IntensityDataset(Dataset):
                     "tables": [
                         {
                             "id": str(uuid.uuid4()),
-                            "name": "Protein_Intensity",
+                            "name": f"{entity_type.title()}_Intensity",
                             "path": self._path(IntensityTableType.INTENSITY),
 
                         },{
                             "id": str(uuid.uuid4()),
-                            "name": "Protein_Metadata",
+                            "name": f"{entity_type.title()}_Metadata",
                             "path": self._path(IntensityTableType.METADATA),
                         },
                     ],
@@ -173,7 +189,7 @@ class IntensityDataset(Dataset):
             if self.runtime_metadata is not None:
                 self._dump_cache["tables"].append({
                     "id": str(uuid.uuid4()),
-                    "name": "Protein_RuntimeMetadata",
+                    "name": f"{entity_type.title()}_RuntimeMetadata",
                     "path": self._path(IntensityTableType.RUNTIME_METADATA),
                 })
         return self._dump_cache
@@ -228,7 +244,7 @@ class PairwiseDataset(Dataset):
             tables.append((self._path(PairwiseTableType.RUNTIME_METADATA), self.runtime_metadata))
         return tables
 
-    def dump(self) -> dict:
+    def dump(self, entity_type: str | None = None) -> dict:  # noqa: ARG002
         if self._dump_cache is None:
             self._dump_cache =  {
                     "name": self.name,
