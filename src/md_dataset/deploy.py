@@ -43,7 +43,6 @@ FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
 DEPLOYMENT_NAME = os.environ["DEPLOYMENT_NAME"]
 RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
-INITIAL_DATA_BUCKET_NAME = os.environ["INITIAL_DATA_BUCKET_NAME"]
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
@@ -55,7 +54,6 @@ def main() -> None:
         "IMAGE": DOCKER_IMAGE,
         "STAGE": STAGE,
         "PREFECT_HOME": f"{tempfile.gettempdir()}/prefect/",
-        "INITIAL_DATA_BUCKET_NAME": INITIAL_DATA_BUCKET_NAME,
         "RESULTS_BUCKET": RESULTS_BUCKET,  # prefect results
         "PREFECT_LOCAL_STORAGE_PATH": f"{tempfile.gettempdir()}/prefect/storage/",
         "HONEYBADGER_KEY": HONEYBADGER_KEY,
