@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+BOLD="\033[1m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+RESET="\033[0m"
+
+echo "Building base md-dataset image"
+docker build -t md_dataset_package-linux-base:latest -f base.Dockerfile --platform="linux/amd64" .
+echo -e "${YELLOW}${BOLD}Docker tag: md_dataset_package-linux-base:latest${RESET}"
+
+echo "Building md-dataset python image"
+docker build --build-arg BASE_IMAGE=md_dataset_package-linux-base:latest -t md_dataset_package-linux-py:latest -f py.Dockerfile --platform="linux/amd64" .
+echo -e "${GREEN}${BOLD}Docker tag: md_dataset_package-linux-py:latest${RESET}"
+
+echo "Building base md-dataset R image"
+docker build --build-arg BASE_IMAGE=md_dataset_package-linux-base:latest -t md_dataset_package-linux-r-base:latest -f r.base.Dockerfile --platform="linux/amd64" .
+echo -e "${YELLOW}${BOLD}Docker tag: md_dataset_package-linux-r-base:latest${RESET}"
+
+echo "Building md-dataset R image"
+docker build --build-arg BASE_IMAGE=md_dataset_package-linux-r-base:latest -t md_dataset_package-linux-r:latest -f r.Dockerfile --platform="linux/amd64" .
+echo -e "${GREEN}${BOLD}Docker tag: md_dataset_package-linux-r:latest:latest${RESET}"

@@ -1,5 +1,6 @@
-ARG BASE_TAG
-FROM 243488295326.dkr.ecr.ap-southeast-2.amazonaws.com/md_dataset_package_base:$BASE_TAG
+ARG BASE_TAG=latest
+ARG BASE_IMAGE=243488295326.dkr.ecr.ap-southeast-2.amazonaws.com/md_dataset_package_base:${BASE_TAG}
+FROM ${BASE_IMAGE} AS build
 
 RUN yum -y update
 
@@ -60,4 +61,5 @@ RUN yum install -y \
     libxcb libXau libXrender \
     && yum clean all
 
+ENV LD_LIBRARY_PATH=/usr/local/lib64
 ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
