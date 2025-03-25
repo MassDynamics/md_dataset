@@ -21,4 +21,4 @@ echo -e "${YELLOW}${BOLD}Docker tag: md_dataset_package-linux-r-base:latest${RES
 
 echo "Building md-dataset R image"
 docker build --build-arg BASE_IMAGE=md_dataset_package-linux-r-base:latest -t md_dataset_package-linux-r:latest -f r.Dockerfile --platform="linux/amd64" .
-echo -e "${GREEN}${BOLD}Docker tag: md_dataset_package-linux-r:latest:latest${RESET}"
+echo -e "${GREEN}${BOLD}Docker tag: md_dataset_package-linux-r:latest${RESET}"
