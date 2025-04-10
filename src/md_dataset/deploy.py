@@ -43,6 +43,7 @@ FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
 DEPLOYMENT_NAME = os.environ["DEPLOYMENT_NAME"]
 RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
+INITIAL_DATA_BUCKET_NAME = os.environ.get("INITIAL_DATA_BUCKET_NAME") # optional
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
@@ -61,6 +62,10 @@ def main() -> None:
         "AWS_REGION": AWS_REGION,
         "AWS_DEFAULT_REGION": AWS_REGION,  # boto3, https://docs.aws.amazon.com/sdkref/latest/guide/feature-region.html#feature-region-sdk-compat
     }
+
+    # legacy md_converter loads its own data from s3
+    if INITIAL_DATA_BUCKET_NAME is not None:
+        env_vars["INITIAL_DATA_BUCKET_NAME"] = INITIAL_DATA_BUCKET_NAME
 
     logger.info("DEPLOYING prefect flow")
 
