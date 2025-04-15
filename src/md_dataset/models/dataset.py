@@ -18,6 +18,7 @@ class DatasetType(Enum):
     INTENSITY = "INTENSITY"
     DOSE_RESPONSE = "DOSE_RESPONSE"
     PAIRWISE = "PAIRWISE"
+    ANOVA = "ANOVA"  
 
 class InputParams(BaseModel):
   """The name of the dataset.
@@ -267,4 +268,58 @@ class PairwiseDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: PairwiseTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+
+class AnovaTableType(Enum):
+    RESULTS = "results"
+
+
+class AnovaDataset(Dataset):
+    """
+    An ANOVA dataset.
+
+    Attributes:
+    -----------
+    results : pd.DataFrame
+        The dataframe containing the ANOVA analysis results.
+    """
+    results: pd.DataFrame
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["results"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                raise ValueError(f"The field '{field_name}' must be set and cannot be None.")
+            if not isinstance(value, pd.DataFrame):
+                raise TypeError(f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}.")
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(AnovaTableType.RESULTS), self.results)]
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache = {
+                "name": self.name,
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "anova_results",
+                        "path": self._path(AnovaTableType.RESULTS),
+                    },
+                ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: AnovaTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
