@@ -18,7 +18,7 @@ class DatasetType(Enum):
     INTENSITY = "INTENSITY"
     DOSE_RESPONSE = "DOSE_RESPONSE"
     PAIRWISE = "PAIRWISE"
-    ANOVA = "ANOVA"  
+    ANOVA = "ANOVA"
 
 class InputParams(BaseModel):
   """The name of the dataset.
@@ -277,8 +277,7 @@ class AnovaTableType(Enum):
 
 
 class AnovaDataset(Dataset):
-    """
-    An ANOVA dataset.
+    """An ANOVA dataset.
 
     Attributes:
     -----------
@@ -297,9 +296,11 @@ class AnovaDataset(Dataset):
         for field_name in required_fields:
             value = values.get(field_name)
             if value is None:
-                raise ValueError(f"The field '{field_name}' must be set and cannot be None.")
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
             if not isinstance(value, pd.DataFrame):
-                raise TypeError(f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}.")
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
         return values
 
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
