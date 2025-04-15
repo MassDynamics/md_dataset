@@ -41,8 +41,16 @@ def create_or_update_dataset_job_send_http_request(
 
     url = f"{base_url}/jobs/create_or_update"
     response = requests.post(url, json=payload, timeout=10)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        error_body = response.text
+        error_details = f". Response body: {error_body}" if error_body else ""
+        msg = f"HTTP error occurred: {e}{error_details}"
+        raise requests.exceptions.HTTPError(
+            msg,
+        ) from e
 
 
 def dataset_job_params(name: str, module: str) -> tuple[dict, str]:
