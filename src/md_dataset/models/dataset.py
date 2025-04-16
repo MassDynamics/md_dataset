@@ -121,7 +121,7 @@ class Dataset(BaseModel, abc.ABC):
             return PairwiseDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
                     **tables)
         if dataset_type == DatasetType.ANOVA:
-            return PairwiseDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+            return AnovaDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
                     **tables)
         return None # TODO raise
 
