@@ -1,5 +1,5 @@
 ARG BASE_TAG=latest
-ARG BASE_IMAGE=243488295326.dkr.ecr.ap-southeast-2.amazonaws.com/md_dataset_package_base:${BASE_TAG}
+ARG BASE_IMAGE=massdynamics/md_dataset_package_base:${BASE_TAG}
 FROM ${BASE_IMAGE} AS build
 
 RUN yum -y update
