@@ -8,10 +8,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 [[ -z "$DOCKER_FILE" ]] && echo "DOCKER_FILE must be set" && exit 1
 [[ -z "$REPO_NAME" ]] && echo "REPO_NAME must be set" && exit 1
 
-# below variables can be set in buildkite hooks and used in every pipeline
-account_id=$(aws sts get-caller-identity --query Account --output text)
-registry=${registry:-${account_id}.dkr.ecr.ap-southeast-2.amazonaws.com}
-
 version=$(grep -m1 'version =' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
 tag=${version}-${BUILD_NUMBER}
 image_tag=${REPO_NAME}:${tag}
@@ -23,19 +19,17 @@ docker build \
   --build-arg BASE_TAG=${tag} \
   -t ${image_tag} -t ${image_tag_latest} .
 
-echo "TAG IMAGE"
-docker tag "${image_tag}" "${registry}/${image_tag}"
-docker tag "${image_tag_latest}" "${registry}/${image_tag_latest}"
+dockerhub_username=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-username" --query "Parameter.Value" --output text)
+dockerhub_password=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-password" --with-decryption --query "Parameter.Value" --output text)
 
-echo "PUSH IMAGE"
-aws ecr describe-repositories --repository-names ${REPO_NAME} || \
-  aws ecr create-repository --repository-name ${REPO_NAME} && \
-  aws ecr set-repository-policy --repository-name ${REPO_NAME} --policy-text file://${SCRIPT_DIR}/ecr-repository-policy.json
+docker login -u $dockerhub_username -p $dockerhub_password
 
-aws ecr get-login-password \
-  | docker login -u AWS --password-stdin $registry
+echo "Tag image"
+docker tag "${image_tag}" $dockerhub_username/$image_tag
+docker tag "${image_tag_latest}" $dockerhub_username/${image_tag_latest}
 
-docker push "${registry}/${image_tag}"
-docker push "${registry}/${image_tag_latest}"
+echo "Pushing to $dockerhub_username"
+docker push $dockerhub_username/${image_tag}
+docker push $dockerhub_username/${image_tag_latest}
 
 echo "+++ Image tag: ${image_tag}"
