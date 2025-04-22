@@ -32,7 +32,8 @@ RUN yum -y update && \
         texlive \
         wget \
         tar \
-        xz && \
+        xz \
+        which && \
     yum clean all
 
 RUN cd /usr/local/src && \
