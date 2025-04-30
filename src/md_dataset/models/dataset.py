@@ -303,13 +303,13 @@ class AnovaDataset(Dataset):
             if not isinstance(value, pd.DataFrame):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
-        
+
         runtime_metadata = values.get("runtime_metadata")
         if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
             msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
                     got {type(runtime_metadata).__name__}."
             raise TypeError(msg)
-        
+
         return values
 
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
