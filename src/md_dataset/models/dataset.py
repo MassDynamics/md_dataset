@@ -276,7 +276,7 @@ class PairwiseDataset(Dataset):
 
 class AnovaTableType(Enum):
     RESULTS = "results"
-
+    RUNTIME_METADATA = "runtime_metadata"
 
 class AnovaDataset(Dataset):
     """An ANOVA dataset.
@@ -303,10 +303,20 @@ class AnovaDataset(Dataset):
             if not isinstance(value, pd.DataFrame):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
+        
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+        
         return values
 
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
-        return [(self._path(AnovaTableType.RESULTS), self.results)]
+        tables = [(self._path(AnovaTableType.RESULTS), self.results)]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(AnovaTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
 
     def dump(self) -> dict:
         if self._dump_cache is None:
@@ -319,6 +329,11 @@ class AnovaDataset(Dataset):
                         "id": str(uuid.uuid4()),
                         "name": "anova_results",
                         "path": self._path(AnovaTableType.RESULTS),
+                    },
+                    {
+                            "id": str(uuid.uuid4()),
+                            "name": "runtime_metadata",
+                            "path": self._path(AnovaTableType.RUNTIME_METADATA),
                     },
                 ],
             }
