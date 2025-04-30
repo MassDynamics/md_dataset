@@ -260,14 +260,13 @@ class PairwiseDataset(Dataset):
                             "name": "output_comparisons",
                             "path": self._path(PairwiseTableType.RESULTS),
                         },
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "runtime_metadata",
+                            "path": self._path(PairwiseTableType.RUNTIME_METADATA),
+                        },
                     ],
             }
-            if self.runtime_metadata is not None:
-                self._dump_cache["tables"].append({
-                    "id": str(uuid.uuid4()),
-                    "name": "runtime_metadata",
-                    "path": self._path(PairwiseTableType.RUNTIME_METADATA),
-                })
         return self._dump_cache
 
     def _path(self, table_type: PairwiseTableType) -> str:
