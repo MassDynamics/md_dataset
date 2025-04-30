@@ -287,6 +287,7 @@ class AnovaDataset(Dataset):
         The dataframe containing the ANOVA analysis results.
     """
     results: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
     _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
