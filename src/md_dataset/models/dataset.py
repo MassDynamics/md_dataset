@@ -390,7 +390,7 @@ class DoseResponseDataset(Dataset):
             tables.append((self._path(DoseResponseTableType.RUNTIME_METADATA), self.runtime_metadata))
         return tables
 
-    def dump(self, entity_type: str | None = None) -> dict:
+    def dump(self, entity_type: str | None = None) -> dict: # noqa: ARG002
         if self._dump_cache is None:
             self._dump_cache =  {
                     "name": self.name,
