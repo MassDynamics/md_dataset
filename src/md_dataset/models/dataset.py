@@ -87,18 +87,6 @@ class IntensityInputDataset(InputDataset):
         return next(filter(lambda table: table.name == IntensityTable.table_name(table_type), \
                 self.tables), None)
 
-class DoseResponseTableType(Enum):
-    OUTPUT_CURVES = "output_curves"
-    OUTPUT_VOLCANOES = "output_volcanoes"
-    INPUT_DRC = "input_drc"
-    RUNTIME_METADATA = "runtime_metadata"
-
-class DoseResponseInputDataset(InputDataset):
-    type: DatasetType = DatasetType.DOSE_RESPONSE
-
-    def table(self, table_type: DoseResponseTableType) -> InputDatasetTable:
-        return next(filter(lambda table: table.name == table_type.value, self.tables), None)
-
 class Dataset(BaseModel, abc.ABC):
     run_id: uuid.UUID
     name: str
@@ -273,10 +261,10 @@ class PairwiseDataset(Dataset):
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 
-
 class AnovaTableType(Enum):
     RESULTS = "results"
     RUNTIME_METADATA = "runtime_metadata"
+
 
 class AnovaDataset(Dataset):
     """An ANOVA dataset.
@@ -341,4 +329,97 @@ class AnovaDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: AnovaTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class DoseResponseTableType(Enum):
+    OUTPUT_CURVES = "output_curves"
+    OUTPUT_VOLCANOES = "output_volcanoes"
+    INPUT_DRC = "input_drc"
+    RUNTIME_METADATA = "runtime_metadata"
+
+class DoseResponseDataset(Dataset):
+    """A dose-response dataset.
+
+    Attributes:
+    ----------
+    output_curves :  PandasDataFrame
+        The dataframe containing the dose-response results to create dose-response curves
+    output_volcanoes : PandasDataFrame
+        The dataframe containing the dose-response results to create dose-response volcano plots
+    input_drc : PandasDataFrame
+        The dataframe containing the dose-response input data
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime
+    """
+    output_curves: pd.DataFrame
+    output_volcanoes: pd.DataFrame
+    input_drc: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["output_curves", "output_volcanoes", "input_drc"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [
+            (self._path(DoseResponseTableType.OUTPUT_CURVES), self.output_curves),
+            (self._path(DoseResponseTableType.OUTPUT_VOLCANOES), self.output_volcanoes),
+            (self._path(DoseResponseTableType.INPUT_DRC), self.input_drc),
+        ]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(DoseResponseTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self, entity_type: str | None = None) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "name": self.name,
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "output_curves",
+                            "path": self._path(DoseResponseTableType.OUTPUT_CURVES),
+                        },
+                    {
+                            "id": str(uuid.uuid4()),
+                            "name": "output_volcanoes",
+                            "path": self._path(DoseResponseTableType.OUTPUT_VOLCANOES),
+                        },
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "input_drc",
+                            "path": self._path(DoseResponseTableType.INPUT_DRC),
+                        },
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "runtime_metadata",
+                            "path": self._path(DoseResponseTableType.RUNTIME_METADATA),
+                        },
+                    ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: DoseResponseTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
