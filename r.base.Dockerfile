@@ -6,7 +6,7 @@ RUN yum -y update
 
 # INSTALL R
 
-ENV R_VERSION=4.3.0
+ENV R_VERSION=4.5.0
 
 RUN yum -y update && \
         yum -y groupinstall "Development Tools" && \
