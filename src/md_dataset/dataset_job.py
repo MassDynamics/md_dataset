@@ -3,6 +3,7 @@ from typing import NamedTuple
 import requests
 from prefect.utilities.callables import parameter_schema
 from md_dataset.models.dataset import DatasetType
+from md_dataset.translate_payload import translate_payload
 
 
 # ruff: noqa: PLR0913
@@ -53,7 +54,7 @@ def create_or_update_dataset_job_send_http_request(
         ) from e
 
 
-def dataset_job_params(name: str, module: str) -> tuple[dict, str]:
+def dataset_job_params(name: str, module: str) -> tuple[dict, str, dict]:
     """Get the parameters schema for a flow.
 
     Args:
@@ -63,9 +64,10 @@ def dataset_job_params(name: str, module: str) -> tuple[dict, str]:
     module = __import__(module, fromlist=[module])
 
     fn = getattr(module, name)
+    parameters_new = translate_payload(dict(fn.parameters))
     description = fn.__doc__
     parameters = parameter_schema(fn)
-    return parameters.dict(), description
+    return parameters.dict(), description, parameters_new
 
 
 def name_to_slug(name: str) -> str:
