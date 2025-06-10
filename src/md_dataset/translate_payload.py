@@ -156,6 +156,9 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
 
 _type_mapping = {
     "id": "UUID",
+    "user_id": "UUID",
+    "experiment_id": "UUID",
+    "experiment_ids": "Array",
     "name": "String",
     "job_run_params": "__REPLACE_ME__",
     "type": "String",
@@ -202,9 +205,16 @@ _pipeline = [
 with open("src/md_dataset/payload_full.json") as f:
     payload_old = json.load(f)
 
+payload_new = []
 for payload in payload_old:
     print(f"Translating payload: {payload['name']}")
-    payload["required_params"] = translate_payload(payload["required_params"])
+    pl = {
+        "name": payload["name"],
+        "type": payload["run_type"],
+        "properties":  translate_payload(payload["required_params"])
+
+    }
+    payload_new.append(pl)
 
 with open("src/md_dataset/payload_new_generated.json", "w") as f:
-    json.dump(payload_old, f, indent=4)
+    json.dump(payload_new, f, indent=4)
