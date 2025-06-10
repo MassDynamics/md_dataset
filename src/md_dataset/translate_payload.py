@@ -199,10 +199,12 @@ _pipeline = [
 ]
 
 # Example usage:
-with open("src/md_dataset/payload_old.json") as f:
+with open("src/md_dataset/payload_full.json") as f:
     payload_old = json.load(f)
 
-payload_new = translate_payload(payload_old)
+for payload in payload_old:
+    print(f"Translating payload: {payload['name']}")
+    payload["required_params"] = translate_payload(payload["required_params"])
 
 with open("src/md_dataset/payload_new_generated.json", "w") as f:
-    json.dump(payload_new, f, indent=4)
+    json.dump(payload_old, f, indent=4)
