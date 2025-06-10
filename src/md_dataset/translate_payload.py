@@ -127,6 +127,26 @@ def convert_enums_to_options(schema: dict) -> dict:
 
     return _convert(schema)
 
+def move_options_to_parameters(schema: dict) -> dict:
+    def _move(node):
+        if isinstance(node, dict):
+            node = dict(node)  # shallow copy
+            if "options" in node:
+                options = node.pop("options")
+                if "parameters" not in node:
+                    node["parameters"] = {}
+                node["parameters"]["options"] = options
+            # Now recurse, but skip the new "parameters" key to avoid infinite recursion
+            return {
+                k: _move(v) if k != "parameters" else v
+                for k, v in node.items()
+            }
+        elif isinstance(node, list):
+            return [_move(item) for item in node]
+        else:
+            return node
+
+    return _move(schema)
 
 
 def translate_payload(payload: dict) -> dict:
@@ -161,6 +181,7 @@ def translate_payload(payload: dict) -> dict:
     payload = flatten_properties(payload, "items")
     payload = remove_and_promote(payload, "params")
     payload = convert_types_by_key(payload, type_mapping)
+    payload = move_options_to_parameters(payload)
     return payload
 
 
