@@ -113,15 +113,16 @@ def _convert_enums_to_options(schema: dict) -> dict:
             return node
     return _convert(schema)
 
-def _move_options_to_parameters(schema: dict) -> dict:
+def _move_to_parameters(schema: dict, keys_to_move: list) -> dict:
     def _move(node):
         if isinstance(node, dict):
             node = dict(node)
-            if "options" in node:
-                options = node.pop("options")
-                if "parameters" not in node:
-                    node["parameters"] = {}
-                node["parameters"]["options"] = options
+            for key_to_move in keys_to_move:
+                if key_to_move in node:
+                    value = node.pop(key_to_move)
+                    if "parameters" not in node:
+                        node["parameters"] = {}
+                    node["parameters"][key_to_move] = value
             return {
                 k: _move(v) if k != "parameters" else v
                 for k, v in node.items()
@@ -180,19 +181,21 @@ _type_mapping = {
 
 _key_mapping = {
     "maxItems": "max",
-    "minItems": "min"
+    "minItems": "min",
+    "maximum": "max",
+    "minimum": "min",
 }
 
 _pipeline = [
     _move_required_flags,
     _convert_enums_to_options,
     _resolve_refs,
-    _move_options_to_parameters,
+    partial(_rename_keys, key_mapping=_key_mapping),
+    partial(_move_to_parameters, keys_to_move=["options", "min", "max"]),
     partial(_flatten_properties, key_to_flatten="properties"),
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
     partial(_convert_types_by_key, type_mapping=_type_mapping),
-    partial(_rename_keys, key_mapping=_key_mapping),
 ]
 
 # Example usage:
