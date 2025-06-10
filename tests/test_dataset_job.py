@@ -14,7 +14,7 @@ from md_dataset.models.dataset import DatasetType
 
 class DatasetJobParamsTest(unittest.TestCase):
     def test_returns_parameters_schema(self):
-        params, description = dataset_job_params(
+        params, description, parameters_new = dataset_job_params(
             name="test_func",
             module="tests.func",
         )
