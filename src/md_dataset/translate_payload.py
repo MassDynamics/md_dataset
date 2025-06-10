@@ -137,6 +137,22 @@ def _apply_pipeline(payload: dict, transforms: list) -> dict:
         payload = transform(payload)
     return payload
 
+def _rename_keys(schema: dict, key_mapping: dict) -> dict:
+    def _rename(node):
+        if isinstance(node, dict):
+            new_node = {}
+            for k, v in node.items():
+                new_key = key_mapping.get(k, k)  # rename if in key_mapping
+                new_node[new_key] = _rename(v)
+            return new_node
+        elif isinstance(node, list):
+            return [_rename(item) for item in node]
+        else:
+            return node
+
+    return _rename(schema)
+
+
 _type_mapping = {
     "id": "UUID",
     "name": "String",
@@ -162,15 +178,21 @@ _type_mapping = {
     "output_dataset_type": "String"
 }
 
+_key_mapping = {
+    "maxItems": "max",
+    "minItems": "min"
+}
+
 _pipeline = [
     _move_required_flags,
     _convert_enums_to_options,
     _resolve_refs,
+    _move_options_to_parameters,
     partial(_flatten_properties, key_to_flatten="properties"),
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
     partial(_convert_types_by_key, type_mapping=_type_mapping),
-    _move_options_to_parameters
+    partial(_rename_keys, key_mapping=_key_mapping),
 ]
 
 # Example usage:
