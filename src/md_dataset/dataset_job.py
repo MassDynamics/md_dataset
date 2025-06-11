@@ -14,6 +14,7 @@ def create_or_update_dataset_job_send_http_request(
     flow_and_deployment_name: str,
     run_type: DatasetType,
     params: dict,
+    params_new: dict,
 ) -> dict:
     """Send HTTP POST request to create or update a dataset job.
 
@@ -38,6 +39,7 @@ def create_or_update_dataset_job_send_http_request(
         "flow_and_deployment_name": flow_and_deployment_name,
         "run_type": run_type,
         "params": params,
+        "params_new": params_new,
     }
 
     url = f"{base_url}/jobs/create_or_update"
@@ -108,7 +110,7 @@ def create_or_update_dataset_job(
     Returns:
         dict: The JSON response from the server containing the dataset job.
     """
-    params, description = dataset_job_params(name=job_params.function, module=job_params.module)
+    params, description, params_new = dataset_job_params(name=job_params.function, module=job_params.module)
     flow_and_deployment_name = f"{job_params.function}/{deployment_name}"
 
     return create_or_update_dataset_job_send_http_request(
@@ -118,5 +120,6 @@ def create_or_update_dataset_job(
         flow_and_deployment_name=flow_and_deployment_name,
         run_type=run_type,
         params=params,
+        params_new = params_new,
     )
 
