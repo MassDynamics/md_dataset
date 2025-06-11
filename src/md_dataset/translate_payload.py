@@ -187,6 +187,33 @@ def _expand_one_of_blocks(schema: dict) -> dict:
 
     return _expand(schema)
 
+def _expand_any_of_blocks(schema: dict) -> dict:
+    def _clean(node):
+        if isinstance(node, dict):
+            new_node = {}
+            for key, value in node.items():
+                if key == "anyOf" and isinstance(value, list):
+                    # Find the first non-null type schema
+                    non_null = next(
+                        (item for item in value if item.get("type") != "null"), 
+                        None
+                    )
+                    if non_null:
+                        # Promote the non-null schema by merging its contents here
+                        for nk, nv in _clean(non_null).items():
+                            new_node[nk] = nv
+                    # Otherwise, omit the anyOf block entirely
+                else:
+                    new_node[key] = _clean(value)
+            return new_node
+        elif isinstance(node, list):
+            return [_clean(item) for item in node]
+        else:
+            return node
+
+    return _clean(schema)
+
+
 
 
 _type_mapping = {
@@ -234,7 +261,8 @@ _pipeline = [
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
     partial(_convert_types_by_key, type_mapping=_type_mapping),
-    _expand_one_of_blocks
+    _expand_one_of_blocks,
+    _expand_any_of_blocks
 ]
 
 # Example usage:
