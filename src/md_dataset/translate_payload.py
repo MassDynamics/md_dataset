@@ -153,6 +153,41 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
 
     return _rename(schema)
 
+def _expand_one_of_blocks(schema: dict) -> dict:
+    def _expand(node):
+        if isinstance(node, dict):
+            new_node = {}
+            for k, v in node.items():
+                if isinstance(v, dict) and "oneOf" in v and "discriminator" in v:
+                    discriminator = v["discriminator"]
+                    mapping = discriminator.get("mapping", {})
+                    one_of_list = v["oneOf"]
+
+                    # Build the new structure with keys from mapping
+                    for variant in one_of_list:
+                        title = variant.get("title")
+                        # Reverse lookup in mapping to get the key for this variant
+                        variant_key = next(
+                            (k_ for k_, v_ in mapping.items() if title in v_),  # title used in path
+                            title  # fallback if no mapping hit
+                        )
+                        new_node.setdefault(k, {})[variant_key] = _expand(variant)
+
+                    # Copy the remaining top-level keys (like "title", "description", etc.)
+                    for key in v:
+                        if key not in {"oneOf", "discriminator"}:
+                            new_node[k][key] = _expand(v[key])
+                else:
+                    new_node[k] = _expand(v)
+            return new_node
+        elif isinstance(node, list):
+            return [_expand(item) for item in node]
+        else:
+            return node
+
+    return _expand(schema)
+
+
 
 _type_mapping = {
     "id": "UUID",
@@ -199,6 +234,7 @@ _pipeline = [
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
     partial(_convert_types_by_key, type_mapping=_type_mapping),
+    _expand_one_of_blocks
 ]
 
 # Example usage:
