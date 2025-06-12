@@ -265,20 +265,20 @@ _pipeline = [
     _expand_any_of_blocks
 ]
 
-# Example usage:
-with open("src/md_dataset/payload_full.json") as f:
-    payload_old = json.load(f)
+# # Example usage:
+# with open("src/md_dataset/payload_full.json") as f:
+#     payload_old = json.load(f)
 
-payload_new = []
-for payload in payload_old:
-    print(f"Translating payload: {payload['name']}")
-    pl = {
-        "name": payload["name"],
-        "type": payload["run_type"],
-        "properties":  translate_payload(payload["required_params"])
+# payload_new = []
+# for payload in payload_old:
+#     print(f"Translating payload: {payload['name']}")
+#     pl = {
+#         "name": payload["name"],
+#         "type": payload["run_type"],
+#         "properties":  translate_payload(payload["required_params"])
 
-    }
-    payload_new.append(pl)
+#     }
+#     payload_new.append(pl)
 
-with open("src/md_dataset/payload_new_generated.json", "w") as f:
-    json.dump(payload_new, f, indent=4)
+# with open("src/md_dataset/payload_new_generated.json", "w") as f:
+#     json.dump(payload_new, f, indent=4)
