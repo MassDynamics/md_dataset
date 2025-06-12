@@ -1,4 +1,3 @@
-import json
 import copy
 import re
 from functools import partial
@@ -18,11 +17,11 @@ def _move_required_flags(schema: dict) -> dict:
                 for item in value:
                     process_object(item)
 
-        if 'required' in obj and 'properties' in obj:
-            for required_key in obj['required']:
-                if required_key in obj['properties']:
-                    obj['properties'][required_key]['required'] = True
-            del obj['required']
+        if "required" in obj and "properties" in obj:
+            for required_key in obj["required"]:
+                if required_key in obj["properties"]:
+                    obj["properties"][required_key]["required"] = True
+            del obj["required"]
 
     process_object(schema)
     return schema
@@ -37,14 +36,11 @@ def _resolve_refs(schema: dict) -> dict:
                     def_name = ref_path.split("/")[-1]
                     resolved = copy.deepcopy(definitions[def_name])
                     return _resolve(resolved)
-                else:
-                    raise ValueError(f"Unsupported $ref path: {ref_path}")
-            else:
-                return {k: _resolve(v) for k, v in node.items()}
-        elif isinstance(node, list):
+                raise ValueError(f"Unsupported $ref path: {ref_path}")
+            return {k: _resolve(v) for k, v in node.items()}
+        if isinstance(node, list):
             return [_resolve(item) for item in node]
-        else:
-            return node
+        return node
     resolved_schema = copy.deepcopy(schema)
     resolved_schema.pop("definitions", None)
     return _resolve(resolved_schema)
@@ -63,10 +59,9 @@ def _flatten_properties(schema: dict, key_to_flatten: str) -> dict:
                         flat_props[k] = v
                 return flat_props
             return {k: _flatten(v) for k, v in node.items()}
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_flatten(item) for item in node]
-        else:
-            return node
+        return node
     return _flatten(schema)
 
 def _remove_and_promote(schema: dict, key_to_promote: str) -> dict:
@@ -86,10 +81,9 @@ def _convert_types_by_key(schema: dict, type_mapping: dict) -> dict:
             if key in type_mapping:
                 node["type"] = type_mapping[key]
             return {k: _convert(v, k) for k, v in node.items()}
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_convert(item) for item in node]
-        else:
-            return node
+        return node
     return _convert(schema)
 
 def _convert_enums_to_options(schema: dict) -> dict:
@@ -107,10 +101,9 @@ def _convert_enums_to_options(schema: dict) -> dict:
                 ]
                 del node["enum"]
             return {k: _convert(v) for k, v in node.items()}
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_convert(item) for item in node]
-        else:
-            return node
+        return node
     return _convert(schema)
 
 def _move_to_parameters(schema: dict, keys_to_move: list) -> dict:
@@ -127,10 +120,9 @@ def _move_to_parameters(schema: dict, keys_to_move: list) -> dict:
                 k: _move(v) if k != "parameters" else v
                 for k, v in node.items()
             }
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_move(item) for item in node]
-        else:
-            return node
+        return node
     return _move(schema)
 
 def _apply_pipeline(payload: dict, transforms: list) -> dict:
@@ -146,10 +138,9 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
                 new_key = key_mapping.get(k, k)  # rename if in key_mapping
                 new_node[new_key] = _rename(v)
             return new_node
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_rename(item) for item in node]
-        else:
-            return node
+        return node
 
     return _rename(schema)
 
@@ -169,7 +160,7 @@ def _expand_one_of_blocks(schema: dict) -> dict:
                         # Reverse lookup in mapping to get the key for this variant
                         variant_key = next(
                             (k_ for k_, v_ in mapping.items() if title in v_),  # title used in path
-                            title  # fallback if no mapping hit
+                            title,  # fallback if no mapping hit
                         )
                         new_node.setdefault(k, {})[variant_key] = _expand(variant)
 
@@ -180,10 +171,9 @@ def _expand_one_of_blocks(schema: dict) -> dict:
                 else:
                     new_node[k] = _expand(v)
             return new_node
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_expand(item) for item in node]
-        else:
-            return node
+        return node
 
     return _expand(schema)
 
@@ -195,8 +185,8 @@ def _expand_any_of_blocks(schema: dict) -> dict:
                 if key == "anyOf" and isinstance(value, list):
                     # Find the first non-null type schema
                     non_null = next(
-                        (item for item in value if item.get("type") != "null"), 
-                        None
+                        (item for item in value if item.get("type") != "null"),
+                        None,
                     )
                     if non_null:
                         # Promote the non-null schema by merging its contents here
@@ -206,10 +196,9 @@ def _expand_any_of_blocks(schema: dict) -> dict:
                 else:
                     new_node[key] = _clean(value)
             return new_node
-        elif isinstance(node, list):
+        if isinstance(node, list):
             return [_clean(item) for item in node]
-        else:
-            return node
+        return node
 
     return _clean(schema)
 
@@ -241,7 +230,7 @@ _type_mapping = {
     "filter_threshold_percentage": "Number",
     "filter_threshold_count": "Number",
     "filter_valid_values_logic": "String",
-    "output_dataset_type": "String"
+    "output_dataset_type": "String",
 }
 
 _key_mapping = {
@@ -262,10 +251,11 @@ _pipeline = [
     partial(_remove_and_promote, key_to_promote="params"),
     partial(_convert_types_by_key, type_mapping=_type_mapping),
     _expand_one_of_blocks,
-    _expand_any_of_blocks
+    _expand_any_of_blocks,
 ]
 
 # # Example usage:
+# import json
 # with open("src/md_dataset/payload_full.json") as f:
 #     payload_old = json.load(f)
 
