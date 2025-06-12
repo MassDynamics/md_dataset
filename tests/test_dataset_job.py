@@ -57,8 +57,11 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         assert url == "http://example.com:8001/jobs/create_or_update"
         actual_payload = kwargs["json"]
         actual_params = actual_payload["params"]
+        actual_params_new = actual_payload["params_new"]
         assert actual_params["title"] == "Parameters"
+        assert actual_params_new["title"] == "Parameters"
         actual_payload.pop("params")
+        actual_payload.pop("params_new")
         assert actual_payload == expected_payload
 
 
@@ -89,6 +92,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             flow_and_deployment_name="flow and deployment name",
             run_type=DatasetType.INTENSITY,
             params={"param1": "value1"},
+            params_new={"param2": "value2"},
         )
 
         assert result == {"id": 123}
@@ -100,6 +104,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             "flow_and_deployment_name": "flow and deployment name",
             "run_type": DatasetType.INTENSITY,
             "params": {"param1": "value1"},
+            "params_new": {"param2": "value2"},
         }
 
         mock_post.assert_called_once_with(
@@ -121,5 +126,6 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
                 flow_and_deployment_name="flow and deployment name",
                 run_type="INTENSITY",
                 params={"param1": "value1"},
+                params_new={"param2": "value2"},
             )
 
