@@ -2,15 +2,16 @@ import copy
 import re
 from functools import partial
 
+
 def translate_payload(payload: dict) -> dict:
     return _apply_pipeline(payload, _pipeline)
 
 def _move_required_flags(schema: dict) -> dict:
-    def process_object(obj: dict):
+    def process_object(obj: dict) -> None:
         if not isinstance(obj, dict):
             return
 
-        for key, value in obj.items():
+        for value in obj.values():  # PERF102, B007
             if isinstance(value, dict):
                 process_object(value)
             elif isinstance(value, list):
@@ -28,7 +29,7 @@ def _move_required_flags(schema: dict) -> dict:
 
 def _resolve_refs(schema: dict) -> dict:
     definitions = schema.get("definitions", {})
-    def _resolve(node):
+    def _resolve(node: dict) -> dict:
         if isinstance(node, dict):
             if "$ref" in node:
                 ref_path = node["$ref"]
@@ -36,7 +37,8 @@ def _resolve_refs(schema: dict) -> dict:
                     def_name = ref_path.split("/")[-1]
                     resolved = copy.deepcopy(definitions[def_name])
                     return _resolve(resolved)
-                raise ValueError(f"Unsupported $ref path: {ref_path}")
+                msg = "Unsupported $ref path: " + ref_path  # TRY003, EM102
+                raise ValueError(msg)
             return {k: _resolve(v) for k, v in node.items()}
         if isinstance(node, list):
             return [_resolve(item) for item in node]
@@ -46,14 +48,12 @@ def _resolve_refs(schema: dict) -> dict:
     return _resolve(resolved_schema)
 
 def _flatten_properties(schema: dict, key_to_flatten: str) -> dict:
-    def _flatten(node):
+    def _flatten(node: dict) -> dict:
         if isinstance(node, dict):
             props = node.get(key_to_flatten)
             other_keys = {k: v for k, v in node.items() if k != key_to_flatten}
             if isinstance(props, dict):
-                flat_props = {}
-                for k, v in props.items():
-                    flat_props[k] = _flatten(v)
+                flat_props = {k: _flatten(v) for k, v in props.items()}  # PERF403
                 for k, v in _flatten(other_keys).items():
                     if k not in flat_props:
                         flat_props[k] = v
@@ -65,20 +65,21 @@ def _flatten_properties(schema: dict, key_to_flatten: str) -> dict:
     return _flatten(schema)
 
 def _remove_and_promote(schema: dict, key_to_promote: str) -> dict:
-    new_schema = {}
-    for key, value in schema.items():
-        if key == key_to_promote and isinstance(value, dict):
-            for inner_key, inner_val in value.items():
-                new_schema[inner_key] = inner_val
-        else:
-            new_schema[key] = value
+    # PERF403: Use dict comprehension
+    new_schema = {
+        inner_key: inner_val
+        for key, value in schema.items()
+        if key == key_to_promote and isinstance(value, dict)
+        for inner_key, inner_val in value.items()
+    }
+    new_schema.update({key: value for key, value in schema.items() if key != key_to_promote})
     return new_schema
 
 def _convert_types_by_key(schema: dict, type_mapping: dict) -> dict:
-    def _convert(node, key=None):
+    def _convert(node: dict, key: str | None = None) -> dict:  # Use Optional[str]
         if isinstance(node, dict):
             node = dict(node)
-            if key in type_mapping:
+            if key is not None and key in type_mapping:
                 node["type"] = type_mapping[key]
             return {k: _convert(v, k) for k, v in node.items()}
         if isinstance(node, list):
@@ -87,11 +88,11 @@ def _convert_types_by_key(schema: dict, type_mapping: dict) -> dict:
     return _convert(schema)
 
 def _convert_enums_to_options(schema: dict) -> dict:
-    def format_value(v):
+    def format_value(v: str) -> str:
         return re.sub(r"\s+", "_", v.lower())
-    def format_name(v):
+    def format_name(v: str) -> str:
         return v.strip().title()
-    def _convert(node):
+    def _convert(node: dict) -> dict:
         if isinstance(node, dict):
             node = dict(node)
             if "enum" in node:
@@ -107,7 +108,7 @@ def _convert_enums_to_options(schema: dict) -> dict:
     return _convert(schema)
 
 def _move_to_parameters(schema: dict, keys_to_move: list) -> dict:
-    def _move(node):
+    def _move(node: dict) -> dict:
         if isinstance(node, dict):
             node = dict(node)
             for key_to_move in keys_to_move:
@@ -131,11 +132,11 @@ def _apply_pipeline(payload: dict, transforms: list) -> dict:
     return payload
 
 def _rename_keys(schema: dict, key_mapping: dict) -> dict:
-    def _rename(node):
+    def _rename(node: dict) -> dict:
         if isinstance(node, dict):
             new_node = {}
             for k, v in node.items():
-                new_key = key_mapping.get(k, k)  # rename if in key_mapping
+                new_key = key_mapping.get(k, k)
                 new_node[new_key] = _rename(v)
             return new_node
         if isinstance(node, list):
@@ -145,7 +146,7 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
     return _rename(schema)
 
 def _expand_one_of_blocks(schema: dict) -> dict:
-    def _expand(node):
+    def _expand(node: dict) -> dict:
         if isinstance(node, dict):
             new_node = {}
             for k, v in node.items():
@@ -154,17 +155,14 @@ def _expand_one_of_blocks(schema: dict) -> dict:
                     mapping = discriminator.get("mapping", {})
                     one_of_list = v["oneOf"]
 
-                    # Build the new structure with keys from mapping
                     for variant in one_of_list:
                         title = variant.get("title")
-                        # Reverse lookup in mapping to get the key for this variant
                         variant_key = next(
-                            (k_ for k_, v_ in mapping.items() if title in v_),  # title used in path
-                            title,  # fallback if no mapping hit
+                            (k_ for k_, v_ in mapping.items() if title in v_),
+                            title,
                         )
                         new_node.setdefault(k, {})[variant_key] = _expand(variant)
 
-                    # Copy the remaining top-level keys (like "title", "description", etc.)
                     for key in v:
                         if key not in {"oneOf", "discriminator"}:
                             new_node[k][key] = _expand(v[key])
@@ -178,24 +176,23 @@ def _expand_one_of_blocks(schema: dict) -> dict:
     return _expand(schema)
 
 def _expand_any_of_blocks(schema: dict) -> dict:
-    def _clean(node):
+    def _clean(node: dict) -> dict:
         if isinstance(node, dict):
-            new_node = {}
-            for key, value in node.items():
-                if key == "anyOf" and isinstance(value, list):
-                    # Find the first non-null type schema
-                    non_null = next(
-                        (item for item in value if item.get("type") != "null"),
-                        None,
-                    )
-                    if non_null:
-                        # Promote the non-null schema by merging its contents here
-                        for nk, nv in _clean(non_null).items():
-                            new_node[nk] = nv
-                    # Otherwise, omit the anyOf block entirely
-                else:
-                    new_node[key] = _clean(value)
-            return new_node
+            # PERF403: Use dict comprehension
+            any_of_items = {
+                nk: nv
+                for key, value in node.items()
+                if key == "anyOf" and isinstance(value, list)
+                for non_null in [next((item for item in value if item.get("type") != "null"), None)]
+                if non_null
+                for nk, nv in _clean(non_null).items()
+            }
+            other_items = {
+                key: _clean(value)
+                for key, value in node.items()
+                if not (key == "anyOf" and isinstance(value, list))
+            }
+            return {**any_of_items, **other_items}
         if isinstance(node, list):
             return [_clean(item) for item in node]
         return node
@@ -254,21 +251,3 @@ _pipeline = [
     _expand_any_of_blocks,
 ]
 
-# # Example usage:
-# import json
-# with open("src/md_dataset/payload_full.json") as f:
-#     payload_old = json.load(f)
-
-# payload_new = []
-# for payload in payload_old:
-#     print(f"Translating payload: {payload['name']}")
-#     pl = {
-#         "name": payload["name"],
-#         "type": payload["run_type"],
-#         "properties":  translate_payload(payload["required_params"])
-
-#     }
-#     payload_new.append(pl)
-
-# with open("src/md_dataset/payload_new_generated.json", "w") as f:
-#     json.dump(payload_new, f, indent=4)
