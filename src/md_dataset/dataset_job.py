@@ -25,6 +25,7 @@ def create_or_update_dataset_job_send_http_request(
         flow_and_deployment_name: Name of the flow and deployment
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
         params: Dictionary of parameters for the job
+        params_new: Translated parameters for the job
 
     Returns:
         dict: The JSON response from the server
