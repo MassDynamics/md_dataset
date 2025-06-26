@@ -1,4 +1,5 @@
 from __future__ import annotations
+import inspect
 import os
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -47,6 +48,8 @@ def get_file_manager() -> None:
 def get_deployment_image() -> str:
     return os.getenv("IMAGE", "unknown")
 
+
+
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -68,7 +71,14 @@ def md_py(func: Callable) -> Callable:
         for dataset in input_datasets:
             dataset.populate_tables(file_manager)
 
-        results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+        # Try calling with params first, fallback to without params if signature mismatch
+        try:
+            results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+        except TypeError as e:
+            if "too many positional arguments" in str(e):
+                results = func(input_datasets, output_dataset_type, *args, **kwargs)
+            else:
+                raise
 
         dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or params.names[0], \
                 dataset_type=output_dataset_type, tables=results)
@@ -76,6 +86,14 @@ def md_py(func: Callable) -> Callable:
         file_manager.save_tables(dataset.tables())
 
         return dataset.dump()
+
+    # Override the signature to always include params regardless of the original function's signature
+    wrapper_params = [
+        inspect.Parameter("input_datasets", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[InputDataset]),
+        inspect.Parameter("params", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=InputParams),
+        inspect.Parameter("output_dataset_type", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=DatasetType),
+    ]
+    wrapper.__signature__ = inspect.Signature(wrapper_params, return_annotation=dict)
 
     return wrapper
 
@@ -166,7 +184,14 @@ def md_r(r_file: str, r_function: str) -> Callable:
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
-            r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+            # Try calling with params first, fallback to without params if signature mismatch
+            try:
+                r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+            except TypeError as e:
+                if "too many positional arguments" in str(e):
+                    r_args = func(input_datasets, output_dataset_type, *args, **kwargs)
+                else:
+                    raise
 
             results = run_r_task(r_file, r_function, r_args)
 
@@ -176,6 +201,14 @@ def md_r(r_file: str, r_function: str) -> Callable:
             file_manager.save_tables(dataset.tables())
 
             return dataset.dump()
+
+        # Override the signature to always include params regardless of the original function's signature
+        wrapper_params = [
+            inspect.Parameter("input_datasets", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[InputDataset]),
+            inspect.Parameter("params", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=InputParams),
+            inspect.Parameter("output_dataset_type", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=DatasetType),
+        ]
+        wrapper.__signature__ = inspect.Signature(wrapper_params, return_annotation=dict)
 
         return wrapper
     return decorator

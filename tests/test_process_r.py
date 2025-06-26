@@ -102,3 +102,33 @@ def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_man
     assert args[0][1][0] == f"job_runs/{result['run_id']}/metadata.parquet"
     pd.testing.assert_frame_equal(args[0][1][1].reset_index(drop=True), \
             pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
+
+def test_md_r_decorator_handles_functions_without_params():
+    """Test that md_r decorator can handle functions without params parameter."""
+    import inspect
+    from md_dataset.models.dataset import DatasetType
+    from md_dataset.models.dataset import InputDataset
+    from md_dataset.models.dataset import InputParams
+    from md_dataset.process import md_r
+
+    @md_r(r_file="./tests/test_process.r", r_function="process")
+    def func_without_params(input_datasets: list[InputDataset], output_dataset_type: DatasetType) -> RFuncArgs:
+        del input_datasets, output_dataset_type
+        return RFuncArgs(data_frames=[], r_args=[])
+
+    @md_r(r_file="./tests/test_process.r", r_function="process")
+    def func_with_params(
+        input_datasets: list[InputDataset], params: InputParams, output_dataset_type: DatasetType,
+    ) -> RFuncArgs:
+        del input_datasets, params, output_dataset_type
+        return RFuncArgs(data_frames=[], r_args=[])
+
+    sig1 = inspect.signature(func_without_params)
+    sig2 = inspect.signature(func_with_params)
+
+    assert "params" in sig1.parameters
+    assert "params" in sig2.parameters
+    assert "input_datasets" in sig1.parameters
+    assert "input_datasets" in sig2.parameters
+    assert "output_dataset_type" in sig1.parameters
+    assert "output_dataset_type" in sig2.parameters

@@ -253,3 +253,33 @@ def test_run_md_converter_process_with_peptide(fake_file_manager: FileManager):
     assert UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Peptide_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+
+def test_md_py_decorator_handles_functions_without_params():
+    """Test that md_py decorator can handle functions without params parameter."""
+    import inspect
+    from md_dataset.models.dataset import DatasetType
+    from md_dataset.models.dataset import InputDataset
+    from md_dataset.models.dataset import InputParams
+    from md_dataset.process import md_py
+
+    @md_py
+    def func_without_params(input_datasets: list[InputDataset], output_dataset_type: DatasetType) -> dict:
+        del input_datasets, output_dataset_type
+        return {"test": "data"}
+
+    @md_py
+    def func_with_params(
+        input_datasets: list[InputDataset], params: InputParams, output_dataset_type: DatasetType,
+    ) -> dict:
+        del input_datasets, params, output_dataset_type
+        return {"test": "data"}
+
+    sig1 = inspect.signature(func_without_params)
+    sig2 = inspect.signature(func_with_params)
+
+    assert "params" in sig1.parameters
+    assert "params" in sig2.parameters
+    assert "input_datasets" in sig1.parameters
+    assert "input_datasets" in sig2.parameters
+    assert "output_dataset_type" in sig1.parameters
+    assert "output_dataset_type" in sig2.parameters
