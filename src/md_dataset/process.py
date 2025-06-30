@@ -100,7 +100,7 @@ def md_converter(func: Callable) -> Callable:
 
         results = func(experiment_id, params, *args, **kwargs)
 
-        dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or params.names[0], \
+        dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
                 dataset_type=DatasetType.INTENSITY, tables=results)
 
         file_manager.save_tables(dataset.tables())
@@ -170,7 +170,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_args)
 
-            dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or params.names[0], \
+            dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
                     dataset_type=output_dataset_type, tables=results)
 
             file_manager.save_tables(dataset.tables())

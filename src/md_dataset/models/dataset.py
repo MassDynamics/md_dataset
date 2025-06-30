@@ -21,14 +21,7 @@ class DatasetType(Enum):
     ANOVA = "ANOVA"
 
 class InputParams(BaseModel):
-  """The name of the dataset.
-
-  Attributes:
-  ----------
-  dataset_name : str
-    The name of the Dataset to create, if None we use legacy names from MD dataset service
-  """
-  dataset_name: str = None
+  pass
 
 class ConverterInputParams(InputParams):
   entity_type: Literal[
@@ -89,7 +82,6 @@ class IntensityInputDataset(InputDataset):
 
 class Dataset(BaseModel, abc.ABC):
     run_id: uuid.UUID
-    name: str
     dataset_type: DatasetType
 
     @abc.abstractmethod
@@ -101,15 +93,15 @@ class Dataset(BaseModel, abc.ABC):
         pass
 
     @classmethod
-    def from_run(cls, run_id: uuid.UUID, name: str, dataset_type: DatasetType, tables: list) -> Dataset:
+    def from_run(cls, run_id: uuid.UUID, dataset_type: DatasetType, tables: list) -> Dataset:
         if dataset_type == DatasetType.INTENSITY:
-            return IntensityDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+            return IntensityDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
         if dataset_type == DatasetType.PAIRWISE:
-            return PairwiseDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+            return PairwiseDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
         if dataset_type == DatasetType.ANOVA:
-            return AnovaDataset(run_id=run_id, name=name, dataset_type=dataset_type, \
+            return AnovaDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
         return None # TODO raise
 
@@ -162,7 +154,6 @@ class IntensityDataset(Dataset):
     def dump(self, entity_type: str | None = "protein") -> dict:
         if self._dump_cache is None:
             self._dump_cache =  {
-                    "name": self.name,
                     "type": self.dataset_type,
                     "run_id": self.run_id,
                     "tables": [
@@ -239,7 +230,6 @@ class PairwiseDataset(Dataset):
     def dump(self, entity_type: str | None = None) -> dict:  # noqa: ARG002
         if self._dump_cache is None:
             self._dump_cache =  {
-                    "name": self.name,
                     "type": self.dataset_type,
                     "run_id": self.run_id,
                     "tables": [
@@ -310,7 +300,6 @@ class AnovaDataset(Dataset):
     def dump(self) -> dict:
         if self._dump_cache is None:
             self._dump_cache = {
-                "name": self.name,
                 "type": self.dataset_type,
                 "run_id": self.run_id,
                 "tables": [
@@ -320,9 +309,9 @@ class AnovaDataset(Dataset):
                         "path": self._path(AnovaTableType.RESULTS),
                     },
                     {
-                            "id": str(uuid.uuid4()),
-                            "name": "runtime_metadata",
-                            "path": self._path(AnovaTableType.RUNTIME_METADATA),
+                        "id": str(uuid.uuid4()),
+                        "name": "runtime_metadata",
+                        "path": self._path(AnovaTableType.RUNTIME_METADATA),
                     },
                 ],
             }
@@ -393,7 +382,6 @@ class DoseResponseDataset(Dataset):
     def dump(self, entity_type: str | None = None) -> dict: # noqa: ARG002
         if self._dump_cache is None:
             self._dump_cache =  {
-                    "name": self.name,
                     "type": self.dataset_type,
                     "run_id": self.run_id,
                     "tables": [
