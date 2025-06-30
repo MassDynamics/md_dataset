@@ -173,16 +173,16 @@ def md_r(r_file: str, r_function: str) -> Callable:
             for dataset in input_datasets:
                 dataset.populate_tables(file_manager)
 
-            r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
-
             # Try calling with params first, fallback to without params if signature mismatch
             try:
-                results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+                r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
             except TypeError as e:
                 if "too many positional arguments" in str(e):
-                    results = func(input_datasets, output_dataset_type, *args, **kwargs)
+                    r_args = func(input_datasets, output_dataset_type, *args, **kwargs)
                 else:
                     raise
+
+            results = run_r_task(r_file, r_function, r_args)
 
             dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
                     dataset_type=output_dataset_type, tables=results)
