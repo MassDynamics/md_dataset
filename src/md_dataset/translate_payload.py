@@ -192,52 +192,65 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
     return _clean(schema)
 
 def _resolve_one_of(schema: dict) -> dict:
-    """Resolve oneOf blocks by extracting referenced properties to top level, placing them after the source property."""
-    definitions = schema.get("definitions", {})
-    
-    def _resolve(node: dict, parent_node: dict = None) -> dict:
-        if isinstance(node, dict):
-            new_node = OrderedDict()
-            items = list(node.items())
-            i = 0
-            while i < len(items):
-                key, value = items[i]
-                if key == "oneOf" and isinstance(value, list):
-                    i += 1
-                    continue
-                if isinstance(value, dict):
-                    resolved_value = _resolve(value, new_node)
-                    new_node[key] = resolved_value
-                    # If this value has a oneOf, insert extracted properties after this property
-                    if "oneOf" in value and isinstance(value["oneOf"], list):
-                        extracted_properties = OrderedDict()
-                        for one_of_item in value["oneOf"]:
-                            if isinstance(one_of_item, dict) and "$ref" in one_of_item:
-                                ref_path = one_of_item["$ref"]
-                                if ref_path.startswith("#/definitions/"):
-                                    def_name = ref_path.split("/")[-1]
-                                    if def_name in definitions:
-                                        def_obj = definitions[def_name]
-                                        if "properties" in def_obj:
-                                            for prop_name, prop_value in def_obj["properties"].items():
-                                                if prop_name != "method":
-                                                    full_ref_path = f"{ref_path}/properties/{prop_name}"
-                                                    extracted_properties[prop_name] = {"$ref": full_ref_path}
-                        for prop_name, prop_value in extracted_properties.items():
-                            new_node[prop_name] = prop_value
-                elif isinstance(value, list):
-                    new_node[key] = [_resolve(item) for item in value]
-                else:
-                    new_node[key] = value
-                i += 1
-            return new_node
-        elif isinstance(node, list):
-            return [_resolve(item) for item in node]
-        else:
-            return node
-    resolved_schema = copy.deepcopy(schema)
-    return _resolve(resolved_schema)
+    """
+    Resolves `oneOf` fields with discriminator by flattening the referenced sub-properties
+    into the parent schema's properties, excluding the discriminator key (e.g., 'method').
+    The resolved fields are added immediately after the original oneOf field.
+    """
+    import copy
+    from collections import OrderedDict
 
+    new_schema = copy.deepcopy(schema)
+    definitions = new_schema.get("definitions", {})
+
+    for def_name, def_schema in definitions.items():
+        if not isinstance(def_schema, dict):
+            continue
+
+        props = def_schema.get("properties", {})
+        if not isinstance(props, dict):
+            continue
+
+        # Use ordered dict to control field order
+        new_props = OrderedDict()
+
+        for prop_name, prop_schema in props.items():
+            new_props[prop_name] = prop_schema
+
+            # If this property contains a oneOf with discriminator
+            if "oneOf" in prop_schema and "discriminator" in prop_schema:
+                for oneof_entry in prop_schema["oneOf"]:
+                    if "$ref" not in oneof_entry:
+                        continue
+
+                    ref_path = oneof_entry["$ref"]
+                    parts = ref_path.split("/")
+                    if len(parts) != 3 or parts[0] != "#" or parts[1] != "definitions":
+                        continue
+
+                    ref_def_name = parts[2]
+                    ref_def = definitions.get(ref_def_name, {})
+                    sub_props = ref_def.get("properties", {})
+
+                    for sub_prop_name in sub_props:
+                        if sub_prop_name == "method":
+                            continue
+                        new_props[sub_prop_name] = {
+                            "$ref": f"#/definitions/{ref_def_name}/properties/{sub_prop_name}"
+                        }
+
+                # Remove the oneOf but preserve the rest
+                cleaned_prop = {
+                    key: val
+                    for key, val in prop_schema.items()
+                    if key != "oneOf"
+                }
+                new_props[prop_name] = cleaned_prop
+
+        # Replace with reordered properties
+        def_schema["properties"] = new_props
+
+    return new_schema
 
 _key_mapping = {
     "maxItems": "max",
