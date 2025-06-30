@@ -1,6 +1,7 @@
 import copy
 import re
 from functools import partial
+from collections import OrderedDict
 
 
 def translate_payload(payload: dict) -> dict:
@@ -34,8 +35,28 @@ def _resolve_refs(schema: dict) -> dict:
             if "$ref" in node:
                 ref_path = node["$ref"]
                 if ref_path.startswith("#/definitions/"):
-                    def_name = ref_path.split("/")[-1]
+                    # Split the path to handle nested property references
+                    path_parts = ref_path.split("/")
+                    def_name = path_parts[2]  # Get the definition name
+                    
+                    if def_name not in definitions:
+                        msg = f"Definition not found: {def_name}"  # TRY003, EM102
+                        raise ValueError(msg)
+                    
+                    # Start with the base definition
                     resolved = copy.deepcopy(definitions[def_name])
+                    
+                    # Navigate through the nested path if it exists
+                    if len(path_parts) > 3:
+                        current = resolved
+                        for part in path_parts[3:]:
+                            if isinstance(current, dict) and part in current:
+                                current = current[part]
+                            else:
+                                msg = f"Invalid path in $ref: {ref_path}"  # TRY003, EM102
+                                raise ValueError(msg)
+                        resolved = current
+                    
                     # Preserve original values for duplicate keys
                     original_keys = {k: v for k, v in node.items() if k != "$ref"}
                     resolved = _resolve(resolved)
@@ -79,8 +100,6 @@ def _remove_and_promote(schema: dict, key_to_promote: str) -> dict:
     }
     new_schema.update({key: value for key, value in schema.items() if key != key_to_promote})
     return new_schema
-
-def _convert_types_by_key(schema: dict, type_mapping: dict) -> dict:
     def _convert(node: dict, key: str | None = None) -> dict:  # Use Optional[str]
         if isinstance(node, dict):
             node = dict(node)
@@ -149,38 +168,6 @@ def _rename_keys(schema: dict, key_mapping: dict) -> dict:
         return node
 
     return _rename(schema)
-
-def _expand_one_of_blocks(schema: dict) -> dict:
-    def _expand(node: dict) -> dict:
-        if isinstance(node, dict):
-            new_node = {}
-            for k, v in node.items():
-                if isinstance(v, dict) and "oneOf" in v and "discriminator" in v:
-                    discriminator = v["discriminator"]
-                    mapping = discriminator.get("mapping", {})
-                    one_of_list = v["oneOf"]
-
-                    for variant in one_of_list:
-                        title = variant.get("title")
-                        variant_key = next(
-                            (k_ for k_, v_ in mapping.items() if title in v_),
-                            title,
-                        )
-                        new_node.setdefault(k, {})[variant_key] = _expand(variant)
-
-                    for key in v:
-                        if key not in {"oneOf", "discriminator"}:
-                            new_node[k][key] = _expand(v[key])
-                else:
-                    new_node[k] = _expand(v)
-            return new_node
-        if isinstance(node, list):
-            return [_expand(item) for item in node]
-        return node
-
-    return _expand(schema)
-
-def _expand_any_of_blocks(schema: dict) -> dict:
     def _clean(node: dict) -> dict:
         if isinstance(node, dict):
             # PERF403: Use dict comprehension
@@ -204,36 +191,53 @@ def _expand_any_of_blocks(schema: dict) -> dict:
 
     return _clean(schema)
 
+def _resolve_one_of(schema: dict) -> dict:
+    """Resolve oneOf blocks by extracting referenced properties to top level, placing them after the source property."""
+    definitions = schema.get("definitions", {})
+    
+    def _resolve(node: dict, parent_node: dict = None) -> dict:
+        if isinstance(node, dict):
+            new_node = OrderedDict()
+            items = list(node.items())
+            i = 0
+            while i < len(items):
+                key, value = items[i]
+                if key == "oneOf" and isinstance(value, list):
+                    i += 1
+                    continue
+                if isinstance(value, dict):
+                    resolved_value = _resolve(value, new_node)
+                    new_node[key] = resolved_value
+                    # If this value has a oneOf, insert extracted properties after this property
+                    if "oneOf" in value and isinstance(value["oneOf"], list):
+                        extracted_properties = OrderedDict()
+                        for one_of_item in value["oneOf"]:
+                            if isinstance(one_of_item, dict) and "$ref" in one_of_item:
+                                ref_path = one_of_item["$ref"]
+                                if ref_path.startswith("#/definitions/"):
+                                    def_name = ref_path.split("/")[-1]
+                                    if def_name in definitions:
+                                        def_obj = definitions[def_name]
+                                        if "properties" in def_obj:
+                                            for prop_name, prop_value in def_obj["properties"].items():
+                                                if prop_name != "method":
+                                                    full_ref_path = f"{ref_path}/properties/{prop_name}"
+                                                    extracted_properties[prop_name] = {"$ref": full_ref_path}
+                        for prop_name, prop_value in extracted_properties.items():
+                            new_node[prop_name] = prop_value
+                elif isinstance(value, list):
+                    new_node[key] = [_resolve(item) for item in value]
+                else:
+                    new_node[key] = value
+                i += 1
+            return new_node
+        elif isinstance(node, list):
+            return [_resolve(item) for item in node]
+        else:
+            return node
+    resolved_schema = copy.deepcopy(schema)
+    return _resolve(resolved_schema)
 
-
-
-_type_mapping = {
-    "id": "UUID",
-    "user_id": "UUID",
-    "experiment_id": "UUID",
-    "experiment_ids": "Array",
-    "name": "String",
-    "job_run_params": "__REPLACE_ME__",
-    "type": "String",
-    "tables": "Array",
-    "dataset_name": "String",
-    "sample_name": "String",
-    "experiment_design": "Experiment",
-    "condition_column": "ConditionComparison",
-    "condition_comparisons": "ConditionComparisonConditions",
-    "condition_comparison_pairs": "Array",
-    "control_variables": "Array",
-    "column": "String",
-    "limma_trend": "Boolean",
-    "robust_empirical_bayes": "Boolean",
-    "fit_separate_models": "Boolean",
-    "filter_values_criteria": "__REPLACE_ME__",
-    "method": "String",
-    "filter_threshold_percentage": "Number",
-    "filter_threshold_count": "Number",
-    "filter_valid_values_logic": "String",
-    "output_dataset_type": "String",
-}
 
 _key_mapping = {
     "maxItems": "max",
@@ -245,13 +249,31 @@ _key_mapping = {
 _pipeline = [
     _move_required_flags,
     _convert_enums_to_options,
+    _resolve_one_of,
     _resolve_refs,
     partial(_rename_keys, key_mapping=_key_mapping),
     partial(_move_to_parameters, keys_to_move=["options", "min", "max"]),
     partial(_flatten_properties, key_to_flatten="properties"),
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
-    # partial(_convert_types_by_key, type_mapping=_type_mapping),
-    _expand_one_of_blocks,
-    _expand_any_of_blocks,
 ]
+
+# Example usage:
+import json
+
+with open("src/md_dataset/payload_full.json") as f:
+    payload_old = json.load(f)
+
+payload_new = []
+for payload in payload_old:
+    print(f"Translating payload: {payload['name']}")
+    pl = {
+        "name": payload["name"],
+        "type": payload["run_type"],
+        "properties":  translate_payload(payload["required_params"]),
+
+    }
+    payload_new.append(pl)
+
+with open("src/md_dataset/payload_new_generated.json", "w") as f:
+    json.dump(payload_new, f, indent=4)
