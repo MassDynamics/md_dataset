@@ -36,7 +36,12 @@ def _resolve_refs(schema: dict) -> dict:
                 if ref_path.startswith("#/definitions/"):
                     def_name = ref_path.split("/")[-1]
                     resolved = copy.deepcopy(definitions[def_name])
-                    return _resolve(resolved)
+                    # Preserve original values for duplicate keys
+                    original_keys = {k: v for k, v in node.items() if k != "$ref"}
+                    resolved = _resolve(resolved)
+                    # Merge resolved with original, keeping original values for duplicates
+                    merged = {**resolved, **original_keys}
+                    return merged
                 msg = "Unsupported $ref path: " + ref_path  # TRY003, EM102
                 raise ValueError(msg)
             return {k: _resolve(v) for k, v in node.items()}
@@ -246,8 +251,7 @@ _pipeline = [
     partial(_flatten_properties, key_to_flatten="properties"),
     partial(_flatten_properties, key_to_flatten="items"),
     partial(_remove_and_promote, key_to_promote="params"),
-    partial(_convert_types_by_key, type_mapping=_type_mapping),
+    # partial(_convert_types_by_key, type_mapping=_type_mapping),
     _expand_one_of_blocks,
     _expand_any_of_blocks,
 ]
-
