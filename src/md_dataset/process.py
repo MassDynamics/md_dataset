@@ -70,7 +70,7 @@ def md_py(func: Callable) -> Callable:
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-        dataset = Dataset.from_run(run_id=runtime.flow_run.id, name=params.dataset_name or params.names[0], \
+        dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
                 dataset_type=output_dataset_type, tables=results)
 
         file_manager.save_tables(dataset.tables())

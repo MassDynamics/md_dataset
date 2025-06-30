@@ -38,7 +38,7 @@ def input_datasets() -> list[IntensityInputDataset]:
 
 class TestBlahParams(InputParams):
     id: int
-    names: list[str] = None
+    dataset_name: str
 
 @pytest.fixture
 def test_params() -> TestBlahParams:
@@ -53,13 +53,12 @@ def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], 
     return {IntensityTableType.INTENSITY.value: intensity_table.data, \
             IntensityTableType.METADATA.value: metadata_table.data}
 
-def test_run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
+def test_run_process_sets_type(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
 
     result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert result["name"] == "foo"
     assert result["type"] == DatasetType.INTENSITY
 
 def test_run_process_has_tables(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
@@ -109,15 +108,6 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 
     assert args[0][1][0] == f"job_runs/{result['run_id']}/metadata.parquet"
     pd.testing.assert_frame_equal(args[0][1][1], test_metadata)
-
-def test_run_process_support_md_names(input_datasets: list[IntensityInputDataset], \
-        fake_file_manager: FileManager):
-    test_params = TestBlahParams(id=123, names=["one", "two"])
-    test_data = pd.DataFrame({})
-    fake_file_manager.load_parquet_to_df.return_value = test_data
-
-    result = run_process_sets_name_and_type(input_datasets, test_params, DatasetType.INTENSITY)
-    assert result["name"] == "one"
 
 @md_py
 def run_process_missing_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \

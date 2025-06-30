@@ -48,7 +48,7 @@ def input_datasets() -> list[InputDataset]:
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
         ], type=DatasetType.INTENSITY)]
 
-def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[InputDataset], \
+def test_run_process_r_input_dataset(input_datasets: list[InputDataset], \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -57,20 +57,9 @@ def test_run_process_r_input_dataset_provided_dataset_name(input_datasets: list[
         result = prepare_test_run_r(input_datasets, TestRParams(dataset_name="test some r code", \
                 message="hello"), DatasetType.INTENSITY)
 
-    assert result["name"] == "test some r code"
     assert result["type"] == DatasetType.INTENSITY
     assert result["run_id"] is not None
     assert isinstance(result["run_id"], UUID)
-
-def test_run_process_r_input_dataset_md_support(input_datasets: list[InputDataset], fake_file_manager: FileManager):
-    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
-    fake_file_manager.load_parquet_to_df.return_value = test_data
-
-    with conversion.localconverter(default_converter):
-        result = prepare_test_run_r(input_datasets, TestRParams(message="hello", names=["r", "sup"]), \
-                DatasetType.INTENSITY)
-
-    assert result["name"] == "r"
 
 def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": ["x", "y", "z"], "col2": ["a", "b", "c"]})
