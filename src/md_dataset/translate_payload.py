@@ -91,25 +91,17 @@ def _flatten_properties(schema: dict, key_to_flatten: str) -> dict:
     return _flatten(schema)
 
 def _remove_and_promote(schema: dict, key_to_promote: str) -> dict:
-    # PERF403: Use dict comprehension
-    new_schema = {
-        inner_key: inner_val
-        for key, value in schema.items()
-        if key == key_to_promote and isinstance(value, dict)
-        for inner_key, inner_val in value.items()
-    }
-    new_schema.update({key: value for key, value in schema.items() if key != key_to_promote})
+    # Preserve original order by iterating through items in order
+    new_schema = {}
+    for key, value in schema.items():
+        if key == key_to_promote and isinstance(value, dict):
+            # Insert the promoted items at the current position
+            for inner_key, inner_val in value.items():
+                new_schema[inner_key] = inner_val
+        elif key != key_to_promote:
+            # Keep other items in their original order
+            new_schema[key] = value
     return new_schema
-    def _convert(node: dict, key: str | None = None) -> dict:  # Use Optional[str]
-        if isinstance(node, dict):
-            node = dict(node)
-            if key is not None and key in type_mapping:
-                node["type"] = type_mapping[key]
-            return {k: _convert(v, k) for k, v in node.items()}
-        if isinstance(node, list):
-            return [_convert(item) for item in node]
-        return node
-    return _convert(schema)
 
 def _convert_enums_to_options(schema: dict) -> dict:
     def format_value(v: str) -> str:
