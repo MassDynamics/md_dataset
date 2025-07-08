@@ -6,7 +6,7 @@ from pydantic import model_validator
 
 class RFuncArgs(BaseModel):
     data_frames: list[pd.DataFrame]
-    r_args: list[str]
+    r_args: list[str] = []
 
     class Config:
         arbitrary_types_allowed = True
