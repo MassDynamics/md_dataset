@@ -70,14 +70,14 @@ class IntensityTableType(Enum):
 
 class IntensityTable:
     @classmethod
-    def table_name(cls, intensity_type: IntensityTableType) -> str:
-        return f"Protein_{intensity_type.value.title()}"
+    def table_name(cls, intensity_type: IntensityTableType, entity_type: ConverterInputParams) -> str:
+        return f"{entity_type.entity_type.title()}_{intensity_type.value.title()}"
 
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
 
-    def table(self, table_type: IntensityTableType) -> InputDatasetTable:
-        return next(filter(lambda table: table.name == IntensityTable.table_name(table_type), \
+    def table(self, table_type: IntensityTableType, entity_type: ConverterInputParams) -> InputDatasetTable:
+        return next(filter(lambda table: table.name == IntensityTable.table_name(table_type, entity_type), \
                 self.tables), None)
 
 class Dataset(BaseModel, abc.ABC):
