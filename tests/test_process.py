@@ -48,10 +48,8 @@ def test_params() -> TestBlahParams:
 def run_process_sets_name_and_type(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, \
-                                              entity_type=ConverterInputParams(entity_type="Protein"))
-    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, \
-                                             entity_type=ConverterInputParams(entity_type="Protein"))
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, "Protein")
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, "Protein")
     return {IntensityTableType.INTENSITY.value: intensity_table.data, \
             IntensityTableType.METADATA.value: metadata_table.data}
 
@@ -76,10 +74,8 @@ def test_run_process_has_tables(input_datasets: list[IntensityInputDataset], tes
 def run_process_data(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, \
-                                              entity_type=ConverterInputParams(entity_type="Protein"))
-    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, \
-                                             entity_type=ConverterInputParams(entity_type="Protein"))
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, "Protein")
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, "Protein")
 
     return {IntensityTableType.INTENSITY.value: intensity_table.data.iloc[::-1], \
             IntensityTableType.METADATA.value: metadata_table.data}
@@ -117,8 +113,7 @@ def test_run_process_save_and_returns_data(input_datasets: list[IntensityInputDa
 def run_process_missing_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, \
-                                              entity_type=ConverterInputParams(entity_type="Protein"))
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, "Protein")
     return {IntensityTableType.INTENSITY.value: intensity_table.data}
 
 def test_run_process_invalid_missing_metadata(input_datasets: list[IntensityInputDataset], \
@@ -136,8 +131,7 @@ def test_run_process_invalid_missing_metadata(input_datasets: list[IntensityInpu
 def run_process_invalid_dataframe(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, \
-                                              entity_type=ConverterInputParams(entity_type="Protein"))
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, "Protein")
     return {IntensityTableType.INTENSITY.value: intensity_table.data, \
             IntensityTableType.METADATA.value: {"a": "dict"}}
 
@@ -173,10 +167,8 @@ def test_run_process_returns_table_data(input_datasets: list[IntensityInputDatas
 def run_process_data_with_runtime_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \
         output_dataset_type: DatasetType) -> dict: # noqa: ARG001
 
-    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, \
-                                              entity_type = ConverterInputParams(entity_type="Protein"))
-    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, \
-                                             entity_type = ConverterInputParams(entity_type="Protein"))
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, "Protein")
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, "Protein")
 
     return {IntensityTableType.INTENSITY.value: intensity_table.data, \
             IntensityTableType.METADATA.value: metadata_table.data, \
