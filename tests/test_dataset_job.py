@@ -25,6 +25,10 @@ class DatasetJobParamsTest(unittest.TestCase):
         assert params["properties"]["input_datasets"]["type"] == "array"
         assert params["properties"]["input_datasets"]["items"] == {"$ref": "#/definitions/InputDataset"}
 
+        assert parameters_new["input_datasets"]["type"] == "object"
+        assert parameters_new["input_datasets"]["name"]["title"] == "Name"
+        assert parameters_new["input_datasets"]["name"]["type"] == "string"
+
         assert description=="A nice description."
 
 
