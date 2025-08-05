@@ -33,6 +33,16 @@ class ConverterInputParams(InputParams):
       default="Protein",
   )
 
+class EntityType(BaseModel):
+  entity_type: Literal[
+      "Peptide",
+      "Protein",
+  ] = Field(
+      title="Entity Type",
+      description="Entity type of the intensity dataset",
+      default="Protein",
+  )
+
 class InputDatasetTable(BaseModel):
     name: str
     bucket: str = None
@@ -70,13 +80,13 @@ class IntensityTableType(Enum):
 
 class IntensityTable:
     @classmethod
-    def table_name(cls, intensity_type: IntensityTableType, entity_type: str) -> str:
+    def table_name(cls, intensity_type: IntensityTableType, entity_type: EntityType) -> str:
         return f"{entity_type}_{intensity_type.value.title()}"
 
 class IntensityInputDataset(InputDataset):
     type: DatasetType = DatasetType.INTENSITY
 
-    def table(self, table_type: IntensityTableType, entity_type: str) -> InputDatasetTable:
+    def table(self, table_type: IntensityTableType, entity_type: EntityType) -> InputDatasetTable:
         return next(filter(lambda table: table.name == IntensityTable.table_name(table_type, entity_type), \
                 self.tables), None)
 

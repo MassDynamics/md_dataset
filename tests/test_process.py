@@ -19,7 +19,6 @@ def prefect_test_fixture():
     with prefect_test_harness():
         yield
 
-
 @pytest.fixture
 def fake_file_manager(mocker: MockerFixture):
     file_manager = mocker.Mock(spec=FileManager)
