@@ -13,6 +13,9 @@ if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1
 fi
 
 echo "installing packages into ${CONDA_ENV_NAME}"
+github_token=$(aws ssm get-parameter --name "/services/github/key" --with-decryption --query "Parameter.Value" --output text)
+export GH_TOKEN=$github_token
+echo "GH_TOKEN: ${GH_TOKEN:0:5}*****"
 conda run -n $CONDA_ENV_NAME bash -c "python -m pip install -e '.[dev]'"
 
 TZ=UTC conda run -n $CONDA_ENV_NAME bash -c "pytest -n auto"
