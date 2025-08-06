@@ -21,9 +21,6 @@ docker build \
 
 dockerhub_username=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-username" --query "Parameter.Value" --output text)
 dockerhub_password=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-password" --with-decryption --query "Parameter.Value" --output text)
-github_token=$(aws ssm get-parameter --name "/services/github/key" --with-decryption --query "Parameter.Value" --output text)
-export GH_TOKEN=$github_token
-echo "GH_TOKEN: ${GH_TOKEN:0:5}*****"
 
 docker login -u $dockerhub_username -p $dockerhub_password
 
