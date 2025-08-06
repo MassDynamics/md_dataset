@@ -11,6 +11,7 @@ steps:
       DOCKER_FILE: "base.Dockerfile"
     agents:
       python-r-4.3: true
+      ebdeploy: true
 
   - label: ":lint-roller: lint"
     command: ./scripts/lint
