@@ -1,8 +1,13 @@
+env:
+  AWS_REGION: "ap-southeast-2"
+  AWS_DEFAULT_REGION: "ap-southeast-2"
+
 steps:
   - label: ":python: test"
     command: ./scripts/test
     env:
       CONDA_ENV_NAME: "md_dataset_package"
+      AWS_PROFILE: "eb-services-cli"
     agents:
       python-r-4.3: true
 
@@ -10,6 +15,8 @@ steps:
     command: ./scripts/lint
     env:
       CONDA_ENV_NAME: "md_dataset_package"
+      env:
+      AWS_PROFILE: "eb-services-cli"
     agents:
       python-r-4.3: true
 
