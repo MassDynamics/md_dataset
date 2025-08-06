@@ -10,6 +10,14 @@ from pydantic import Field
 from pydantic import PrivateAttr
 from pydantic import model_validator
 
+from md_form.field_utils.field_helpers import (
+    select_field,
+)
+from md_form.field_utils.when import When
+from md_form.field_utils.rules_builder import (
+    is_required,
+)
+
 if TYPE_CHECKING:
     from md_dataset.file_manager import FileManager
 
@@ -27,10 +35,12 @@ class ConverterInputParams(InputParams):
   entity_type: Literal[
       "Peptide",
       "Protein",
-  ] = Field(
-      title="Entity Type",
+  ] = select_field(
+      name="Entity Type",
       description="Entity type of the intensity dataset",
       default="Protein",
+      rules=[is_required()],
+      when=When.not_equals("input_datasets", None)
   )
 
 class InputDatasetTable(BaseModel):
