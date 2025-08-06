@@ -12,7 +12,7 @@ if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1
   conda create -y --name $CONDA_ENV_NAME python=3.11
 fi
 conda run -n $CONDA_ENV_NAME bash -c "python -m pip install awscli"
-conda run -n $CONDA_ENV_NAME bash -c "aws configure list-profiles"
+conda run -n $CONDA_ENV_NAME bash -c "aws configure list"
 github_token=$(conda run -n $CONDA_ENV_NAME bash -c 'aws ssm get-parameter --name "/services/github/key" --with-decryption --query "Parameter.Value" --output text')
 export GH_TOKEN=$github_token
 echo "installing packages into ${CONDA_ENV_NAME}"
