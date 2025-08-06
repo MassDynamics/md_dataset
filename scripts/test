@@ -13,20 +13,8 @@ if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1
 fi
 
 echo "installing packages into ${CONDA_ENV_NAME}"
-
-# Install AWS CLI if not available
-if ! command -v aws &> /dev/null; then
-    echo "AWS CLI not found, installing..."
-    if command -v pip &> /dev/null; then
-        pip install awscli
-    elif command -v pip3 &> /dev/null; then
-        pip3 install awscli
-    else
-        echo "Error: pip not found, cannot install AWS CLI"
-        exit 1
-    fi
-fi
-
+python3 -m venv venv
+source venv/bin/activate
 github_token=$(aws ssm get-parameter --name "/services/github/key" --with-decryption --query "Parameter.Value" --output text)
 export GH_TOKEN=$github_token
 echo "GH_TOKEN: ${GH_TOKEN:0:5}*****"
