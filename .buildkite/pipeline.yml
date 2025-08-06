@@ -10,7 +10,6 @@ steps:
       AWS_PROFILE: "eb-services-cli"
       DOCKER_FILE: "base.Dockerfile"
     agents:
-      python-r-4.3: true
       ebdeploy: true
 
   - label: ":lint-roller: lint"
