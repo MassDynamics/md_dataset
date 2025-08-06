@@ -1,7 +1,7 @@
 env:
   AWS_REGION: "ap-southeast-2"
   AWS_DEFAULT_REGION: "ap-southeast-2"
-  AWS_PROFILE: "eb-services-cli"
+  AWS_PROFILE: "aws-services-cli"
 
 steps:
   - label: ":python: test"
