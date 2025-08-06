@@ -7,7 +7,7 @@ steps:
     command: ./scripts/test
     env:
       CONDA_ENV_NAME: "md_dataset_package"
-      AWS_PROFILE: "eb-services-cli"
+      AWS_PROFILE: "aws-services-cli"
       DOCKER_FILE: "base.Dockerfile"
     agents:
       python-r-4.3: true
