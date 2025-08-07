@@ -25,7 +25,7 @@ class DatasetType(Enum):
 class InputParams(BaseModel):
   pass
 
-class ConverterInputParams(InputParams):
+class EntityInputParams(InputParams):
   entity_type: Literal[
       "Peptide",
       "Protein",

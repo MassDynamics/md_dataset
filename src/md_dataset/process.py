@@ -12,7 +12,7 @@ from prefect import runtime
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
-from md_dataset.models.dataset import ConverterInputParams
+from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDataset
@@ -89,7 +89,7 @@ def md_converter(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(experiment_id: UUID, params: ConverterInputParams, \
+    def wrapper(experiment_id: UUID, params: EntityInputParams, \
             *args: P.args, **kwargs: P.kwargs) -> dict:
         logger = get_run_logger()
         logger.info("Running Deployment: %s", runtime.deployment.name)

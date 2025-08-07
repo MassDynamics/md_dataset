@@ -4,7 +4,7 @@ import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from md_dataset.file_manager import FileManager
-from md_dataset.models.dataset import ConverterInputParams
+from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDatasetTable
 from md_dataset.models.dataset import InputParams
@@ -211,7 +211,7 @@ def test_run_md_converter_process(fake_file_manager: FileManager):
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
-    params = ConverterInputParams(dataset_name="foo", entity_type="Protein")
+    params = EntityInputParams(dataset_name="foo", entity_type="Protein")
 
     result = run_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
 
@@ -228,7 +228,7 @@ def test_run_md_converter_process_with_peptide(fake_file_manager: FileManager):
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
-    params = ConverterInputParams(dataset_name="foo", entity_type="Peptide")
+    params = EntityInputParams(dataset_name="foo", entity_type="Peptide")
 
     result = run_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
 
