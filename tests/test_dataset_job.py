@@ -61,7 +61,6 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         assert url == "http://example.com:8001/jobs/create_or_update"
         actual_payload = kwargs["json"]
         actual_params = actual_payload["params"]
-        actual_params_new = actual_payload["params_new"]
         assert actual_params["title"] == "Parameters"
         actual_payload.pop("params")
         actual_payload.pop("params_new")
