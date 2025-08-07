@@ -14,7 +14,7 @@ from md_dataset.models.dataset import DatasetType
 
 class DatasetJobParamsTest(unittest.TestCase):
     def test_returns_parameters_schema(self):
-        params, description = dataset_job_params(
+        params, description, parameters_new = dataset_job_params(
             name="test_func",
             module="tests.func",
         )
@@ -24,6 +24,10 @@ class DatasetJobParamsTest(unittest.TestCase):
         assert params["properties"]["input_datasets"]["title"] == "input_datasets"
         assert params["properties"]["input_datasets"]["type"] == "array"
         assert params["properties"]["input_datasets"]["items"] == {"$ref": "#/definitions/InputDataset"}
+
+        assert parameters_new["input_datasets"]["type"] == "object"
+        assert parameters_new["input_datasets"]["name"]["title"] == "Name"
+        assert parameters_new["input_datasets"]["name"]["type"] == "string"
 
         assert description=="A nice description."
 
@@ -59,6 +63,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         actual_params = actual_payload["params"]
         assert actual_params["title"] == "Parameters"
         actual_payload.pop("params")
+        actual_payload.pop("params_new")
         assert actual_payload == expected_payload
 
 
@@ -89,6 +94,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             flow_and_deployment_name="flow and deployment name",
             run_type=DatasetType.INTENSITY,
             params={"param1": "value1"},
+            params_new={"param2": "value2"},
         )
 
         assert result == {"id": 123}
@@ -100,6 +106,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             "flow_and_deployment_name": "flow and deployment name",
             "run_type": DatasetType.INTENSITY,
             "params": {"param1": "value1"},
+            "params_new": {"param2": "value2"},
         }
 
         mock_post.assert_called_once_with(
@@ -121,5 +128,6 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
                 flow_and_deployment_name="flow and deployment name",
                 run_type="INTENSITY",
                 params={"param1": "value1"},
+                params_new={"param2": "value2"},
             )
 
