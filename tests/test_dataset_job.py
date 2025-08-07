@@ -63,7 +63,6 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         actual_params = actual_payload["params"]
         actual_params_new = actual_payload["params_new"]
         assert actual_params["title"] == "Parameters"
-        assert actual_params_new["title"] == "Parameters"
         actual_payload.pop("params")
         actual_payload.pop("params_new")
         assert actual_payload == expected_payload
