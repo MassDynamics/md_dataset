@@ -47,6 +47,15 @@ def get_file_manager() -> None:
 def get_deployment_image() -> str:
     return os.getenv("IMAGE", "unknown")
 
+def load_data(input_datasets: list[T], file_manager: FileManager) -> None:
+    logger = get_run_logger()
+    for dataset in input_datasets:
+        try:
+            dataset.populate_tables(file_manager)
+        except Exception:
+            logger.exception("Failed to load dataset %s", dataset.name)
+            raise
+
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -65,8 +74,7 @@ def md_py(func: Callable) -> Callable:
 
         file_manager = get_file_manager()
 
-        for dataset in input_datasets:
-            dataset.populate_tables(file_manager)
+        load_data(input_datasets, file_manager)
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
@@ -96,14 +104,12 @@ def md_converter(func: Callable) -> Callable:
         logger.info("Version: %s", runtime.deployment.version)
         logger.info("Image: %s", get_deployment_image())
 
-        file_manager = get_file_manager()
-
         results = func(experiment_id, params, *args, **kwargs)
 
         dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
                 dataset_type=DatasetType.INTENSITY, tables=results)
 
-        file_manager.save_tables(dataset.tables())
+        get_file_manager().save_tables(dataset.tables())
 
         return dataset.dump(params.entity_type)
 
@@ -163,8 +169,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             file_manager = get_file_manager()
 
-            for dataset in input_datasets:
-                dataset.populate_tables(file_manager)
+            load_data(input_datasets, file_manager)
 
             r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
