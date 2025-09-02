@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 import abc
 import uuid
 from enum import Enum
@@ -97,10 +98,13 @@ class Dataset(BaseModel, abc.ABC):
         pass
 
     @classmethod
-    def from_run(cls, run_id: uuid.UUID, dataset_type: DatasetType, tables: list) -> Dataset:
-        if dataset_type == DatasetType.INTENSITY:
-            return IntensityDataset(run_id=run_id, dataset_type=dataset_type, \
+    def from_run(cls, run_id: uuid.UUID, dataset_type: DatasetType, tables: list | dict) -> Dataset:
+        if dataset_type == DatasetType.INTENSITY and isinstance(tables, dict):
+            return LegacyIntensityDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
+        if dataset_type == DatasetType.INTENSITY and isinstance(tables, list):
+            return IntensityDataset(run_id=run_id, dataset_type=dataset_type, \
+                   intensity_data=tables)
         if dataset_type == DatasetType.PAIRWISE:
             return PairwiseDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
@@ -109,7 +113,7 @@ class Dataset(BaseModel, abc.ABC):
                     **tables)
         return None # TODO raise
 
-class IntensityDataset(Dataset):
+class LegacyIntensityDataset(Dataset):
     """An intentisy dataset.
 
     Attributes:
@@ -183,6 +187,51 @@ class IntensityDataset(Dataset):
 
     def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+class IntensityEntity(str, Enum):
+    PROTEIN = "Protein"
+    PEPTIDE = "Peptide"
+
+class IntensityDataType(str, Enum):
+    INTENSITY = "Intensity"
+    METADATA = "Metadata"
+    RUNTIME_METADATA = "RuntimeMetadata"
+
+class IntensityData(BaseModel):
+    entity: IntensityEntity
+    type: IntensityDataType
+    data: pd.DataFrame
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class IntensityDataset(Dataset):
+    intensity_data: list[IntensityData]
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(datum.entity, datum.type), datum.data) for datum in self.intensity_data]
+
+    def dump(self, entity_type: str | None = "protein") -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": f"{datum.entity.value}_{datum.type.value}",
+                            "path": self._path(datum.entity, datum.type),
+                        } for datum in self.intensity_data],
+                    }
+        return self._dump_cache
+
+    def _path(self, entity: IntensityEntity, data_type: IntensityDataType) -> str:
+        return f"job_runs/{self.run_id}/{entity.value}_{data_type.value}.parquet"
+
 
 class PairwiseTableType(Enum):
     RESULTS = "results"
