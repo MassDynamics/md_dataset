@@ -11,6 +11,9 @@ from md_dataset.models.dataset import InputParams
 from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.process import md_converter
+from md_dataset.models.dataset import IntensityData
+from md_dataset.models.dataset import IntensityEntity
+from md_dataset.models.dataset import IntensityDataType
 from md_dataset.process import md_py
 
 
@@ -124,7 +127,7 @@ def test_run_process_invalid_missing_metadata(input_datasets: list[IntensityInpu
     with pytest.raises(Exception) as exception_info:
         assert run_process_missing_metadata(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
 
-    assert "1 validation error for IntensityDataset" in str(exception_info.value)
+    assert "1 validation error for LegacyIntensityDataset" in str(exception_info.value)
     assert "The field 'metadata' must be set and cannot be None." in str(exception_info.value)
 
 @md_py
@@ -198,7 +201,7 @@ def test_run_process_returns_table_runtime_metadata(input_datasets: list[Intensi
             "col2": ["x", "y", "z"]}))
 
 @md_converter
-def run_converter_process(experiment_id: UUID, params: InputParams) -> dict: # noqa: ARG001
+def run_legacy_converter_process(experiment_id: UUID, params: InputParams) -> dict: # noqa: ARG001
     intensity_table = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     metadata_table = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     runtime_metadata_table = pd.DataFrame({"col1": [7], "col2": ["m"]})
@@ -206,14 +209,14 @@ def run_converter_process(experiment_id: UUID, params: InputParams) -> dict: # n
             IntensityTableType.METADATA.value: metadata_table, \
             IntensityTableType.RUNTIME_METADATA.value: runtime_metadata_table}
 
-def test_run_md_converter_process(fake_file_manager: FileManager):
+def test_run_legacy_md_converter_process(fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
     params = EntityInputParams(dataset_name="foo", entity_type="Protein")
 
-    result = run_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
+    result = run_legacy_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
 
     assert UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Protein_Intensity"
@@ -223,14 +226,14 @@ def test_run_md_converter_process(fake_file_manager: FileManager):
     assert result["tables"][1]["name"] == "Protein_Metadata"
     assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/metadata.parquet"
 
-def test_run_md_converter_process_with_peptide(fake_file_manager: FileManager):
+def test_run_legacy_md_converter_process_with_peptide(fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
 
     params = EntityInputParams(dataset_name="foo", entity_type="Peptide")
 
-    result = run_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
+    result = run_legacy_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
 
     assert UUID(result["tables"][0]["id"], version=4) is not None
     assert result["tables"][0]["name"] == "Peptide_Intensity"
@@ -243,3 +246,36 @@ def test_run_md_converter_process_with_peptide(fake_file_manager: FileManager):
     assert UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Peptide_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+
+
+@md_converter
+def run_converter_process(experiment_id: UUID, params: InputParams) -> dict: # noqa: ARG001
+    intensity_table = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    metadata_table = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    runtime_metadata_table = pd.DataFrame({"col1": [7], "col2": ["m"]})
+    return [
+        IntensityData(entity=IntensityEntity.PEPTIDE, type=IntensityDataType.INTENSITY, data=intensity_table),
+        IntensityData(entity=IntensityEntity.PEPTIDE, type=IntensityDataType.METADATA, data=metadata_table),
+        IntensityData(entity=IntensityEntity.PEPTIDE, type=IntensityDataType.RUNTIME_METADATA, data=runtime_metadata_table),
+    ]
+
+def test_run_md_converter_process(fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    params = EntityInputParams(dataset_name="foo", entity_type="Peptide")
+
+    result = run_converter_process(UUID("11111111-1111-1111-1111-111111111111"), params)
+
+    assert UUID(result["tables"][0]["id"], version=4) is not None
+    assert result["tables"][0]["name"] == "Peptide_Intensity"
+    assert result["tables"][0]["path"] == f"job_runs/{result['run_id']}/Peptide_Intensity.parquet"
+
+    assert UUID(result["tables"][1]["id"], version=4) is not None
+    assert result["tables"][1]["name"] == "Peptide_Metadata"
+    assert result["tables"][1]["path"] == f"job_runs/{result['run_id']}/Peptide_Metadata.parquet"
+
+    assert UUID(result["tables"][2]["id"], version=4) is not None
+    assert result["tables"][2]["name"] == "Peptide_RuntimeMetadata"
+    assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/Peptide_RuntimeMetadata.parquet"
