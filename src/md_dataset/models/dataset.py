@@ -167,7 +167,7 @@ class IntensityDataset(Dataset):
             missing_types = required_table_types - table_types
 
             if missing_types:
-                for missing_type in missing_types:
+                for missing_type in sorted(missing_types, key=lambda x: x.value):
                     msg = f"The field '{missing_type.value}' must be set and cannot be None."
                     raise ValueError(msg)
 
