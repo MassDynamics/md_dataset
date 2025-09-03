@@ -46,6 +46,8 @@ dev = [
     "boto3-type-annotations",
     "bump-my-version",
     "coverage [toml]",
+    "pbd",
+    "protobuf>=4.25,<5.0",
     "pytest",
     "pytest-mock",
     "pytest-cov",

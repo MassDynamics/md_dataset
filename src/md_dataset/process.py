@@ -111,7 +111,7 @@ def md_converter(func: Callable) -> Callable:
 
         get_file_manager().save_tables(dataset.tables())
 
-        return dataset.dump(params.entity_type)
+        return dataset.dump()
 
     return wrapper
 
