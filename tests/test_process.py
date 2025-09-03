@@ -531,3 +531,128 @@ def test_run_process_with_runtime_metadata(input_datasets: list[IntensityInputDa
     assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
 
     assert "Protein_RuntimeMetadata.parquet" in result["tables"][2]["path"]
+
+
+# IntensityDataset dump()
+
+def test_intensity_dataset_dump_caching():
+    """Test that the dump method properly caches results."""
+    from md_dataset.models.dataset import IntensityDataset
+
+    dataset = IntensityDataset(
+        run_id=UUID("11111111-1111-1111-1111-111111111111"),
+        dataset_type=DatasetType.INTENSITY,
+        intensity_tables=[
+            IntensityData(
+                entity=IntensityEntity.PROTEIN,
+                tables=[
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=pd.DataFrame({"col1": [1, 2, 3]})),
+                    IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col2": ["a", "b", "c"]})),
+                ],
+            ),
+        ],
+    )
+
+    result1 = dataset.dump()
+    result2 = dataset.dump()
+
+    assert result1 is result2
+
+    assert result1["type"] == DatasetType.INTENSITY
+    assert result1["run_id"] == UUID("11111111-1111-1111-1111-111111111111")
+    assert len(result1["tables"]) == 2
+
+
+def test_intensity_dataset_dump_table_ordering():
+    """Test that tables are ordered consistently in dump output."""
+    from md_dataset.models.dataset import IntensityDataset
+
+    dataset = IntensityDataset(
+        run_id=UUID("11111111-1111-1111-1111-111111111111"),
+        dataset_type=DatasetType.INTENSITY,
+        intensity_tables=[
+            IntensityData(
+                entity=IntensityEntity.PEPTIDE,
+                tables=[
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=pd.DataFrame({"col1": [1, 2, 3]})),
+                    IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col2": ["a", "b", "c"]})),
+                ],
+            ),
+            IntensityData(
+                entity=IntensityEntity.PROTEIN,
+                tables=[
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=pd.DataFrame({"col1": [4, 5, 6]})),
+                    IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col2": ["x", "y", "z"]})),
+                ],
+            ),
+        ],
+    )
+
+    result = dataset.dump()
+
+    expected_order = [
+        "Peptide_Intensity",
+        "Peptide_Metadata",
+        "Protein_Intensity",
+        "Protein_Metadata",
+    ]
+
+    actual_order = [table["name"] for table in result["tables"]]
+    assert actual_order == expected_order
+
+
+def test_intensity_dataset_dump_uuid_uniqueness():
+    from md_dataset.models.dataset import IntensityDataset
+
+    dataset = IntensityDataset(
+        run_id=UUID("11111111-1111-1111-1111-111111111111"),
+        dataset_type=DatasetType.INTENSITY,
+        intensity_tables=[
+            IntensityData(
+                entity=IntensityEntity.PROTEIN,
+                tables=[
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=pd.DataFrame({"col1": [1, 2, 3]})),
+                    IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col2": ["a", "b", "c"]})),
+                    IntensityTable(type=IntensityTableType.RUNTIME_METADATA, data=pd.DataFrame({"col3": [7, 8, 9]})),
+                ],
+            ),
+        ],
+    )
+
+    result = dataset.dump()
+
+    uuids = [table["id"] for table in result["tables"]]
+    assert len(uuids) == len(set(uuids))
+
+    for uuid_str in uuids:
+        UUID(uuid_str, version=4)
+
+
+def test_intensity_dataset_dump_path_generation():
+    from md_dataset.models.dataset import IntensityDataset
+
+    dataset = IntensityDataset(
+        run_id=UUID("11111111-1111-1111-1111-111111111111"),
+        dataset_type=DatasetType.INTENSITY,
+        intensity_tables=[
+            IntensityData(
+                entity=IntensityEntity.PROTEIN,
+                tables=[
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=pd.DataFrame({"col1": [1, 2, 3]})),
+                    IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col2": ["a", "b", "c"]})),
+                    IntensityTable(type=IntensityTableType.RUNTIME_METADATA, data=pd.DataFrame({"col3": [7, 8, 9]})),
+                ],
+            ),
+        ],
+    )
+
+    result = dataset.dump()
+
+    expected_paths = [
+        "job_runs/11111111-1111-1111-1111-111111111111/Protein_Intensity.parquet",
+        "job_runs/11111111-1111-1111-1111-111111111111/Protein_Metadata.parquet",
+        "job_runs/11111111-1111-1111-1111-111111111111/Protein_RuntimeMetadata.parquet",
+    ]
+
+    actual_paths = [table["path"] for table in result["tables"]]
+    assert actual_paths == expected_paths
