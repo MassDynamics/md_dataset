@@ -17,6 +17,10 @@ from md_dataset.models.dataset import IntensityTableType
 from md_dataset.process import md_converter
 from md_dataset.process import md_py
 
+# Test constants
+THREE_EXPECTED_TABLES_COUNT = 3
+FOUR_EXPECTED_TABLES_COUNT = 4
+
 
 @pytest.fixture(autouse=True, scope="session")
 def prefect_test_fixture():
@@ -154,8 +158,8 @@ def test_run_process_invalid_type(input_datasets: list[IntensityInputDataset], t
     with pytest.raises(ValidationError) as exception_info:
         assert run_process_invalid_dataframe(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
 
-    assert "Input should be an instance of DataFrame [type=is_instance_of, input_value={'a': 'dict'}, \
-            input_type=dict]" in str(exception_info.value)
+    assert "Input should be an instance of DataFrame [type=is_instance_of, input_value={'a': 'dict'}, input_type=dict]"\
+            in str(exception_info.value)
 
 def test_run_process_returns_table_data(input_datasets: list[IntensityInputDataset], test_params: TestBlahParams, \
         fake_file_manager: FileManager):
@@ -341,3 +345,189 @@ def test_run_legacy_md_converter_process_with_peptide(fake_file_manager: FileMan
     assert UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+
+
+@md_py
+def run_process_empty_tables(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[],  # Empty tables list
+        ),
+    ]
+
+
+def test_run_process_empty_tables(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    with pytest.raises(Exception) as exception_info:
+        assert run_process_empty_tables(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
+
+    assert "The field 'intensity' must be set and cannot be None." in str(exception_info.value)
+
+
+@md_py
+def run_process_missing_intensity(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN)
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[
+                IntensityTable(type=IntensityTableType.METADATA, data=intensity_table.data),
+            ],
+        ),
+    ]
+
+
+def test_run_process_missing_intensity(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    with pytest.raises(Exception) as exception_info:
+        assert run_process_missing_intensity(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
+
+    assert "The field 'intensity' must be set and cannot be None." in str(exception_info.value)
+
+
+@md_py
+def run_process_duplicate_table_types(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN)
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[
+                IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table.data),
+                IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table.data),
+                IntensityTable(type=IntensityTableType.METADATA, data=metadata_table.data),
+            ],
+        ),
+    ]
+
+
+def test_run_process_duplicate_table_types(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    result = run_process_duplicate_table_types(input_datasets, test_params, DatasetType.INTENSITY)
+
+    # We currently allow this, but we likely should throw a validation error
+    assert len(result["tables"]) == THREE_EXPECTED_TABLES_COUNT
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][1]["name"] == "Protein_Intensity"
+    assert result["tables"][2]["name"] == "Protein_Metadata"
+
+
+@md_py
+def run_process_none_data(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[
+                IntensityTable(type=IntensityTableType.INTENSITY, data=None),
+                IntensityTable(type=IntensityTableType.METADATA, data=pd.DataFrame({"col1": [1]})),
+            ],
+        ),
+    ]
+
+
+def test_run_process_none_data(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    fake_file_manager.load_parquet_to_df.return_value = test_data
+
+    with pytest.raises(ValidationError) as exception_info:
+        assert run_process_none_data(input_datasets, test_params, DatasetType.INTENSITY).is_failed()
+
+    assert "Input should be an instance of DataFrame" in str(exception_info.value)
+
+
+@md_py
+def run_process_different_entity_types(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN)
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[
+                IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table.data),
+                IntensityTable(type=IntensityTableType.METADATA, data=metadata_table.data),
+            ],
+        ),
+        IntensityData(
+            entity=IntensityEntity.PEPTIDE,
+            tables=[
+                IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table.data),
+                IntensityTable(type=IntensityTableType.METADATA, data=metadata_table.data),
+            ],
+        ),
+    ]
+
+
+def test_run_process_different_entity_types(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    result = run_process_different_entity_types(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert len(result["tables"]) == FOUR_EXPECTED_TABLES_COUNT
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][1]["name"] == "Protein_Metadata"
+    assert result["tables"][2]["name"] == "Peptide_Intensity"
+    assert result["tables"][3]["name"] == "Peptide_Metadata"
+
+    assert "Protein_Intensity.parquet" in result["tables"][0]["path"]
+    assert "Protein_Metadata.parquet" in result["tables"][1]["path"]
+    assert "Peptide_Intensity.parquet" in result["tables"][2]["path"]
+    assert "Peptide_Metadata.parquet" in result["tables"][3]["path"]
+
+
+@md_py
+def run_process_with_runtime_metadata(input_datasets: list[IntensityInputDataset], params: InputParams, \
+        output_dataset_type: DatasetType) -> dict: # noqa: ARG001
+
+    intensity_table = input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN)
+    metadata_table = input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN)
+    return [
+        IntensityData(
+            entity=IntensityEntity.PROTEIN,
+            tables=[
+                IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table.data),
+                IntensityTable(type=IntensityTableType.METADATA, data=metadata_table.data),
+                IntensityTable(type=IntensityTableType.RUNTIME_METADATA, data=pd.DataFrame({"runtime": [1, 2, 3]})),
+            ],
+        ),
+    ]
+
+
+def test_run_process_with_runtime_metadata(input_datasets: list[IntensityInputDataset], \
+        test_params: TestBlahParams, fake_file_manager: FileManager):
+    test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+    test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": ["x", "y", "z"]})
+    fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
+
+    result = run_process_with_runtime_metadata(input_datasets, test_params, DatasetType.INTENSITY)
+
+    assert len(result["tables"]) == THREE_EXPECTED_TABLES_COUNT
+    assert result["tables"][0]["name"] == "Protein_Intensity"
+    assert result["tables"][1]["name"] == "Protein_Metadata"
+    assert result["tables"][2]["name"] == "Protein_RuntimeMetadata"
+
+    assert "Protein_RuntimeMetadata.parquet" in result["tables"][2]["path"]
