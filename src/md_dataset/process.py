@@ -140,13 +140,91 @@ def run_r_task(
     with (ro.default_converter + pandas2ri.converter).context():
         return recursive_conversion(r_out)
 
-def recursive_conversion(r_object) -> dict: # noqa: ANN001
+def _convert_r_string_to_python(r_obj) -> str: # noqa: ANN001
+    """Convert R string object to Python string."""
+    import rpy2.robjects as ro
+
+    if isinstance(r_obj, ro.vectors.StrVector):
+        return r_obj[0]  # Extract first element
+    return ro.conversion.get_conversion().rpy2py(r_obj)
+
+
+def _extract_table_items(tables_data) -> list: # noqa: ANN001
+    """Extract table items from tables data structure."""
+    if isinstance(tables_data, dict):
+        # Handle OrdDict - access values directly
+        if hasattr(tables_data, "items"):
+            # This is an OrdDict or similar R object
+            return [recursive_conversion(value) for key, value in tables_data.items()]
+        # Regular Python dict
+        return list(tables_data.values())
+    # Already a list
+    return tables_data
+
+
+def _convert_to_intensity_data_objects(converted_list) -> list: # noqa: ANN001
+    """Convert list of dictionaries to IntensityData objects."""
+    from md_dataset.models.dataset import IntensityData
+    from md_dataset.models.dataset import IntensityEntity
+    from md_dataset.models.dataset import IntensityTable
+    from md_dataset.models.dataset import IntensityTableType
+    logger = get_run_logger()
+
+    logger.info("Converting to IntensityData objects")
+    intensity_data_list = []
+
+    for item in converted_list:
+        # Convert entity
+        entity_str = _convert_r_string_to_python(item["entity"])
+        entity = IntensityEntity(entity_str)
+
+        # Convert tables
+        tables = []
+        table_items = _extract_table_items(item["tables"])
+
+        for table_item in table_items:
+            table_type_str = _convert_r_string_to_python(table_item["type"])
+            table_type = IntensityTableType(table_type_str)
+            table_data = table_item["data"]  # Already converted to DataFrame
+            tables.append(IntensityTable(type=table_type, data=table_data))
+
+        intensity_data_list.append(IntensityData(entity=entity, tables=tables))
+
+    return intensity_data_list
+
+
+def _is_intensity_data_structure(converted_list) -> bool: # noqa: ANN001
+    """Check if the converted list looks like IntensityData objects."""
+    return (len(converted_list) > 0 and
+            isinstance(converted_list[0], dict) and
+            "entity" in converted_list[0] and
+            "tables" in converted_list[0])
+
+
+def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     import rpy2.robjects as ro
     logger = get_run_logger()
 
     if isinstance(r_object, ro.vectors.ListVector):
-        logger.info("Convert ListVector")
-        return {key: recursive_conversion(value) for key, value in r_object.items()}
+        # Check if it's a named list (has names, i.e LEGACY) or regular list
+        if r_object.names:
+            logger.info("Convert named ListVector to dict")
+            return {key: recursive_conversion(value) for key, value in r_object.items()}
+
+        logger.info("Convert unnamed ListVector to list")
+        converted_list = [recursive_conversion(value) for value in r_object]
+
+        # Check if this looks like a list of IntensityData objects
+        if _is_intensity_data_structure(converted_list):
+            return _convert_to_intensity_data_objects(converted_list)
+
+        return converted_list
+
+    # Handle R data frames
+    if hasattr(r_object, "colnames") and hasattr(r_object, "nrow"):
+        logger.info("Convert R data frame to pandas DataFrame")
+        return ro.conversion.get_conversion().rpy2py(r_object)
+
     logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)
 
