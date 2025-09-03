@@ -560,7 +560,8 @@ def test_intensity_dataset_dump_caching():
 
     assert result1["type"] == DatasetType.INTENSITY
     assert result1["run_id"] == UUID("11111111-1111-1111-1111-111111111111")
-    assert len(result1["tables"]) == 2
+    expected_table_count = 2
+    assert len(result1["tables"]) == expected_table_count
 
 
 def test_intensity_dataset_dump_table_ordering():
