@@ -109,27 +109,6 @@ class Dataset(BaseModel, abc.ABC):
     def dump(self) -> dict:
         pass
 
-    @classmethod
-    def from_run(cls, run_id: uuid.UUID, dataset_type: DatasetType, tables: list | dict) -> Dataset:
-        if dataset_type == DatasetType.INTENSITY and isinstance(tables, dict):
-            return LegacyIntensityDataset(run_id=run_id, dataset_type=dataset_type, \
-                    **tables)
-        if dataset_type == DatasetType.INTENSITY and isinstance(tables, list):
-            return IntensityDataset(run_id=run_id, dataset_type=dataset_type, \
-                   intensity_tables=tables)
-        if dataset_type == DatasetType.PAIRWISE:
-            return PairwiseDataset(run_id=run_id, dataset_type=dataset_type, \
-                    **tables)
-        if dataset_type == DatasetType.ANOVA:
-            return AnovaDataset(run_id=run_id, dataset_type=dataset_type, \
-                    **tables)
-        if dataset_type == DatasetType.DOSE_RESPONSE:
-            return DoseResponseDataset(run_id=run_id, dataset_type=dataset_type, \
-                    **tables)
-        return None # TODO raise
-
-
-
 class IntensityData(BaseModel):
     entity: IntensityEntity
     tables: list[IntensityTable]
