@@ -116,7 +116,7 @@ class Dataset(BaseModel, abc.ABC):
                     **tables)
         if dataset_type == DatasetType.INTENSITY and isinstance(tables, list):
             return IntensityDataset(run_id=run_id, dataset_type=dataset_type, \
-                   intensity_data=tables)
+                   intensity_tables=tables)
         if dataset_type == DatasetType.PAIRWISE:
             return PairwiseDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
@@ -125,80 +125,6 @@ class Dataset(BaseModel, abc.ABC):
                     **tables)
         return None # TODO raise
 
-class LegacyIntensityDataset(Dataset):
-    """An intentisy dataset.
-
-    Attributes:
-    ----------
-    intensity :  PandasDataFrame
-        The dataframe containing intensity values
-    metadata : PandasDataFrame
-        Information about the dataset
-    runtime_metadata : PandasDataFrame
-        Information about the dataset at runtime
-    """
-    intensity: pd.DataFrame
-    metadata: pd.DataFrame
-    runtime_metadata: pd.DataFrame = None
-    _dump_cache: dict = PrivateAttr(default=None)
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    @model_validator(mode="before")
-    def validate_dataframes(cls, values: dict) -> dict:
-        required_fields = ["intensity", "metadata"]
-        for field_name in required_fields:
-            value = values.get(field_name)
-            if value is None:
-                msg = f"The field '{field_name}' must be set and cannot be None."
-                raise ValueError(msg)
-            if not isinstance(value, pd.DataFrame):
-                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
-                raise TypeError(msg)
-
-        runtime_metadata = values.get("runtime_metadata")
-        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
-            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
-                    got {type(runtime_metadata).__name__}."
-            raise TypeError(msg)
-        return values
-
-    def tables(self) -> list[tuple[str, pd.DataFrame]]:
-        tables = [(self._path(IntensityTableType.INTENSITY), self.intensity), \
-                (self._path(IntensityTableType.METADATA), self.metadata)]
-        if self.runtime_metadata is not None:
-            tables.append((self._path(IntensityTableType.RUNTIME_METADATA), self.runtime_metadata))
-        return tables
-
-    def dump(self) -> dict:
-        if self._dump_cache is None:
-            self._dump_cache =  {
-                    "type": self.dataset_type,
-                    "run_id": self.run_id,
-                    "tables": [
-                        {
-                            "id": str(uuid.uuid4()),
-                            "name": "Protein_Intensity",
-                            "path": self._path(IntensityTableType.INTENSITY),
-
-                        },{
-                            "id": str(uuid.uuid4()),
-                            "name": "Protein_Metadata",
-                            "path": self._path(IntensityTableType.METADATA),
-                        },
-                    ],
-            }
-            if self.runtime_metadata is not None:
-                self._dump_cache["tables"].append({
-                    "id": str(uuid.uuid4()),
-                    "name": "Protein_RuntimeMetadata",
-                    "path": self._path(IntensityTableType.RUNTIME_METADATA),
-                })
-        return self._dump_cache
-
-    def _path(self, table_type: IntensityTableType) -> str:
-        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 
 class IntensityData(BaseModel):
@@ -209,23 +135,58 @@ class IntensityData(BaseModel):
         arbitrary_types_allowed = True
 
 class IntensityDataset(Dataset):
-    intensity_data: list[IntensityData]
+    intensity_tables: list[IntensityData]
     _dump_cache: dict = PrivateAttr(default=None)
 
     class Config:
         arbitrary_types_allowed = True
 
+    @model_validator(mode="before")
+    def validate_intensity_tables(cls, values: dict) -> dict:
+        intensity_tables = values.get("intensity_tables")
+        if intensity_tables is None:
+            msg = "IntensityData must have field 'intensity_tables' set, it must be set and cannot be None."
+            raise ValueError(msg)
+
+        if not isinstance(intensity_tables, list):
+            msg = f"The field 'intensity_tables' must be a list, but got {type(intensity_tables).__name__}."
+            raise TypeError(msg)
+
+        required_table_types = {IntensityTableType.INTENSITY, IntensityTableType.METADATA}
+
+        for i, datum in enumerate(intensity_tables):
+            if not isinstance(datum, IntensityData):
+                msg = f"Each item in 'intensity_tables' must be an IntensityData object, but got \
+                        {type(datum).__name__} at index {i}."
+                raise TypeError(msg)
+
+            table_types = {table.type for table in datum.tables}
+            missing_types = required_table_types - table_types
+
+            if missing_types:
+                for missing_type in missing_types:
+                    msg = f"The field '{missing_type.value}' must be set and cannot be None."
+                    raise ValueError(msg)
+
+            for table in datum.tables:
+                if not isinstance(table.data, pd.DataFrame):
+                    msg = f"Table data must be a pandas DataFrame, but got {type(table.data).__name__} \
+                            for table type {table.type.value} at index {i}."
+                    raise TypeError(msg)
+
+        return values
+
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
-        tables = []
-        for datum in self.intensity_data:
-            tables.extend((self._path(datum.entity, table.type), table.data) for table in datum.tables)
-        return tables
+        result = []
+        for datum in self.intensity_tables:
+            result.extend((self._path(datum.entity, table.type), table.data) for table in datum.tables)
+        return result
 
     def dump(self) -> dict:
         if self._dump_cache is None:
-            tables = []
-            for datum in self.intensity_data:
-                tables.extend({
+            result_tables = []
+            for datum in self.intensity_tables:
+                result_tables.extend({
                     "id": str(uuid.uuid4()),
                     "name": f"{datum.entity.value}_{to_pascal(table.type.value)}",
                     "path": self._path(datum.entity, table.type),
@@ -234,7 +195,7 @@ class IntensityDataset(Dataset):
             self._dump_cache = {
                 "type": self.dataset_type,
                 "run_id": self.run_id,
-                "tables": tables,
+                "tables": result_tables,
             }
         return self._dump_cache
 
@@ -478,4 +439,79 @@ class DoseResponseDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: DoseResponseTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+class LegacyIntensityDataset(Dataset):
+    """An intentisy dataset.
+
+    Attributes:
+    ----------
+    intensity :  PandasDataFrame
+        The dataframe containing intensity values
+    metadata : PandasDataFrame
+        Information about the dataset
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime
+    """
+    intensity: pd.DataFrame
+    metadata: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["intensity", "metadata"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [(self._path(IntensityTableType.INTENSITY), self.intensity), \
+                (self._path(IntensityTableType.METADATA), self.metadata)]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(IntensityTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "Protein_Intensity",
+                            "path": self._path(IntensityTableType.INTENSITY),
+
+                            },{
+                                "id": str(uuid.uuid4()),
+                                "name": "Protein_Metadata",
+                                "path": self._path(IntensityTableType.METADATA),
+                                },
+                            ],
+                    }
+            if self.runtime_metadata is not None:
+                self._dump_cache["tables"].append({
+                    "id": str(uuid.uuid4()),
+                    "name": "Protein_RuntimeMetadata",
+                    "path": self._path(IntensityTableType.RUNTIME_METADATA),
+                    })
+        return self._dump_cache
+
+    def _path(self, table_type: IntensityTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
