@@ -12,11 +12,15 @@ from prefect import runtime
 from prefect import task
 from prefect_aws.s3 import S3Bucket
 from md_dataset.file_manager import FileManager
+from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import InputDataset
 from md_dataset.models.dataset import InputParams
+from md_dataset.models.dataset import IntensityDataset
+from md_dataset.models.dataset import LegacyIntensityDataset
+from md_dataset.models.dataset import PairwiseDataset
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,6 +29,30 @@ if TYPE_CHECKING:
 
 P = ParamSpec("P")
 T = TypeVar("T", bound="InputDataset")
+
+_DATASET_REGISTRY = {
+    (DatasetType.INTENSITY, dict): lambda run_id, dataset_type, \
+            tables: LegacyIntensityDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.INTENSITY, list): lambda run_id, dataset_type, \
+            tables: IntensityDataset(run_id=run_id, dataset_type=dataset_type, intensity_tables=tables),
+    (DatasetType.PAIRWISE, dict): lambda run_id, dataset_type, \
+            tables: PairwiseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.ANOVA, dict): lambda run_id, dataset_type, \
+            tables: AnovaDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+}
+
+
+def create_dataset_from_run(run_id: UUID, dataset_type: DatasetType, tables: list | dict) -> Dataset:
+    """Create a dataset instance based on type and tables structure."""
+    table_type = type(tables)
+    factory_func = _DATASET_REGISTRY.get((dataset_type, table_type))
+
+    if factory_func is None:
+        msg = f"Unsupported dataset type: {dataset_type} with table type: {table_type.__name__}"
+        raise ValueError(msg)
+
+    return factory_func(run_id, dataset_type, tables)
+
 
 def get_s3_block() -> S3Bucket:
     results_bucket = os.getenv("RESULTS_BUCKET")
@@ -78,7 +106,7 @@ def md_py(func: Callable) -> Callable:
 
         results = func(input_datasets, params, output_dataset_type, *args, **kwargs)
 
-        dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
+        dataset = create_dataset_from_run(run_id=runtime.flow_run.id, \
                 dataset_type=output_dataset_type, tables=results)
 
         file_manager.save_tables(dataset.tables())
@@ -106,7 +134,7 @@ def md_converter(func: Callable) -> Callable:
 
         results = func(experiment_id, params, *args, **kwargs)
 
-        dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
+        dataset = create_dataset_from_run(run_id=runtime.flow_run.id, \
                 dataset_type=DatasetType.INTENSITY, tables=results)
 
         get_file_manager().save_tables(dataset.tables())
@@ -253,7 +281,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
 
             results = run_r_task(r_file, r_function, r_args)
 
-            dataset = Dataset.from_run(run_id=runtime.flow_run.id, \
+            dataset = create_dataset_from_run(run_id=runtime.flow_run.id, \
                     dataset_type=output_dataset_type, tables=results)
 
             file_manager.save_tables(dataset.tables())
