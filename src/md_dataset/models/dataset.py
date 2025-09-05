@@ -107,6 +107,9 @@ class Dataset(BaseModel, abc.ABC):
         if dataset_type == DatasetType.ANOVA:
             return AnovaDataset(run_id=run_id, dataset_type=dataset_type, \
                     **tables)
+        if dataset_type == DatasetType.DOSE_RESPONSE:
+            return DoseResponseDataset(run_id=run_id, dataset_type=dataset_type, \
+                    **tables)
         return None # TODO raise
 
 class IntensityDataset(Dataset):
