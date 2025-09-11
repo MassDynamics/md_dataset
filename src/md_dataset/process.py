@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import os
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -124,6 +125,7 @@ def run_r_task(
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
+    import rpy2.rinterface_lib.embedded as embedded
 
     logger = get_run_logger()
     logger.info("Running R task with function %s in file %s", r_function, r_file)
@@ -135,10 +137,38 @@ def run_r_task(
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
 
-    r_out = r_func(*r_data_frames, *r_preparation.r_args)
+    try:
+        r_out = r_func(*r_data_frames, *r_preparation.r_args)
+    except embedded.RRuntimeError as e:
+        # Extract clean R error message
+        r_error_message = embedded._geterrmessage()
+        # Format error message using JSON for robustness
+        error_data = {
+            "clean": r_error_message,
+            "original": e.message
+        }
+        formatted_r_error_message = json.dumps(error_data)
+        
+        raise embedded.RRuntimeError(formatted_r_error_message) from e
 
     with (ro.default_converter + pandas2ri.converter).context():
         return recursive_conversion(r_out)
+
+def extract_clean_r_error(error_message: str) -> str:
+    """Extract the clean R error message from a JSON-formatted error string.
+    
+    Args:
+        error_message: The JSON-formatted error message string
+        
+    Returns:
+        str: The clean R error message (without original error details)
+    """
+    try:
+        error_data = json.loads(error_message)
+        return error_data.get("clean", error_message)
+    except (json.JSONDecodeError, TypeError):
+        # If it's not valid JSON, return the original message
+        return error_message
 
 def recursive_conversion(r_object) -> dict: # noqa: ANN001
     import rpy2.robjects as ro
