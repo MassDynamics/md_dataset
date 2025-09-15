@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import os
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -139,12 +140,38 @@ def run_r_task(
     try:
         r_out = r_func(*r_data_frames, *r_preparation.r_args)
     except embedded.RRuntimeError as e:
-        raise embedded.RRuntimeError(str(e)) from e
+        # Extract clean R error message from the exception
+        r_error_message = str(e)
+        # Format error message using JSON for robustness
+        error_data = {
+            "clean": r_error_message,
+            "original": str(e),
+        }
+        formatted_r_error_message = json.dumps(error_data)
+
+        raise embedded.RRuntimeError(formatted_r_error_message) from e
 
     with (ro.default_converter + pandas2ri.converter).context():
         return recursive_conversion(r_out)
 
-def recursive_conversion(r_object) -> dict: # noqa: ANN001
+def extract_clean_r_error(error_message: str) -> str:
+    """Extract the clean R error message from a JSON-formatted error string.
+
+    Args:
+        error_message: The JSON-formatted error message string
+
+    Returns:
+        str: The clean R error message (without original error details)
+    """
+    try:
+        error_data = json.loads(error_message)
+        return error_data.get("clean", error_message)
+    except (json.JSONDecodeError, TypeError):
+        # If it's not valid JSON, return the original message
+        return error_message
+
+
+def recursive_conversion(r_object) -> dict:  # noqa: ANN001
     import rpy2.robjects as ro
     logger = get_run_logger()
 

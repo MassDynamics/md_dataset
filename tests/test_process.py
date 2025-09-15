@@ -243,3 +243,108 @@ def test_run_md_converter_process_with_peptide(fake_file_manager: FileManager):
     assert UUID(result["tables"][2]["id"], version=4) is not None
     assert result["tables"][2]["name"] == "Peptide_RuntimeMetadata"
     assert result["tables"][2]["path"] == f"job_runs/{result['run_id']}/runtime_metadata.parquet"
+
+
+class TestExtractCleanRError:
+    """Test cases for extract_clean_r_error function."""
+
+    def test_valid_json_with_clean_error(self):
+        """Test extraction from valid JSON with clean error."""
+        import json
+        from md_dataset.process import extract_clean_r_error
+
+        test_json = json.dumps({
+            "clean": (
+                "The data contains negative intensities. Please check if your data was "
+                "log-transformed before starting the analysis."
+            ),
+            "original": (
+                "Error in runDiscovery(experimentDesign = experimentDesign, "
+                "intensitiesTable = intensitiesTable,  : \n  The data contains negative "
+                "intensities. Please check if your data was log-transformed before "
+                "starting the analysis."
+            ),
+        })
+
+        result = extract_clean_r_error(test_json)
+        expected = (
+            "The data contains negative intensities. Please check if your data was "
+            "log-transformed before starting the analysis."
+        )
+
+        assert result == expected
+
+    def test_valid_json_without_clean_key(self):
+        """Test JSON without 'clean' key should return original message."""
+        import json
+        from md_dataset.process import extract_clean_r_error
+
+        test_json = json.dumps({
+            "original": "Some error message",
+        })
+
+        result = extract_clean_r_error(test_json)
+        assert result == test_json
+
+    def test_malformed_json(self):
+        """Test malformed JSON should return original message."""
+        from md_dataset.process import extract_clean_r_error
+
+        malformed_json = '{"clean": "Error message", "original": "Original error"'  # Missing closing brace
+
+        result = extract_clean_r_error(malformed_json)
+        assert result == malformed_json
+
+    def test_non_json_string(self):
+        """Test non-JSON string should return original message."""
+        from md_dataset.process import extract_clean_r_error
+
+        non_json = "This is just a plain error message"
+
+        result = extract_clean_r_error(non_json)
+        assert result == non_json
+
+    def test_empty_string(self):
+        """Test empty string should return empty string."""
+        from md_dataset.process import extract_clean_r_error
+
+        result = extract_clean_r_error("")
+        assert result == ""
+
+    def test_complex_error_with_quotes_and_newlines(self):
+        """Test complex error message with quotes, newlines, and special characters."""
+        import json
+        from md_dataset.process import extract_clean_r_error
+
+        complex_error = 'Error with "quotes" and\nnewlines and\ttabs and unicode: 测试'
+        test_json = json.dumps({
+            "clean": complex_error,
+            "original": 'Original error with "quotes" and\nnewlines and\ttabs',
+        })
+
+        result = extract_clean_r_error(test_json)
+        assert result == complex_error
+
+    def test_real_world_r_error_scenario(self):
+        """Test with a real-world R error scenario."""
+        import json
+        from md_dataset.process import extract_clean_r_error
+
+        real_error = (
+            "Error in runDiscovery(experimentDesign = experimentDesign, "
+            "intensitiesTable = intensitiesTable,  : \n  The data contains negative "
+            "intensities. Please check if your data was log-transformed before "
+            "starting the analysis."
+        )
+        clean_error = (
+            "The data contains negative intensities. Please check if your data was "
+            "log-transformed before starting the analysis."
+        )
+
+        test_json = json.dumps({
+            "clean": clean_error,
+            "original": real_error,
+        })
+
+        result = extract_clean_r_error(test_json)
+        assert result == clean_error
