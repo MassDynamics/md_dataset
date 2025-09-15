@@ -140,12 +140,12 @@ def run_r_task(
     try:
         r_out = r_func(*r_data_frames, *r_preparation.r_args)
     except embedded.RRuntimeError as e:
-        # Extract clean R error message
-        r_error_message = embedded._geterrmessage()  # noqa: SLF001
+        # Extract clean R error message from the exception
+        r_error_message = str(e)
         # Format error message using JSON for robustness
         error_data = {
             "clean": r_error_message,
-            "original": e.message,
+            "original": str(e),
         }
         formatted_r_error_message = json.dumps(error_data)
 
