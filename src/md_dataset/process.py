@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import os
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -122,6 +123,7 @@ def run_r_task(
     r_preparation: RFuncArgs,
 ) -> dict:
     import rpy2.robjects as ro
+    from rpy2.rinterface_lib import embedded
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
@@ -135,7 +137,10 @@ def run_r_task(
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_data_frames = [ro.conversion.py2rpy(df) for df in r_preparation.data_frames]
 
-    r_out = r_func(*r_data_frames, *r_preparation.r_args)
+    try:
+        r_out = r_func(*r_data_frames, *r_preparation.r_args)
+    except embedded.RRuntimeError as e:
+        raise embedded.RRuntimeError(str(e)) from e
 
     with (ro.default_converter + pandas2ri.converter).context():
         return recursive_conversion(r_out)
