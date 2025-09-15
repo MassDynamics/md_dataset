@@ -141,11 +141,12 @@ def run_r_task(
         r_out = r_func(*r_data_frames, *r_preparation.r_args)
     except embedded.RRuntimeError as e:
         # Extract clean R error message from the exception
-        r_error_message = str(e)
+        r_error_full = str(e)
+        r_error_clean = _extract_last_nonempty_line(r_error_full)
         # Format error message using JSON for robustness
         error_data = {
-            "clean": r_error_message,
-            "original": str(e),
+            "clean": r_error_clean,
+            "original": r_error_full,
         }
         formatted_r_error_message = json.dumps(error_data)
 
@@ -169,6 +170,21 @@ def extract_clean_r_error(error_message: str) -> str:
     except (json.JSONDecodeError, TypeError):
         # If it's not valid JSON, return the original message
         return error_message
+
+
+def _extract_last_nonempty_line(error_text: str) -> str:
+    """Return the last non-empty line from the error text.
+
+    This heuristically strips rpy2/R prefixes like
+    "Error in ... :" by selecting the final informative line.
+    """
+    if not isinstance(error_text, str):
+        return str(error_text)
+    lines = [line.strip() for line in error_text.splitlines()]
+    for line in reversed(lines):
+        if line:
+            return line
+    return error_text.strip()
 
 
 def recursive_conversion(r_object) -> dict:  # noqa: ANN001
