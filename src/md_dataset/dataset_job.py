@@ -72,7 +72,7 @@ def dataset_job_params(name: str, module: str) -> tuple[dict, str, dict]:
     parameters = parameter_schema(fn)
 
     # for new md_form properties
-    fn_new = getattr(module, f"${name}_properties", None)
+    fn_new = getattr(module, f"{name}_properties", None)
     parameters_new = translate_payload(dict(fn_new.parameters)) if fn_new else None
 
     return parameters.dict(), description, parameters_new
