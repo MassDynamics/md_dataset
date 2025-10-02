@@ -66,10 +66,15 @@ def dataset_job_params(name: str, module: str) -> tuple[dict, str, dict]:
     """
     module = __import__(module, fromlist=[module])
 
+    # for old required_params
     fn = getattr(module, name)
-    parameters_new = translate_payload(dict(fn.parameters))
     description = fn.__doc__
     parameters = parameter_schema(fn)
+
+    # for new md_form properties
+    fn_new = getattr(module, f"${name}_properties", None)
+    parameters_new = translate_payload(dict(fn_new.parameters)) if fn_new else None
+
     return parameters.dict(), description, parameters_new
 
 
