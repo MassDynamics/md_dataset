@@ -15,6 +15,7 @@ from md_dataset.file_manager import FileManager
 from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import DoseResponseDataset
 from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import InputDataset
 from md_dataset.models.dataset import InputParams
@@ -39,8 +40,9 @@ _DATASET_REGISTRY = {
             tables: PairwiseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.ANOVA, dict): lambda run_id, dataset_type, \
             tables: AnovaDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.DOSE_RESPONSE, dict): lambda run_id, dataset_type, \
+            tables: DoseResponseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
-
 
 def create_dataset_from_run(run_id: UUID, dataset_type: DatasetType, tables: list | dict) -> Dataset:
     """Create a dataset instance based on type and tables structure."""
