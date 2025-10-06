@@ -25,8 +25,7 @@ pytest
 
 ## Documentation
 
-TODO
-
+[R implementation](https://github.com/MassDynamics/MDCustomR)
 
 ## Credits
 
