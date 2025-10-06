@@ -54,12 +54,6 @@ class InputDataset(BaseModel):
     type: DatasetType
     tables: list[InputDatasetTable]
 
-    def table_by_name(self, name: str) -> InputDatasetTable:
-        return next(filter(lambda table: table.name == name, self.tables), None)
-
-    def table_data_by_name(self, name: str) -> pd.DataFrame:
-        return self.table_by_name(name).data
-
     def populate_tables(self, file_manager: FileManager) -> InputDataset:
         tables = [
                 InputDatasetTable(**table.dict(exclude={"data", "bucket", "key"}), \
