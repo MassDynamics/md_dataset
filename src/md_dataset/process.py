@@ -117,8 +117,7 @@ def md_py(func: Callable) -> Callable:
 
     return wrapper
 
-
-def md_converter(func: Callable) -> Callable:
+def md_experiment(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
     @flow(
