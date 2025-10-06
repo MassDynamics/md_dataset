@@ -7,9 +7,11 @@ from rpy2.robjects import conversion
 from rpy2.robjects import default_converter
 from md_dataset.file_manager import FileManager
 from md_dataset.models.dataset import DatasetType
-from md_dataset.models.dataset import InputDataset
 from md_dataset.models.dataset import InputDatasetTable
 from md_dataset.models.dataset import InputParams
+from md_dataset.models.dataset import IntensityEntity
+from md_dataset.models.dataset import IntensityInputDataset
+from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
 
@@ -20,20 +22,20 @@ class TestRParams(InputParams):
 
 
 @md_r(r_file="./tests/test_process.r", r_function="process_legacy")
-def prepare_test_run_r_legacy(input_datasets: list[InputDataset], params: TestRParams, \
+def prepare_test_run_r_legacy(input_datasets: list[IntensityInputDataset], params: TestRParams, \
         output_dataset_type: DatasetType) -> RFuncArgs: # noqa: ARG001
     return RFuncArgs(data_frames = [ \
-            input_datasets[0].table_data_by_name("Protein_Intensity"), \
-            input_datasets[0].table_data_by_name("Protein_Metadata")], \
+            input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN).data, \
+            input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN).data], \
             r_args=[params.message])
 
 
 @md_r(r_file="./tests/test_process.r", r_function="process")
-def prepare_test_run_r(input_datasets: list[InputDataset], params: TestRParams, \
+def prepare_test_run_r(input_datasets: list[IntensityInputDataset], params: TestRParams, \
         output_dataset_type: DatasetType) -> RFuncArgs: # noqa: ARG001
     return RFuncArgs(data_frames = [ \
-            input_datasets[0].table_data_by_name("Protein_Intensity"), \
-            input_datasets[0].table_data_by_name("Protein_Metadata")], \
+            input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN).data, \
+            input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN).data], \
             r_args=[params.message])
 
 
@@ -52,14 +54,14 @@ def fake_file_manager(mocker: MockerFixture):
 
 
 @pytest.fixture
-def input_datasets() -> list[InputDataset]:
-    return [InputDataset(id=UUID("11111111-1111-1111-1111-111111111111"), name="r", tables=[
+def input_datasets() -> list[IntensityInputDataset]:
+    return [IntensityInputDataset(id=UUID("11111111-1111-1111-1111-111111111111"), name="r", tables=[
             InputDatasetTable(name="Protein_Intensity", bucket = "bucket", key = "baz/qux"),
             InputDatasetTable(name="Protein_Metadata", bucket= "bucket", key = "qux/quux"),
-        ], type=DatasetType.INTENSITY)]
+        ])]
 
 
-def test_run_process_r_legacy_input_dataset(input_datasets: list[InputDataset], \
+def test_run_process_r_legacy_input_dataset(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -73,7 +75,7 @@ def test_run_process_r_legacy_input_dataset(input_datasets: list[InputDataset], 
     assert isinstance(result["run_id"], UUID)
 
 
-def test_run_process_r_legacy_results(input_datasets: list[InputDataset], fake_file_manager: FileManager):
+def test_run_process_r_legacy_results(input_datasets: list[IntensityInputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": ["x", "y", "z"], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": [1, 2, 3]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
@@ -105,7 +107,7 @@ def test_run_process_r_legacy_results(input_datasets: list[InputDataset], fake_f
             pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
 
 
-def test_run_process_r_input_dataset(input_datasets: list[InputDataset], \
+def test_run_process_r_input_dataset(input_datasets: list[IntensityInputDataset], \
         fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     fake_file_manager.load_parquet_to_df.return_value = test_data
@@ -119,7 +121,7 @@ def test_run_process_r_input_dataset(input_datasets: list[InputDataset], \
     assert isinstance(result["run_id"], UUID)
 
 
-def test_run_process_r_results(input_datasets: list[InputDataset], fake_file_manager: FileManager):
+def test_run_process_r_results(input_datasets: list[IntensityInputDataset], fake_file_manager: FileManager):
     test_data = pd.DataFrame({"col1": ["x", "y", "z"], "col2": ["a", "b", "c"]})
     test_metadata = pd.DataFrame({"col1": [4, 5, 6], "col2": [1, 2, 3]})
     fake_file_manager.load_parquet_to_df.side_effect = [test_data, test_metadata]
