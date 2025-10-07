@@ -61,15 +61,23 @@ def get_s3_block() -> S3Bucket:
     if not results_bucket:
         msg = "RESULTS_BUCKET environment variable not set"
         raise ValueError(msg)
-    s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
-    s3_block.save("mdprocess", overwrite=True)
-    return s3_block
+
+    # local dev using AWS
+    profile = os.getenv("BOTO3_PROFILE")
+    if profile is None:
+        s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
+        s3_block.save("mdprocess", overwrite=True)
+        return s3_block
+    return None
 
 def get_s3_client() -> boto3.session.Session:
     if os.environ.get("USE_LOCALSTACK", "false").lower() == "true":
         session = boto3.session.Session()
         return session.client(service_name="s3", endpoint_url=os.environ.get("AWS_ENDPOINT_URL"))
-    return boto3.session.Session().client("s3")
+    # local dev using AWS
+    profile = os.getenv("BOTO3_PROFILE")
+    session = boto3.Session(profile_name=profile)
+    return session.client("s3")
 
 def get_file_manager() -> None:
     return FileManager(client=get_s3_client(), default_bucket=os.getenv("RESULTS_BUCKET"))
@@ -86,6 +94,7 @@ def load_data(input_datasets: list[T], file_manager: FileManager) -> None:
             logger.exception("Failed to load dataset %s", dataset.name)
             raise
 
+# Python based datasets
 def md_py(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -117,6 +126,7 @@ def md_py(func: Callable) -> Callable:
 
     return wrapper
 
+# New uploaded experiments
 def md_experiment(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
@@ -257,6 +267,7 @@ def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)
 
+# R based datasets
 def md_r(r_file: str, r_function: str) -> Callable:
     def decorator(func: Callable) -> Callable:
         result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None

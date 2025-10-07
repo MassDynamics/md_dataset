@@ -9,7 +9,7 @@ Common package for integrating with Mass Dynamics workflows
 
 To install md_dataset from GitHub repository, do:
 
-```console
+```sh
 git clone git@github.com:MassDynamics/md_dataset.git
 cd md_dataset
 python -m pip install .
@@ -17,7 +17,7 @@ python -m pip install .
 
 To develop the package:
 
-```console
+```sh
 python -m pip install -e '.[dev]'
 ruff check
 pytest
@@ -26,6 +26,21 @@ pytest
 ## Documentation
 
 [R implementation](https://github.com/MassDynamics/MDCustomR)
+
+To run a dataset locally, you can using localstack:
+
+```sh
+USE_LOCALSTACK=true
+```
+
+To use an AWS source buckets:
+
+```sh
+RESULTS_BUCKET=bucket-name
+BOTO3_PROFILE=your-profile
+```
+
+These will both use a local prefect installation.
 
 ## Credits
 
