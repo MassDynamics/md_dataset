@@ -13,8 +13,8 @@ from md_dataset.models.dataset import IntensityEntity
 from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTable
 from md_dataset.models.dataset import IntensityTableType
-from md_dataset.process import md_upload
 from md_dataset.process import md_py
+from md_dataset.process import md_upload
 from md_dataset.storage import FileManager
 
 # Test constants
