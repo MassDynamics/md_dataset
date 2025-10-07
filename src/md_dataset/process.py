@@ -98,6 +98,42 @@ def md_upload(func: Callable) -> Callable:
 
     return wrapper
 
+# R based datasets
+def md_r(r_file: str, r_function: str) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
+
+        @flow(
+                log_prints=True,
+                persist_result=True,
+                result_storage=result_storage,
+                )
+        @wraps(func)
+        def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
+                *args: P.args, **kwargs: P.kwargs) -> dict:
+            logger = get_run_logger()
+            logger.info("Running Deployment: %s", runtime.deployment.name)
+            logger.info("Version: %s", runtime.deployment.version)
+            logger.info("Image: %s", get_deployment_image())
+
+            file_manager = get_file_manager()
+
+            load_data(input_datasets, file_manager)
+
+            r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
+
+            results = run_r_task(r_file, r_function, r_args)
+
+            dataset = create_dataset_from_run(run_id=runtime.flow_run.id, \
+                    dataset_type=output_dataset_type, tables=results)
+
+            file_manager.save_tables(dataset.tables())
+
+            return dataset.dump()
+
+        return wrapper
+    return decorator
+
 @task
 def run_r_task(
     r_file: str,
@@ -211,38 +247,3 @@ def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)
 
-# R based datasets
-def md_r(r_file: str, r_function: str) -> Callable:
-    def decorator(func: Callable) -> Callable:
-        result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
-
-        @flow(
-                log_prints=True,
-                persist_result=True,
-                result_storage=result_storage,
-                )
-        @wraps(func)
-        def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
-                *args: P.args, **kwargs: P.kwargs) -> dict:
-            logger = get_run_logger()
-            logger.info("Running Deployment: %s", runtime.deployment.name)
-            logger.info("Version: %s", runtime.deployment.version)
-            logger.info("Image: %s", get_deployment_image())
-
-            file_manager = get_file_manager()
-
-            load_data(input_datasets, file_manager)
-
-            r_args = func(input_datasets, params, output_dataset_type, *args, **kwargs)
-
-            results = run_r_task(r_file, r_function, r_args)
-
-            dataset = create_dataset_from_run(run_id=runtime.flow_run.id, \
-                    dataset_type=output_dataset_type, tables=results)
-
-            file_manager.save_tables(dataset.tables())
-
-            return dataset.dump()
-
-        return wrapper
-    return decorator
