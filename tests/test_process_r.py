@@ -5,7 +5,6 @@ from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from rpy2.robjects import conversion
 from rpy2.robjects import default_converter
-from md_dataset.file_manager import FileManager
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDatasetTable
 from md_dataset.models.dataset import InputParams
@@ -14,6 +13,7 @@ from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
+from md_dataset.storage import FileManager
 
 
 class TestRParams(InputParams):

@@ -4,7 +4,6 @@ import pytest
 from prefect.testing.utilities import prefect_test_harness
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
-from md_dataset.file_manager import FileManager
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import InputDatasetTable
@@ -16,6 +15,7 @@ from md_dataset.models.dataset import IntensityTable
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.process import md_experiment
 from md_dataset.process import md_py
+from md_dataset.storage import FileManager
 
 # Test constants
 THREE_EXPECTED_TABLES_COUNT = 3

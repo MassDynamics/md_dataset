@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from boto3_type_annotations.s3 import Client
 from pytest_mock import MockerFixture
-from md_dataset.file_manager import FileManager
+from md_dataset.storage import FileManager
 
 
 @pytest.fixture

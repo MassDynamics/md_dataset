@@ -4,19 +4,18 @@ from functools import wraps
 from typing import TYPE_CHECKING
 from typing import ParamSpec
 from typing import TypeVar
-import boto3
-import boto3.session
 from prefect import flow
 from prefect import get_run_logger
 from prefect import runtime
 from prefect import task
-from prefect_aws.s3 import S3Bucket
-from md_dataset.file_manager import FileManager
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import InputDataset
 from md_dataset.models.dataset import InputParams
 from md_dataset.models.factory import create_dataset_from_run
+from md_dataset.storage import FileManager
+from md_dataset.storage import get_file_manager
+from md_dataset.storage import get_s3_block
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,33 +25,6 @@ if TYPE_CHECKING:
 P = ParamSpec("P")
 T = TypeVar("T", bound="InputDataset")
 
-
-
-def get_s3_block() -> S3Bucket:
-    results_bucket = os.getenv("RESULTS_BUCKET")
-    if not results_bucket:
-        msg = "RESULTS_BUCKET environment variable not set"
-        raise ValueError(msg)
-
-    # local dev using AWS
-    profile = os.getenv("BOTO3_PROFILE")
-    if profile is None:
-        s3_block = S3Bucket(bucket_name=results_bucket, bucket_folder="prefect_result_storage")
-        s3_block.save("mdprocess", overwrite=True)
-        return s3_block
-    return None
-
-def get_s3_client() -> boto3.session.Session:
-    if os.environ.get("USE_LOCALSTACK", "false").lower() == "true":
-        session = boto3.session.Session()
-        return session.client(service_name="s3", endpoint_url=os.environ.get("AWS_ENDPOINT_URL"))
-    # local dev using AWS
-    profile = os.getenv("BOTO3_PROFILE")
-    session = boto3.Session(profile_name=profile)
-    return session.client("s3")
-
-def get_file_manager() -> None:
-    return FileManager(client=get_s3_client(), default_bucket=os.getenv("RESULTS_BUCKET"))
 
 def get_deployment_image() -> str:
     return os.getenv("IMAGE", "unknown")

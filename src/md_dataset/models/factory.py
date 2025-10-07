@@ -1,8 +1,6 @@
 """Dataset factory for creating dataset instances based on type and structure."""
 
-from typing import TYPE_CHECKING
 from uuid import UUID
-
 from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
@@ -10,9 +8,6 @@ from md_dataset.models.dataset import DoseResponseDataset
 from md_dataset.models.dataset import IntensityDataset
 from md_dataset.models.dataset import LegacyIntensityDataset
 from md_dataset.models.dataset import PairwiseDataset
-
-if TYPE_CHECKING:
-    pass
 
 _DATASET_REGISTRY = {
     (DatasetType.INTENSITY, dict): lambda run_id, dataset_type, \
