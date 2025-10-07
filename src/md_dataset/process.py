@@ -70,8 +70,8 @@ def md_py(func: Callable) -> Callable:
 
     return wrapper
 
-# New uploaded experiments
-def md_experiment(func: Callable) -> Callable:
+# New uploaded "experiments"
+def md_upload(func: Callable) -> Callable:
     result_storage = get_s3_block() if os.getenv("RESULTS_BUCKET") is not None else None
 
     @flow(
