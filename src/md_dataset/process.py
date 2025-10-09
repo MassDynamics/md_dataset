@@ -9,7 +9,6 @@ from prefect import get_run_logger
 from prefect import runtime
 from prefect import task
 from md_dataset.models.dataset import DatasetType
-from md_dataset.models.dataset import EntityInputParams
 from md_dataset.models.dataset import InputDataset
 from md_dataset.models.dataset import InputParams
 from md_dataset.models.factory import create_dataset_from_run
@@ -80,7 +79,7 @@ def md_upload(func: Callable) -> Callable:
             result_storage=result_storage,
     )
     @wraps(func)
-    def wrapper(experiment_id: UUID, params: EntityInputParams, \
+    def wrapper(experiment_id: UUID, params: InputParams, \
             *args: P.args, **kwargs: P.kwargs) -> dict:
         logger = get_run_logger()
         logger.info("Running Deployment: %s", runtime.deployment.name)
