@@ -70,6 +70,7 @@ class IntensityTableType(Enum):
     INTENSITY = "intensity"
     METADATA = "metadata"
     RUNTIME_METADATA = "runtime_metadata"
+    PTM_SITES = "ptm_sites"
 
 class IntensityTable(BaseModel):
     type: IntensityTableType
