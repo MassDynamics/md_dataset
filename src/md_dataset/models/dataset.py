@@ -129,7 +129,7 @@ class IntensityDataset(Dataset):
             msg = f"The field 'intensity_tables' must be a list, but got {type(intensity_tables).__name__}."
             raise TypeError(msg)
 
-        required_table_types = {IntensityTableType.INTENSITY, IntensityTableType.METADATA, IntensityTableType.PTM_SITES}
+        required_table_types = {IntensityTableType.INTENSITY, IntensityTableType.METADATA}
 
         for i, datum in enumerate(intensity_tables):
             if not isinstance(datum, IntensityData):
