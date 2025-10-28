@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "${CONDA_ENV_NAME}" ]; then
+    echo "Error: CONDA_ENV_NAME environment variable is not set"
+    exit 1
+fi
+
+if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1)) ); then
+  echo "creating conda environment ${CONDA_ENV_NAME}"
+  conda create -y --name $CONDA_ENV_NAME python=3.11
+fi
+
+echo "installing packages into ${CONDA_ENV_NAME}"
+conda run -n $CONDA_ENV_NAME bash -c "python -m pip install -e '.[dev]'"
+
+conda run -n $CONDA_ENV_NAME bash -c "ruff check --fix"
