@@ -163,12 +163,10 @@ class IntensityDataset(Dataset):
         if self._dump_cache is None:
             result_tables = []
             for datum in self.intensity_tables:
-                name = f"{datum.entity.value}_{to_pascal(table.type.value)}"
-                if table.type == IntensityTableType.PTM_SITES:
-                    name = "PTM_sites"
                 result_tables.extend({
                     "id": str(uuid.uuid4()),
-                    "name": name,
+                    "name": "PTM_sites" if table.type == IntensityTableType.PTM_SITES
+                            else f"{datum.entity.value}_{to_pascal(table.type.value)}",
                     "path": self._path(datum.entity, table.type),
                 } for table in datum.tables)
 
