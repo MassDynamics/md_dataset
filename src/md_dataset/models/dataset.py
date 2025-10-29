@@ -177,6 +177,8 @@ class IntensityDataset(Dataset):
         return self._dump_cache
 
     def _path(self, entity: IntensityEntity, data_type: IntensityTableType) -> str:
+        if data_type == IntensityTableType.PTM_SITES:
+            return f"job_runs/{self.run_id}/PTM_sites.parquet"
         return f"job_runs/{self.run_id}/{entity.value}_{to_pascal(data_type.value)}.parquet"
 
 def to_pascal(s: str) -> str:
