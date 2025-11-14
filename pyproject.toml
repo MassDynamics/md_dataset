@@ -27,7 +27,7 @@ dependencies = [
   "prefect-aws ~= 0.5.7",
   "pyarrow",
   "pydantic ~= 2.10.4",
-  "md_form @ git+https://github.com/MassDynamics/md_form@v0.1.0-23"
+  "md_form @ git+https://github.com/MassDynamics/md_form@v0.1.0-24"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = [""]
