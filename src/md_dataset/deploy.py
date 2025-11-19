@@ -44,6 +44,7 @@ FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
 DEPLOYMENT_NAME = os.environ["DEPLOYMENT_NAME"]
 RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
 INITIAL_DATA_BUCKET_NAME = os.environ.get("INITIAL_DATA_BUCKET_NAME") # optional
+PUBLISHED = os.environ.get("PUBLISHED", "true")
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 def main() -> None:
@@ -95,7 +96,7 @@ def main() -> None:
     logger.info("DEPLOYING dataset job")
     job = create_or_update_dataset_job(
         base_url=DATASET_SERVICE_API_BASE_URL,
-        job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME),
+        job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME, published=PUBLISHED),
         deployment_name=DEPLOYMENT_NAME,
         run_type=DatasetType[DATASET_RUN_TYPE].value,
     )

@@ -15,6 +15,7 @@ def create_or_update_dataset_job_send_http_request(
     run_type: DatasetType,
     params: dict,
     params_new: dict,
+    published: bool = True,
 ) -> dict:
     """Send HTTP POST request to create or update a dataset job.
 
@@ -26,6 +27,7 @@ def create_or_update_dataset_job_send_http_request(
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
         params: Dictionary of parameters for the job
         params_new: Translated parameters for the job
+        published: Whether the job is published, default is True
 
     Returns:
         dict: The JSON response from the server
@@ -41,6 +43,7 @@ def create_or_update_dataset_job_send_http_request(
         "run_type": run_type,
         "params": params,
         "params_new": params_new,
+        "published": published,
     }
 
     url = f"{base_url}/jobs/create_or_update"
@@ -98,6 +101,7 @@ class JobParams(NamedTuple):
     name: str
     function: str
     module: str
+    published: bool
 
 def create_or_update_dataset_job(
     base_url: str,
@@ -126,6 +130,7 @@ def create_or_update_dataset_job(
         flow_and_deployment_name=flow_and_deployment_name,
         run_type=run_type,
         params=params,
-        params_new = params_new,
+        params_new=params_new,
+        published=job_params.published,
     )
 

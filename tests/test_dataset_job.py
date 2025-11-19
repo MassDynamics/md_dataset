@@ -41,7 +41,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
 
         result = create_or_update_dataset_job(
             base_url="http://example.com:8001",
-            job_params=JobParams(function="test_func", module="tests.func", name="job name"),
+            job_params=JobParams(function="test_func", module="tests.func", name="job name", published=True),
             deployment_name="deployment name",
             run_type=DatasetType.INTENSITY,
         )
@@ -54,6 +54,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             "description": "A nice description.",
             "flow_and_deployment_name": "test_func/deployment name",
             "run_type": DatasetType.INTENSITY,
+            "published": True,
         }
 
         (url,), kwargs = mock_post.call_args
@@ -64,7 +65,6 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         actual_payload.pop("params")
         actual_payload.pop("params_new")
         assert actual_payload == expected_payload
-
 
 class FlowNameToSlugTest(unittest.TestCase):
     def test_name_to_slug(self):
@@ -94,6 +94,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             run_type=DatasetType.INTENSITY,
             params={"param1": "value1"},
             params_new={"param2": "value2"},
+            published=False,
         )
 
         assert result == {"id": 123}
@@ -106,6 +107,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
             "run_type": DatasetType.INTENSITY,
             "params": {"param1": "value1"},
             "params_new": {"param2": "value2"},
+            "published": False,
         }
 
         mock_post.assert_called_once_with(
@@ -128,5 +130,6 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
                 run_type="INTENSITY",
                 params={"param1": "value1"},
                 params_new={"param2": "value2"},
+                published=False,
             )
 
