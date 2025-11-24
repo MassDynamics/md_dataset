@@ -10,6 +10,7 @@ from md_dataset.dataset_job import create_or_update_dataset_job_send_http_reques
 from md_dataset.dataset_job import dataset_job_params
 from md_dataset.dataset_job import name_to_slug
 from md_dataset.models.dataset import DatasetType
+from src.md_dataset.dataset_job import create_or_update_dataset_job_and_deployment
 
 
 class DatasetJobParamsTest(unittest.TestCase):
@@ -55,6 +56,46 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             "flow_and_deployment_name": "test_func/deployment name",
             "run_type": DatasetType.INTENSITY,
             "published": True,
+        }
+
+        (url,), kwargs = mock_post.call_args
+        assert url == "http://example.com:8001/jobs/create_or_update"
+        actual_payload = kwargs["json"]
+        actual_params = actual_payload["params"]
+        assert actual_params["title"] == "Parameters"
+        actual_payload.pop("params")
+        actual_payload.pop("params_new")
+        assert actual_payload == expected_payload
+
+    @patch("requests.post")
+    def test_success_with_create_or_update_dataset_job_and_deployment(self, mock_post: MagicMock):
+        response = requests.Response()
+        response.status_code = 200
+        response.raw = BytesIO(b'{"id": 123}')
+        mock_post.return_value = response
+
+        result = create_or_update_dataset_job_and_deployment(
+            base_url="http://example.com:8001",
+            job_params=JobParams(function="test_func", module="tests.func", name="job name", published=True),
+            deployment_name="deployment name",
+            run_type=DatasetType.INTENSITY,
+            image="111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
+        )
+
+        assert result == {"id": 123}
+
+        expected_payload = {
+            "name": "job name",
+            "slug": "job_name",
+            "description": "A nice description.",
+            "flow_and_deployment_name": "test_func/deployment name",
+            "run_type": DatasetType.INTENSITY,
+            "published": True,
+            "job_deploy_request": {
+                "image": "111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
+                "flow_package": "tests.func",
+                "flow": "test_func",
+            },
         }
 
         (url,), kwargs = mock_post.call_args
