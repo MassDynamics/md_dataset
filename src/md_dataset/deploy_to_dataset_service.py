@@ -1,7 +1,7 @@
 import logging
 import os
 from md_dataset.dataset_job import JobParams
-from md_dataset.dataset_job import create_or_update_dataset_job
+from md_dataset.dataset_job import create_or_update_dataset_job_and_deployment
 from md_dataset.models.dataset import DatasetType
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 def main() -> None:
 
     logger.info("DEPLOYING dataset job")
-    job = create_or_update_dataset_job(
+    job = create_or_update_dataset_job_and_deployment(
         base_url=DATASET_SERVICE_API_BASE_URL,
         job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME, published=PUBLISHED),
         deployment_name=DEPLOYMENT_NAME,
