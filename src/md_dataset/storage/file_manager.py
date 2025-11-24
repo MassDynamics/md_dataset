@@ -89,13 +89,16 @@ class FileManager:
             return pd.read_parquet(io.BytesIO(content), engine="pyarrow")
 
     def save_tables(self, tables: list[tuple[str, pd.DataFrame]]) -> None:
-        """Save multiple tables to S3 as parquet files.
+        """Save multiple tables to S3 as parquet and CSV files.
 
         Args:
             tables: List of (path, DataFrame) tuples to save
         """
         for path, data in tables:
             self.save_df_to_parquet(path=path, df=data)
+            # Also save as CSV
+            csv_path = path.replace(".parquet", ".csv")
+            self.save_df_to_csv(path=csv_path, df=data)
 
     def save_df_to_parquet(self, df: pd.DataFrame, path: str) -> None:
         """Save a pandas DataFrame to S3 as a parquet file.
@@ -108,6 +111,22 @@ class FileManager:
         df.to_parquet(pq_buffer, engine="pyarrow", compression="gzip", index=False)
         self.client.put_object(
             Body=(pq_buffer.getvalue()),
+            Bucket=self.default_bucket,
+            Key=path,
+        )
+
+    def save_df_to_csv(self, df: pd.DataFrame, path: str) -> None:
+        """Save a pandas DataFrame to S3 as a CSV file.
+
+        Args:
+            df: DataFrame to save
+            path: S3 object key for the saved file
+        """
+        csv_buffer = io.StringIO()
+        df.to_csv(csv_buffer, index=False)
+        csv_bytes = csv_buffer.getvalue().encode("utf-8")
+        self.client.put_object(
+            Body=csv_bytes,
             Bucket=self.default_bucket,
             Key=path,
         )
