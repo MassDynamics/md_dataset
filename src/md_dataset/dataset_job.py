@@ -1,10 +1,12 @@
 import re
+import time
 from typing import NamedTuple
 import requests
 from md_form import translate_payload
 from prefect.utilities.callables import parameter_schema
 from md_dataset.models.dataset import DatasetType
 
+ACCEPTED_STATUS_CODE = 202
 
 # ruff: noqa: PLR0913
 def create_or_update_dataset_job_send_http_request(
@@ -52,9 +54,11 @@ def create_or_update_dataset_job_send_http_request(
         payload["job_deploy_request"] = job_deploy_request
 
     url = f"{base_url}/jobs/create_or_update"
-    response = requests.post(url, json=payload, timeout=10)
+    response = requests.post(url, json=payload, timeout=50)
     try:
         response.raise_for_status()
+        if response.status_code == ACCEPTED_STATUS_CODE:
+            return get_job_deploy_request(base_url, response.headers["Location"]).json()
         return response.json()
     except requests.exceptions.HTTPError as e:
         error_body = response.text
@@ -64,6 +68,13 @@ def create_or_update_dataset_job_send_http_request(
             msg,
         ) from e
 
+def get_job_deploy_request(base_url: str, url: str) -> requests.Response:
+    response = requests.get(f"{base_url}{url}", timeout=50)
+    response.raise_for_status()
+    if response.status_code == ACCEPTED_STATUS_CODE:
+        time.sleep(2)
+        return get_job_deploy_request(base_url, response.headers["Location"])
+    return response
 
 def dataset_job_params(name: str, module: str) -> tuple[dict, str, dict]:
     """Get the parameters schema for a flow.
