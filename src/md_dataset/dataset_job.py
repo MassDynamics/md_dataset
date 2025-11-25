@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 from typing import NamedTuple
@@ -5,6 +6,16 @@ import requests
 from md_form import translate_payload
 from prefect.utilities.callables import parameter_schema
 from md_dataset.models.dataset import DatasetType
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
 
 ACCEPTED_STATUS_CODE = 202
 
@@ -57,6 +68,8 @@ def create_or_update_dataset_job_send_http_request(
     response = requests.post(url, json=payload, timeout=50)
     try:
         response.raise_for_status()
+        log_status_code =f"url:{url} status_code: {response.status_code}"
+        logger.info(log_status_code)
         if response.status_code == ACCEPTED_STATUS_CODE:
             return get_job_deploy_request(base_url, response.headers["Location"]).json()
         return response.json()
@@ -71,7 +84,10 @@ def create_or_update_dataset_job_send_http_request(
 def get_job_deploy_request(base_url: str, url: str) -> requests.Response:
     response = requests.get(f"{base_url}{url}", timeout=50)
     response.raise_for_status()
+    log_status_code =f"url:{url} status_code: {response.status_code}"
+    logger.info(log_status_code)
     if response.status_code == ACCEPTED_STATUS_CODE:
+        logger.info("waiting for deployment...")
         time.sleep(2)
         return get_job_deploy_request(base_url, response.headers["Location"])
     return response
