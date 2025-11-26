@@ -65,7 +65,7 @@ def create_or_update_dataset_job_send_http_request(
         payload["job_deploy_request"] = job_deploy_request
 
     url = f"{base_url}/jobs/create_or_update"
-    response = requests.post(url, json=payload, timeout=50)
+    response = requests.post(url, json=payload, timeout=(30, 50))
     try:
         response.raise_for_status()
         log_status_code =f"url:{url} status_code: {response.status_code}"
@@ -82,7 +82,7 @@ def create_or_update_dataset_job_send_http_request(
         ) from e
 
 def get_job_deploy_request(base_url: str, url: str) -> requests.Response:
-    response = requests.get(f"{base_url}{url}", timeout=50)
+    response = requests.get(f"{base_url}{url}", timeout=(30, 50))
     response.raise_for_status()
     log_status_code =f"url:{url} status_code: {response.status_code}"
     logger.info(log_status_code)
