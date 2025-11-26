@@ -152,7 +152,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         }
 
         mock_post.assert_called_once_with(
-            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=50,
+            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=(30, 50),
         )
 
     @patch("requests.post")
@@ -220,11 +220,11 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         }
 
         mock_post.assert_called_once_with(
-            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=50,
+            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=(30, 50),
         )
 
         mock_get.assert_called_with(
-            "http://example.com/jobs/some_slug/job_deploy_request/thePodName", timeout=50,
+            "http://example.com/jobs/some_slug/job_deploy_request/thePodName", timeout=(30, 50),
         )
 
         expected_get_call_count = 2
