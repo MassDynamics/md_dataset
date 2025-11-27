@@ -11,6 +11,7 @@ from md_dataset.dataset_job import dataset_job_params
 from md_dataset.dataset_job import name_to_slug
 from md_dataset.models.dataset import DatasetType
 from src.md_dataset.dataset_job import create_or_update_dataset_job_and_deployment
+from src.md_dataset.dataset_job import create_or_update_dataset_job_and_deployment_send_http_request
 
 
 class DatasetJobParamsTest(unittest.TestCase):
@@ -77,7 +78,6 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         result = create_or_update_dataset_job_and_deployment(
             base_url="http://example.com:8001",
             job_params=JobParams(function="test_func", module="tests.func", name="job name", published=True),
-            deployment_name="deployment name",
             run_type=DatasetType.INTENSITY,
             image="111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
         )
@@ -86,11 +86,8 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
 
         expected_payload = {
             "name": "job name",
-            "slug": "job_name",
             "description": "A nice description.",
-            "flow_and_deployment_name": "test_func/deployment name",
             "run_type": DatasetType.INTENSITY,
-            "published": True,
             "job_deploy_request": {
                 "image": "111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
                 "flow_package": "tests.func",
@@ -99,12 +96,8 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
         }
 
         (url,), kwargs = mock_post.call_args
-        assert url == "http://example.com:8001/jobs/create_or_update"
+        assert url == "http://example.com:8001/jobs/v2/create_or_update"
         actual_payload = kwargs["json"]
-        actual_params = actual_payload["params"]
-        assert actual_params["title"] == "Parameters"
-        actual_payload.pop("params")
-        actual_payload.pop("params_new")
         assert actual_payload == expected_payload
 
 class FlowNameToSlugTest(unittest.TestCase):
@@ -117,7 +110,6 @@ class FlowNameToSlugTest(unittest.TestCase):
         assert name_to_slug("-starting-with-dash") == "starting_with_dash"
         assert name_to_slug("ending-with-dash-") == "ending_with_dash"
         assert name_to_slug("") == ""
-
 
 class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
     @patch("requests.post")
@@ -152,7 +144,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         }
 
         mock_post.assert_called_once_with(
-            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=(30, 50),
+            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=10,
         )
 
     @patch("requests.post")
@@ -174,7 +166,7 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
                 published=False,
             )
 
-
+class CreateOrUpdateDatasetJobAndDeploymentSendHttpRequestTest(unittest.TestCase):
     @patch("requests.get")
     @patch("requests.post")
     def test_accepted_request(self, mock_post: MagicMock, mock_get: MagicMock):
@@ -194,38 +186,30 @@ class CreateOrUpdateDatasetJobSendHttpRequestTest(unittest.TestCase):
         finished_response.raw = BytesIO(b'{"id": 123}')
         mock_get.side_effect = [response, finished_response]
 
-
-        result = create_or_update_dataset_job_send_http_request(
+        result = create_or_update_dataset_job_and_deployment_send_http_request(
                 base_url="http://example.com",
                 job_name="job name",
                 description="description",
-                flow_and_deployment_name="flow and deployment name",
                 run_type=DatasetType.INTENSITY,
-                params={"param1": "value1"},
-                params_new={"param2": "value2"},
-                published=False,
+                job_deploy_request={
+                    "image": "something",
+                },
+
             )
 
         assert result == {"id": 123}
 
         expected_payload = {
             "name": "job name",
-            "slug": "job_name",
             "description": "description",
-            "flow_and_deployment_name": "flow and deployment name",
             "run_type": DatasetType.INTENSITY,
-            "params": {"param1": "value1"},
-            "params_new": {"param2": "value2"},
-            "published": False,
+            "job_deploy_request": {"image": "something"},
         }
 
         mock_post.assert_called_once_with(
-            "http://example.com/jobs/create_or_update", json=expected_payload, timeout=(30, 50),
+            "http://example.com/jobs/v2/create_or_update", json=expected_payload, timeout=50,
         )
 
-        mock_get.assert_called_with(
-            "http://example.com/jobs/some_slug/job_deploy_request/thePodName", timeout=(30, 50),
-        )
 
         expected_get_call_count = 2
         assert mock_get.call_count == expected_get_call_count

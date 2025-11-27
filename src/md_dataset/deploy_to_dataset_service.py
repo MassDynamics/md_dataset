@@ -20,7 +20,6 @@ DOCKER_IMAGE = os.environ["DOCKER_IMAGE"]
 JOB_NAME = os.environ["JOB_NAME"]
 FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
-DEPLOYMENT_NAME = os.environ["DEPLOYMENT_NAME"]
 PUBLISHED = os.environ.get("PUBLISHED", "false")
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
@@ -30,7 +29,6 @@ def main() -> None:
     job = create_or_update_dataset_job_and_deployment(
         base_url=DATASET_SERVICE_API_BASE_URL,
         job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME, published=PUBLISHED),
-        deployment_name=DEPLOYMENT_NAME,
         run_type=DatasetType[DATASET_RUN_TYPE].value,
         image=DOCKER_IMAGE,
     )
