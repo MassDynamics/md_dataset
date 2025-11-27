@@ -29,7 +29,6 @@ def create_or_update_dataset_job_send_http_request(
     params: dict,
     params_new: dict,
     published: bool = True,
-    job_deploy_request: dict|None = None,
 ) -> dict:
     """Send HTTP POST request to create or update a dataset job.
 
@@ -42,7 +41,6 @@ def create_or_update_dataset_job_send_http_request(
         params: Dictionary of parameters for the job
         params_new: Translated parameters for the job
         published: Whether the job is published, default is True
-        job_deploy_request: if provided will send a request to the dataset service to do the prefect deployment
 
     Returns:
         dict: The JSON response from the server
@@ -61,11 +59,51 @@ def create_or_update_dataset_job_send_http_request(
         "published": published,
     }
 
-    if job_deploy_request is not None:
-        payload["job_deploy_request"] = job_deploy_request
-
     url = f"{base_url}/jobs/create_or_update"
-    response = requests.post(url, json=payload, timeout=(30, 50))
+    response = requests.post(url, json=payload, timeout=10)
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        error_body = response.text
+        error_details = f". Response body: {error_body}" if error_body else ""
+        msg = f"HTTP error occurred: {e}{error_details}"
+        raise requests.exceptions.HTTPError(
+            msg,
+        ) from e
+
+# ruff: noqa: PLR0913
+def create_or_update_dataset_job_and_deployment_send_http_request(
+        base_url: str,
+        job_name: str,
+        description: str,
+        run_type: DatasetType,
+        job_deploy_request: dict|None = None,
+) -> dict:
+    """Send HTTP POST request to create or update a dataset job.
+
+    Args:
+        base_url: The endpoint base URL (schema, host, and port), e.g. http://example.com:8001
+        job_name: Name of the job
+        description: Description of the job
+        run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
+        job_deploy_request: dict of image, flow_package, flow
+
+    Returns:
+        dict: The JSON response from the server
+
+    Raises:
+        requests.exceptions.HTTPError: If the response status code is not 200
+    """
+    payload = {
+        "name": job_name,
+        "description": description,
+        "run_type": run_type,
+        "job_deploy_request": job_deploy_request,
+    }
+
+    url = f"{base_url}/jobs/v2/create_or_update"
+    response = requests.post(url, json=payload, timeout=50)
     try:
         response.raise_for_status()
         log_status_code =f"url:{url} status_code: {response.status_code}"
@@ -82,7 +120,7 @@ def create_or_update_dataset_job_send_http_request(
         ) from e
 
 def get_job_deploy_request(base_url: str, url: str) -> requests.Response:
-    response = requests.get(f"{base_url}{url}", timeout=(30, 50))
+    response = requests.get(f"{base_url}{url}", timeout=50)
     response.raise_for_status()
     log_status_code =f"url:{url} status_code: {response.status_code}"
     logger.info(log_status_code)
@@ -169,7 +207,6 @@ def create_or_update_dataset_job(
 def create_or_update_dataset_job_and_deployment(
         base_url: str,
         job_params: JobParams,
-        deployment_name: str,
         run_type: DatasetType,
         image: str,
 ) -> dict:
@@ -177,7 +214,6 @@ def create_or_update_dataset_job_and_deployment(
 
     Args:
         base_url: The endpoint base URL of the dataset service API (schema, host, and port), e.g. http://example.com:8001
-        deployment_name: Name of the deployment
         job_params: The job name, name of the module and function, must be ab existing function name in the `module`.
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
         image: full image tag which has already been made available (e.g. "1234.ecr.us-east-1.com/dose-response:0.0.2")
@@ -185,18 +221,13 @@ def create_or_update_dataset_job_and_deployment(
     Returns:
         dict: The JSON response from the server containing the dataset job.
     """
-    params, description, params_new = dataset_job_params(name=job_params.function, module=job_params.module)
-    flow_and_deployment_name = f"{job_params.function}/{deployment_name}"
+    _,description, _ = dataset_job_params(name=job_params.function, module=job_params.module)
 
-    return create_or_update_dataset_job_send_http_request(
+    return create_or_update_dataset_job_and_deployment_send_http_request(
         base_url=base_url,
         job_name=job_params.name,
         description=description,
-        flow_and_deployment_name=flow_and_deployment_name,
         run_type=run_type,
-        params=params,
-        params_new=params_new,
-        published=job_params.published,
         job_deploy_request={
             "image": image,
             "flow_package": job_params.module,
