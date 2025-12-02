@@ -78,6 +78,7 @@ def create_or_update_dataset_job_and_deployment_send_http_request(
         job_name: str,
         description: str,
         run_type: DatasetType,
+        slug: str|None = None,
         job_deploy_request: dict|None = None,
 ) -> dict:
     """Send HTTP POST request to create or update a dataset job.
@@ -87,6 +88,7 @@ def create_or_update_dataset_job_and_deployment_send_http_request(
         job_name: Name of the job
         description: Description of the job
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
+        slug: A unique string based on the existing job's name. Useful for updating the name of the job
         job_deploy_request: dict of image, flow_package, flow
 
     Returns:
@@ -101,6 +103,8 @@ def create_or_update_dataset_job_and_deployment_send_http_request(
         "run_type": run_type,
         "job_deploy_request": job_deploy_request,
     }
+    if slug:
+        payload["slug"] = slug
 
     url = f"{base_url}/jobs/v2/create_or_update"
     response = requests.post(url, json=payload, timeout=50)
@@ -209,6 +213,7 @@ def create_or_update_dataset_job_and_deployment(
         job_params: JobParams,
         run_type: DatasetType,
         image: str,
+        dataset_slug: str | None = None,
 ) -> dict:
     """Send HTTP request to dataset service to create or update a dataset job end to end.
 
@@ -217,6 +222,7 @@ def create_or_update_dataset_job_and_deployment(
         job_params: The job name, name of the module and function, must be ab existing function name in the `module`.
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
         image: full image tag which has already been made available (e.g. "1234.ecr.us-east-1.com/dose-response:0.0.2")
+        dataset_slug: A unique string based on the existing job's name. Useful for updating the name of the job
 
     Returns:
         dict: The JSON response from the server containing the dataset job.
@@ -228,6 +234,7 @@ def create_or_update_dataset_job_and_deployment(
         job_name=job_params.name,
         description=description,
         run_type=run_type,
+        slug=dataset_slug,
         job_deploy_request={
             "image": image,
             "flow_package": job_params.module,

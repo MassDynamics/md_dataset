@@ -80,6 +80,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             job_params=JobParams(function="test_func", module="tests.func", name="job name", published=True),
             run_type=DatasetType.INTENSITY,
             image="111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
+            dataset_slug="dataset_slug",
         )
 
         assert result == {"id": 123}
@@ -88,6 +89,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             "name": "job name",
             "description": "A nice description.",
             "run_type": DatasetType.INTENSITY,
+            "slug": "dataset_slug",
             "job_deploy_request": {
                 "image": "111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
                 "flow_package": "tests.func",

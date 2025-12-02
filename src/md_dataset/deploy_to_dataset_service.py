@@ -22,7 +22,7 @@ FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
 PUBLISHED = os.environ.get("PUBLISHED", "false")
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
-
+DATASET_SLUG = os.environ.get("DATASET_SLUG", None)
 def main() -> None:
 
     logger.info("DEPLOYING dataset job")
@@ -31,6 +31,7 @@ def main() -> None:
         job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME, published=PUBLISHED),
         run_type=DatasetType[DATASET_RUN_TYPE].value,
         image=DOCKER_IMAGE,
+        dataset_slug=DATASET_SLUG,
     )
 
     logger.info(job)
