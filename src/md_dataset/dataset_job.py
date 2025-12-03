@@ -76,7 +76,6 @@ def create_or_update_dataset_job_send_http_request(
 def create_or_update_dataset_job_and_deployment_send_http_request(
         base_url: str,
         job_name: str,
-        description: str,
         run_type: DatasetType,
         slug: str|None = None,
         job_deploy_request: dict|None = None,
@@ -86,7 +85,6 @@ def create_or_update_dataset_job_and_deployment_send_http_request(
     Args:
         base_url: The endpoint base URL (schema, host, and port), e.g. http://example.com:8001
         job_name: Name of the job
-        description: Description of the job
         run_type: Dataset type ('DatasetType.INTENSITY', 'DatasetType.PAIRWISE' etc.)
         slug: A unique string based on the existing job's name. Useful for updating the name of the job
         job_deploy_request: dict of image, flow_package, flow
@@ -99,7 +97,6 @@ def create_or_update_dataset_job_and_deployment_send_http_request(
     """
     payload = {
         "name": job_name,
-        "description": description,
         "run_type": run_type,
         "job_deploy_request": job_deploy_request,
     }
@@ -227,12 +224,10 @@ def create_or_update_dataset_job_and_deployment(
     Returns:
         dict: The JSON response from the server containing the dataset job.
     """
-    _,description, _ = dataset_job_params(name=job_params.function, module=job_params.module)
 
     return create_or_update_dataset_job_and_deployment_send_http_request(
         base_url=base_url,
         job_name=job_params.name,
-        description=description,
         run_type=run_type,
         slug=dataset_slug,
         job_deploy_request={

@@ -87,7 +87,6 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
 
         expected_payload = {
             "name": "job name",
-            "description": "A nice description.",
             "run_type": DatasetType.INTENSITY,
             "slug": "dataset_slug",
             "job_deploy_request": {
@@ -191,7 +190,6 @@ class CreateOrUpdateDatasetJobAndDeploymentSendHttpRequestTest(unittest.TestCase
         result = create_or_update_dataset_job_and_deployment_send_http_request(
                 base_url="http://example.com",
                 job_name="job name",
-                description="description",
                 run_type=DatasetType.INTENSITY,
                 job_deploy_request={
                     "image": "something",
@@ -203,7 +201,6 @@ class CreateOrUpdateDatasetJobAndDeploymentSendHttpRequestTest(unittest.TestCase
 
         expected_payload = {
             "name": "job name",
-            "description": "description",
             "run_type": DatasetType.INTENSITY,
             "job_deploy_request": {"image": "something"},
         }

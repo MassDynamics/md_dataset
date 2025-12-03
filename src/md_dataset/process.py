@@ -45,6 +45,7 @@ def md_py(func: Callable) -> Callable:
             log_prints=True,
             persist_result=True,
             result_storage=result_storage,
+            description = func.__doc__
     )
     @wraps(func)
     def wrapper(input_datasets: list[T], params: InputParams, output_dataset_type: DatasetType, \
@@ -106,6 +107,7 @@ def md_r(r_file: str, r_function: str) -> Callable:
                 log_prints=True,
                 persist_result=True,
                 result_storage=result_storage,
+                description = func.__doc__
                 )
         @wraps(func)
         def wrapper(input_datasets: list[T] , params: InputParams, output_dataset_type: DatasetType, \
