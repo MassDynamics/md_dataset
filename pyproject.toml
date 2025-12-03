@@ -35,7 +35,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.7.3-beta"
+version = "0.8.0-beta"
 
 [project.optional-dependencies]
 r = [
@@ -77,6 +77,7 @@ publishing = [
 md-dataset-deploy = "md_dataset.deploy:main"
 md-dataset-deploy-prefect = "md_dataset.deploy_prefect:main"
 md-dataset-deploy-to-service = "md_dataset.deploy_to_dataset_service:main"
+md-deploy-dataset-job = "md_dataset.deploy_dataset_job:main"
 
 [project.urls]
 Repository = "https://github.com/MassDynamics/md_dataset"

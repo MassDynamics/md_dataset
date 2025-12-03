@@ -1,8 +1,6 @@
 import logging
 import os
-from warnings import deprecated
-from md_dataset.dataset_job import JobParams
-from md_dataset.dataset_job import create_or_update_dataset_job_and_deployment
+from md_dataset.dataset_job_api import create_or_update_dataset_job_and_deployment
 from md_dataset.models.dataset import DatasetType
 
 logger = logging.getLogger(__name__)
@@ -16,21 +14,24 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-DATASET_SERVICE_API_BASE_URL = os.environ.get("DATASET_SERVICE_API_BASE_URL", "http://md-data-set-web")
+MASSDYNAMICS_API_BASE_URL = os.environ.get("MASSDYNAMICS_API_BASE_URL", "https://app.massdynamics.com")
+MASSDYNAMICS_API_KEY = os.environ["MASSDYNAMICS_API_KEY"]
 DOCKER_IMAGE = os.environ["DOCKER_IMAGE"]
 JOB_NAME = os.environ["JOB_NAME"]
 FLOW = os.environ["FLOW"]
 FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
-PUBLISHED = os.environ.get("PUBLISHED", "false")
+PUBLIC = os.environ.get("PUBLIC", None)
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 DATASET_SLUG = os.environ.get("DATASET_SLUG", None)
-@deprecated("use md-deploy-dataset-job")
 def main() -> None:
 
     logger.info("DEPLOYING dataset job")
     job = create_or_update_dataset_job_and_deployment(
-        base_url=DATASET_SERVICE_API_BASE_URL,
-        job_params=JobParams(function=FLOW, module=FLOW_PACKAGE, name=JOB_NAME, published=PUBLISHED),
+        base_url=MASSDYNAMICS_API_BASE_URL,
+        api_key=MASSDYNAMICS_API_KEY,
+        job_name=JOB_NAME,
+        job_module=FLOW_PACKAGE,
+        job_function=FLOW,
         run_type=DatasetType[DATASET_RUN_TYPE].value,
         image=DOCKER_IMAGE,
         dataset_slug=DATASET_SLUG,

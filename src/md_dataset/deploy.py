@@ -48,7 +48,7 @@ INITIAL_DATA_BUCKET_NAME = os.environ.get("INITIAL_DATA_BUCKET_NAME") # optional
 PUBLISHED = os.environ.get("PUBLISHED", "true")
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
-@deprecated("use md-dataset-deploy-to-service")
+@deprecated("use md-deploy-dataset-job")
 def main() -> None:
     logger.info("Prefect url: %s", PREFECT_API_URL)
 
