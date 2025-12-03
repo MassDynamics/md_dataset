@@ -26,6 +26,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             run_type=DatasetType.INTENSITY,
             image="111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
             dataset_slug="dataset_slug",
+            public="false",
         )
 
         assert result == {"id": 123}
@@ -34,6 +35,7 @@ class CreateOrUpdateDatasetJobTest(unittest.TestCase):
             "name": "job name",
             "run_type": DatasetType.INTENSITY,
             "slug": "dataset_slug",
+            "public": False,
             "job_deploy_request": {
                 "image": "111113333333.dkr.ecr.us-east-1.amazonaws.com/dose-response:0.0.2-2",
                 "flow_package": "tests.func",
@@ -73,6 +75,7 @@ class CreateOrUpdateDatasetJobAndDeploymentSendHttpRequestTest(unittest.TestCase
                 api_key="api_key_AAAA",
                 job_name="job name",
                 run_type=DatasetType.INTENSITY,
+                public=False,
                 job_deploy_request={
                     "image": "something",
                 },
@@ -85,6 +88,7 @@ class CreateOrUpdateDatasetJobAndDeploymentSendHttpRequestTest(unittest.TestCase
             "name": "job name",
             "run_type": DatasetType.INTENSITY,
             "job_deploy_request": {"image": "something"},
+            "public": False,
         }
 
         mock_post.assert_called_once_with(

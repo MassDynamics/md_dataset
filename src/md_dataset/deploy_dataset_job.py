@@ -34,6 +34,7 @@ def main() -> None:
         job_function=FLOW,
         run_type=DatasetType[DATASET_RUN_TYPE].value,
         image=DOCKER_IMAGE,
+        public=PUBLIC,
         dataset_slug=DATASET_SLUG,
     )
 
