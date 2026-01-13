@@ -60,6 +60,7 @@ dev = [
     "tox",
     "myst_parser",
     "rpy2 ~= 3.5.17",
+    "deprecated"
 ]
 docs = [
     "sphinx",

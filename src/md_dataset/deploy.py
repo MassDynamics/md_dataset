@@ -2,7 +2,7 @@ import importlib
 import logging
 import os
 import tempfile
-from warnings import deprecated
+from deprecated import deprecated
 from md_dataset.dataset_job import JobParams
 from md_dataset.dataset_job import create_or_update_dataset_job
 from md_dataset.models.dataset import DatasetType
@@ -48,7 +48,7 @@ INITIAL_DATA_BUCKET_NAME = os.environ.get("INITIAL_DATA_BUCKET_NAME") # optional
 PUBLISHED = os.environ.get("PUBLISHED", "true")
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
-@deprecated("use md-deploy-dataset-job")
+@deprecated(reason="use md-deploy-dataset-job")
 def main() -> None:
     logger.info("Prefect url: %s", PREFECT_API_URL)
 
