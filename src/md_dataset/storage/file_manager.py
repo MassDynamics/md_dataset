@@ -108,7 +108,7 @@ class FileManager:
             path: S3 object key for the saved file
         """
         pq_buffer = io.BytesIO()
-        df.to_parquet(pq_buffer, engine="pyarrow", compression="gzip", index=False)
+        df.to_parquet(pq_buffer, engine="pyarrow", compression="gzip", index=False, row_group_size=16_000)
         self.client.put_object(
             Body=(pq_buffer.getvalue()),
             Bucket=self.default_bucket,
