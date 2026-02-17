@@ -22,6 +22,7 @@ class DatasetType(Enum):
     DOSE_RESPONSE = "DOSE_RESPONSE"
     PAIRWISE = "PAIRWISE"
     ANOVA = "ANOVA"
+    ENRICHMENT = "ENRICHMENT"
 
 class InputParams(BaseModel):
   pass
@@ -188,6 +189,92 @@ def to_pascal(s: str) -> str:
     parts = re.split(r"[_\W]+", s.strip())
     return "".join(p[:1].upper() + p[1:].lower() for p in parts if p)
 
+class EnrichmentTableType(Enum):
+    RESULTS = "results"
+    RUNTIME_METADATA = "runtime_metadata"
+    DATABASE_METADATA = "database_metadata"
+
+
+class EnrichmentDataset(Dataset):
+    """A Enrichment dataset.
+
+    Attributes:
+    ----------
+    results :  PandasDataFrame
+        The dataframe containing the enrichment results
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime
+    database_metadata : PandasDataFrame
+        Information about the database used for the enrichment analysis
+    """
+    results: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    database_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["results"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+
+        database_metadata = values.get("database_metadata")
+        if database_metadata is not None and not isinstance(database_metadata, pd.DataFrame):
+            msg = f"The field 'database_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(database_metadata).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [(self._path(EnrichmentTableType.RESULTS), self.results)]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(EnrichmentTableType.RUNTIME_METADATA), self.runtime_metadata))
+        if self.database_metadata is not None:
+            tables.append((self._path(EnrichmentTableType.DATABASE_METADATA), self.database_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache =  {
+                    "type": self.dataset_type,
+                    "run_id": self.run_id,
+                    "tables": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "output_comparisons",
+                            "path": self._path(EnrichmentTableType.RESULTS),
+                        },
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "runtime_metadata",
+                            "path": self._path(EnrichmentTableType.RUNTIME_METADATA),
+                        },
+                        {
+                            "id": str(uuid.uuid4()),
+                            "name": "database_metadata",
+                            "path": self._path(EnrichmentTableType.DATABASE_METADATA),
+                        },
+                    ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: EnrichmentTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 class PairwiseTableType(Enum):
     RESULTS = "results"
