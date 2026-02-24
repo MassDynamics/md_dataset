@@ -22,7 +22,7 @@ class DatasetType(Enum):
     DOSE_RESPONSE = "DOSE_RESPONSE"
     PAIRWISE = "PAIRWISE"
     ANOVA = "ANOVA"
-    CAMERA_GSEA = "CAMERA_GSEA"
+    GSEA = "GSEA"
 
 class InputParams(BaseModel):
   pass
@@ -189,23 +189,23 @@ def to_pascal(s: str) -> str:
     parts = re.split(r"[_\W]+", s.strip())
     return "".join(p[:1].upper() + p[1:].lower() for p in parts if p)
 
-class CameraGseaTableType(Enum):
+class GseaTableType(Enum):
     RESULTS = "results"
     RUNTIME_METADATA = "runtime_metadata"
     DATABASE_METADATA = "database_metadata"
 
 
-class CameraGseaDataset(Dataset):
-    """A Camera GSEA dataset.
+class GseaDataset(Dataset):
+    """A GSEA dataset.
 
     Attributes:
     ----------
     results :  PandasDataFrame
-        The dataframe containing the enrichment results
+        The dataframe containing the GSEA results
     runtime_metadata : PandasDataFrame
         Information about the dataset at runtime
     database_metadata : PandasDataFrame
-        Information about the database used for the enrichment analysis
+        Information about the database used for the GSEA analysis
     """
     results: pd.DataFrame
     runtime_metadata: pd.DataFrame = None
@@ -241,11 +241,11 @@ class CameraGseaDataset(Dataset):
         return values
 
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
-        tables = [(self._path(CameraGseaTableType.RESULTS), self.results)]
+        tables = [(self._path(GseaTableType.RESULTS), self.results)]
         if self.runtime_metadata is not None:
-            tables.append((self._path(CameraGseaTableType.RUNTIME_METADATA), self.runtime_metadata))
+            tables.append((self._path(GseaTableType.RUNTIME_METADATA), self.runtime_metadata))
         if self.database_metadata is not None:
-            tables.append((self._path(CameraGseaTableType.DATABASE_METADATA), self.database_metadata))
+            tables.append((self._path(GseaTableType.DATABASE_METADATA), self.database_metadata))
         return tables
 
     def dump(self) -> dict:
@@ -257,23 +257,23 @@ class CameraGseaDataset(Dataset):
                         {
                             "id": str(uuid.uuid4()),
                             "name": "output_comparisons",
-                            "path": self._path(CameraGseaTableType.RESULTS),
+                            "path": self._path(GseaTableType.RESULTS),
                         },
                         {
                             "id": str(uuid.uuid4()),
                             "name": "runtime_metadata",
-                            "path": self._path(CameraGseaTableType.RUNTIME_METADATA),
+                            "path": self._path(GseaTableType.RUNTIME_METADATA),
                         },
                         {
                             "id": str(uuid.uuid4()),
                             "name": "database_metadata",
-                            "path": self._path(CameraGseaTableType.DATABASE_METADATA),
+                            "path": self._path(GseaTableType.DATABASE_METADATA),
                         },
                     ],
             }
         return self._dump_cache
 
-    def _path(self, table_type: CameraGseaTableType) -> str:
+    def _path(self, table_type: GseaTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
 
 class PairwiseTableType(Enum):
