@@ -66,6 +66,7 @@ class InputDataset(BaseModel):
 class IntensityEntity(str, Enum):
     PROTEIN = "Protein"
     PEPTIDE = "Peptide"
+    GENE = "Gene"
 
 class IntensityTableType(Enum):
     INTENSITY = "intensity"
