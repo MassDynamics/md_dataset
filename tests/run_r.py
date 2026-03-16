@@ -1,6 +1,5 @@
 import pandas as pd
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 from uuid import UUID
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDatasetTable
@@ -10,7 +9,7 @@ from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
-from prefect.testing.utilities import prefect_test_harness
+from harness import md_test_harness
 
 
 TEST_DATA_DIR = Path(__file__).parent / "data" / "abcd1234"
@@ -39,10 +38,7 @@ if __name__ == "__main__":
     intensity_data = pd.read_parquet(TEST_DATA_DIR / "Protein_Intensity.parquet")
     metadata_data = pd.read_parquet(TEST_DATA_DIR / "Protein_Metadata.parquet")
 
-    mock_file_manager = MagicMock()
-    mock_file_manager.load_parquet_to_df.side_effect = [intensity_data, metadata_data]
-
-    with prefect_test_harness():
-        with patch("md_dataset.process.get_file_manager", return_value=mock_file_manager):
-            prepare_test_run_r_legacy(input_datasets(), TestRParams(dataset_name="some name", \
-                        message="hello"), DatasetType.INTENSITY)
+    with md_test_harness() as (file_manager, saved_tables):
+        file_manager.load_parquet_to_df.side_effect = [intensity_data, metadata_data]
+        prepare_test_run_r_legacy(input_datasets(), TestRParams(dataset_name="some name", \
+                    message="hello"), DatasetType.INTENSITY)
