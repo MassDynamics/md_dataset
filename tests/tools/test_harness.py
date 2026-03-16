@@ -1,8 +1,8 @@
+import md_dataset.process
 import pandas as pd
 import pytest
-from md_dataset.process import get_file_manager
 from md_dataset.storage import FileManager
-from harness import md_test_harness
+from tools.harness import md_test_harness
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def sample_tables() -> list[tuple[str, pd.DataFrame]]:
 
 def test_file_manager_is_patched():
     with md_test_harness() as (file_manager, _):
-        assert get_file_manager() is file_manager
+        assert md_dataset.process.get_file_manager() is file_manager
 
 
 def test_file_manager_has_file_manager_spec():

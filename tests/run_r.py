@@ -9,7 +9,7 @@ from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
-from harness import md_test_harness
+from tools.harness import md_test_harness
 
 
 TEST_DATA_DIR = Path(__file__).parent / "data" / "abcd1234"
