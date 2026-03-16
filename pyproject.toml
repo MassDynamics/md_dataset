@@ -61,6 +61,8 @@ dev = [
     "tox",
     "myst_parser",
     "rpy2 ~= 3.5.17",
+    "jupyter",
+    "ipykernel",
 ]
 docs = [
     "sphinx",
