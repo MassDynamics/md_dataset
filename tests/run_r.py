@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 import pandas as pd
-from tools.harness import md_test_harness
+from tools.harness import md_dataset_test_harness
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDatasetTable
 from md_dataset.models.dataset import InputParams
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     intensity_data = pd.read_parquet(TEST_DATA_DIR / "Protein_Intensity.parquet")
     metadata_data = pd.read_parquet(TEST_DATA_DIR / "Protein_Metadata.parquet")
 
-    with md_test_harness() as (file_manager, saved_tables):
+    with md_dataset_test_harness() as (file_manager, saved_tables):
         file_manager.load_parquet_to_df.side_effect = [intensity_data, metadata_data]
         prepare_test_run_r_legacy(input_datasets(), TestRParams(message="hello"), DatasetType.INTENSITY)
 

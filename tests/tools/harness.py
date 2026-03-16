@@ -7,7 +7,7 @@ from md_dataset.storage import FileManager
 
 
 @contextmanager
-def md_test_harness():
+def md_dataset_test_harness():
     saved: dict[str, pd.DataFrame] = {}
     mock_fm = MagicMock(spec=FileManager)
 

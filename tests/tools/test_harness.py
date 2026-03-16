@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from tools.harness import md_test_harness
+from tools.harness import md_dataset_test_harness
 import md_dataset.process
 from md_dataset.storage import FileManager
 
@@ -14,17 +14,17 @@ def sample_tables() -> list[tuple[str, pd.DataFrame]]:
 
 
 def test_file_manager_is_patched():
-    with md_test_harness() as (file_manager, _):
+    with md_dataset_test_harness() as (file_manager, _):
         assert md_dataset.process.get_file_manager() is file_manager
 
 
 def test_file_manager_has_file_manager_spec():
-    with md_test_harness() as (file_manager, _):
+    with md_dataset_test_harness() as (file_manager, _):
         assert isinstance(file_manager, FileManager)
 
 
 def test_save_tables_captures_into_dict(sample_tables: list[tuple[str, pd.DataFrame]]):
-    with md_test_harness() as (file_manager, saved_tables):
+    with md_dataset_test_harness() as (file_manager, saved_tables):
         file_manager.save_tables(sample_tables)
 
     assert len(saved_tables) == 2  # noqa: PLR2004
@@ -35,7 +35,7 @@ def test_save_tables_captures_into_dict(sample_tables: list[tuple[str, pd.DataFr
 
 
 def test_save_tables_prints_head(capsys: pytest.CaptureFixture[str], sample_tables: list[tuple[str, pd.DataFrame]]):
-    with md_test_harness() as (file_manager, _):
+    with md_dataset_test_harness() as (file_manager, _):
         file_manager.save_tables(sample_tables)
 
     output = capsys.readouterr().out
