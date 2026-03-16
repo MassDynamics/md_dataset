@@ -2,13 +2,14 @@ from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+from md_dataset.storage import FileManager
 from prefect.testing.utilities import prefect_test_harness
 
 
 @contextmanager
 def md_test_harness():
     saved: dict[str, pd.DataFrame] = {}
-    mock_fm = MagicMock()
+    mock_fm = MagicMock(spec=FileManager)
 
     def capture_save_tables(tables: list[tuple[str, pd.DataFrame]]) -> None:
         for path, df in tables:
