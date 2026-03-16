@@ -17,11 +17,10 @@ TEST_DATA_DIR = Path(__file__).parent / "data" / "abcd1234"
 
 class TestRParams(InputParams):
     message: str
-    names: list[str] = None
 
 
 def input_datasets() -> list[IntensityInputDataset]:
-    return [IntensityInputDataset(id=UUID("f3127c62-e0a8-4b48-9bc2-e40eb821aab1"), name="doesn't matter", tables=[
+    return [IntensityInputDataset(id=UUID("f3127c62-e0a8-4b48-9bc2-e40eb821aab1"), name="interesting name", tables=[
         InputDatasetTable(name="Protein_Intensity"),
         InputDatasetTable(name="Protein_Metadata"),
         ])]
@@ -40,5 +39,6 @@ if __name__ == "__main__":
 
     with md_test_harness() as (file_manager, saved_tables):
         file_manager.load_parquet_to_df.side_effect = [intensity_data, metadata_data]
-        prepare_test_run_r_legacy(input_datasets(), TestRParams(dataset_name="some name", \
-                    message="hello"), DatasetType.INTENSITY)
+        prepare_test_run_r_legacy(input_datasets(), TestRParams(message="hello"), DatasetType.INTENSITY)
+
+    print(saved_tables.keys())
