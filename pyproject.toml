@@ -147,6 +147,10 @@ pydocstyle.convention = "google"
     "ANN201", # Missing return type annotation for public function
     "PT011",  # Missing `match` parameter in `pytest.raises()`
     "S101",   # Use of assert is detected
+    "T201",   # print statements permitted in test/dev scripts
+]
+"tests/**.ipynb" = [
+    "T201",   # print statements permitted in notebooks
 ]
 
 [tool.ruff.lint.isort]

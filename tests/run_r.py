@@ -1,6 +1,7 @@
-import pandas as pd
 from pathlib import Path
 from uuid import UUID
+import pandas as pd
+from tools.harness import md_test_harness
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import InputDatasetTable
 from md_dataset.models.dataset import InputParams
@@ -9,8 +10,6 @@ from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
 from md_dataset.process import md_r
-from tools.harness import md_test_harness
-
 
 TEST_DATA_DIR = Path(__file__).parent / "data" / "abcd1234"
 
