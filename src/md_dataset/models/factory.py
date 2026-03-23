@@ -5,9 +5,9 @@ from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import DoseResponseDataset
+from md_dataset.models.dataset import EnrichmentDataset
 from md_dataset.models.dataset import IntensityDataset
 from md_dataset.models.dataset import LegacyIntensityDataset
-from md_dataset.models.dataset import EnrichmentDataset
 from md_dataset.models.dataset import PairwiseDataset
 
 _DATASET_REGISTRY = {
