@@ -45,7 +45,7 @@ FLOW_PACKAGE = os.environ["FLOW_PACKAGE"]
 DEPLOYMENT_NAME = os.environ["DEPLOYMENT_NAME"]
 RESULTS_BUCKET = os.environ["PREFECT_RESULTS_BUCKET"]
 INITIAL_DATA_BUCKET_NAME = os.environ.get("INITIAL_DATA_BUCKET_NAME") # optional
-PUBLISHED = os.environ.get("PUBLISHED", "true")
+PUBLISHED = os.environ.get("PUBLISHED", "true").lower() == "true"
 DATASET_RUN_TYPE = os.environ["DATASET_RUN_TYPE"]
 
 @deprecated(reason="use md-deploy-dataset-job")
