@@ -252,26 +252,29 @@ class EnrichmentDataset(Dataset):
 
     def dump(self) -> dict:
         if self._dump_cache is None:
-            self._dump_cache =  {
+            result_tables = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "output_comparisons",
+                    "path": self._path(EnrichmentTableType.RESULTS),
+                },
+            ]
+            if self.runtime_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(EnrichmentTableType.RUNTIME_METADATA),
+                })
+            if self.database_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "database_metadata",
+                    "path": self._path(EnrichmentTableType.DATABASE_METADATA),
+                })
+            self._dump_cache = {
                     "type": self.dataset_type,
                     "run_id": self.run_id,
-                    "tables": [
-                        {
-                            "id": str(uuid.uuid4()),
-                            "name": "output_comparisons",
-                            "path": self._path(EnrichmentTableType.RESULTS),
-                        },
-                        {
-                            "id": str(uuid.uuid4()),
-                            "name": "runtime_metadata",
-                            "path": self._path(EnrichmentTableType.RUNTIME_METADATA),
-                        },
-                        {
-                            "id": str(uuid.uuid4()),
-                            "name": "database_metadata",
-                            "path": self._path(EnrichmentTableType.DATABASE_METADATA),
-                        },
-                    ],
+                    "tables": result_tables,
             }
         return self._dump_cache
 
