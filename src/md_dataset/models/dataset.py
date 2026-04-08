@@ -74,6 +74,7 @@ class IntensityTableType(Enum):
     METADATA = "metadata"
     RUNTIME_METADATA = "runtime_metadata"
     PTM_SITES = "ptm_sites"
+    DIANN_STATS = "diann_stats"
 
 class IntensityTable(BaseModel):
     type: IntensityTableType
@@ -169,6 +170,7 @@ class IntensityDataset(Dataset):
                 result_tables.extend({
                     "id": str(uuid.uuid4()),
                     "name": "PTM_sites" if table.type == IntensityTableType.PTM_SITES
+                            else "Diann_Stats" if table.type == IntensityTableType.DIANN_STATS
                             else f"{datum.entity.value}_{to_pascal(table.type.value)}",
                     "path": self._path(datum.entity, table.type),
                 } for table in datum.tables)
@@ -183,6 +185,8 @@ class IntensityDataset(Dataset):
     def _path(self, entity: IntensityEntity, data_type: IntensityTableType) -> str:
         if data_type == IntensityTableType.PTM_SITES:
             return f"job_runs/{self.run_id}/PTM_sites.parquet"
+        if data_type == IntensityTableType.DIANN_STATS:
+            return f"job_runs/{self.run_id}/Diann_Stats.parquet"
         return f"job_runs/{self.run_id}/{entity.value}_{to_pascal(data_type.value)}.parquet"
 
 def to_pascal(s: str) -> str:
