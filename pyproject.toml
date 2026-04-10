@@ -37,7 +37,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.10.4"
+version = "0.10.5"
 
 [project.optional-dependencies]
 r = [
