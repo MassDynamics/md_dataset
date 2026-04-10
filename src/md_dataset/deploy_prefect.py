@@ -83,8 +83,8 @@ def main() -> None:
             "cpu_limit": CPU_LIMITS,
             "memory_limit": MEMORY_LIMITS,
             "labels": {
-                "env": STAGE
-            }
+                "env": STAGE,
+            },
         },
         tags=[f"service={DEPLOYMENT_NAME}", f"job_name={JOB_NAME}", "type=custom"],
     )
