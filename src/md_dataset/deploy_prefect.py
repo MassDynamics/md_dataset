@@ -82,7 +82,8 @@ def main() -> None:
             "memory_request": MEMORY_REQUESTS,
             "cpu_limit": CPU_LIMITS,
             "memory_limit": MEMORY_LIMITS,
-            "labels": {
+            "pod_labels": {
+                "node-group": "fargate",
                 "env": STAGE,
             },
         },
