@@ -13,6 +13,6 @@ if ! (( $(conda env list | grep "^${CONDA_ENV_NAME}[[:space:]]*" >/dev/null 2>&1
 fi
 
 echo "installing packages into ${CONDA_ENV_NAME}"
-conda run -n $CONDA_ENV_NAME bash -c "python -m pip install -e '.[dev]'"
+conda run -n $CONDA_ENV_NAME bash -c "python -m pip install --no-cache-dir -e '.[dev]'"
 
 TZ=UTC conda run -n $CONDA_ENV_NAME bash -c "pytest -n auto"
