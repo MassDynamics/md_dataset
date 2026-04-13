@@ -6,6 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Literal
 import pandas as pd
+from md_form.field_utils.conditional_validator import ConditionalRequiredMixin
 from md_form.field_utils.field_helpers import select_field
 from md_form.field_utils.rules_builder import is_required
 from md_form.field_utils.when import When
@@ -25,7 +26,7 @@ class DatasetType(Enum):
     ANOVA = "ANOVA"
     ENRICHMENT = "ENRICHMENT"
 
-class InputParams(BaseModel):
+class InputParams(ConditionalRequiredMixin, BaseModel):
   pass
 
 class EntityInputParams(InputParams):
