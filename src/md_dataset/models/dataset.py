@@ -603,7 +603,7 @@ class WGCNATableType(Enum):
     RUNTIME_METADATA = "runtime_metadata"
 
 
-class WGCNADataset(Dataset):
+class WGCNA(Dataset):
     """A WGCNA (Weighted Gene Co-expression Network Analysis) dataset.
 
     Attributes:
