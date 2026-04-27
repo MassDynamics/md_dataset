@@ -25,6 +25,7 @@ class DatasetType(Enum):
     PAIRWISE = "PAIRWISE"
     ANOVA = "ANOVA"
     ENRICHMENT = "ENRICHMENT"
+    WGCNA = "WGCNA"
 
 class InputParams(ConditionalRequiredMixin, BaseModel):
   pass
@@ -591,4 +592,118 @@ class LegacyIntensityDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: IntensityTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class WGCNATableType(Enum):
+    MODULE_ASSIGNMENTS = "module_assignments"
+    MODULE_EIGENGENES = "module_eigengenes"
+    MODULE_TRAIT_CORRELATION = "module_trait_correlation"
+    SOFT_THRESHOLD = "soft_threshold"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class WGCNADataset(Dataset):
+    """A WGCNA (Weighted Gene Co-expression Network Analysis) dataset.
+
+    Attributes:
+    ----------
+    module_assignments : PandasDataFrame
+        Entity → module label mapping (`M0` = unassigned; real modules `M1, M2, ...`).
+    module_eigengenes : PandasDataFrame
+        Per-sample first-principal-component score for each module.
+    module_trait_correlation : PandasDataFrame
+        Pearson r and p-value between each module eigengene and each trait
+        (long format: module × trait). Empty if no trait was provided.
+    soft_threshold : PandasDataFrame
+        Full `pickSoftThreshold` sweep — R², slope, mean / median / max
+        connectivity for each candidate soft-thresholding power.
+    runtime_metadata : PandasDataFrame
+        Package version, parameters used, selected β, module count.
+    """
+    module_assignments: pd.DataFrame
+    module_eigengenes: pd.DataFrame
+    module_trait_correlation: pd.DataFrame = None
+    soft_threshold: pd.DataFrame = None
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["module_assignments", "module_eigengenes"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        for optional in ("module_trait_correlation", "soft_threshold", "runtime_metadata"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = f"The field '{optional}' must be a pandas DataFrame if provided, but \
+                        got {type(value).__name__}."
+                raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [
+            (self._path(WGCNATableType.MODULE_ASSIGNMENTS), self.module_assignments),
+            (self._path(WGCNATableType.MODULE_EIGENGENES), self.module_eigengenes),
+        ]
+        if self.module_trait_correlation is not None:
+            tables.append(
+                (self._path(WGCNATableType.MODULE_TRAIT_CORRELATION), self.module_trait_correlation),
+            )
+        if self.soft_threshold is not None:
+            tables.append((self._path(WGCNATableType.SOFT_THRESHOLD), self.soft_threshold))
+        if self.runtime_metadata is not None:
+            tables.append((self._path(WGCNATableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            result_tables = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "module_assignments",
+                    "path": self._path(WGCNATableType.MODULE_ASSIGNMENTS),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "module_eigengenes",
+                    "path": self._path(WGCNATableType.MODULE_EIGENGENES),
+                },
+            ]
+            if self.module_trait_correlation is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "module_trait_correlation",
+                    "path": self._path(WGCNATableType.MODULE_TRAIT_CORRELATION),
+                })
+            if self.soft_threshold is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "soft_threshold",
+                    "path": self._path(WGCNATableType.SOFT_THRESHOLD),
+                })
+            if self.runtime_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(WGCNATableType.RUNTIME_METADATA),
+                })
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": result_tables,
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: WGCNATableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
