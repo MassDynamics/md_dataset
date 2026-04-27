@@ -614,7 +614,7 @@ class WGCNADataset(Dataset):
         Per-sample first-principal-component score for each module.
     module_trait_correlation : PandasDataFrame
         Pearson r and p-value between each module eigengene and each trait
-        (long format: module × trait). Empty if no trait was provided.
+        (long format: module x trait). Empty if no trait was provided.
     soft_threshold : PandasDataFrame
         Full `pickSoftThreshold` sweep — R², slope, mean / median / max
         connectivity for each candidate soft-thresholding power.
