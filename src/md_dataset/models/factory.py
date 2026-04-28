@@ -1,7 +1,7 @@
 """Dataset factory for creating dataset instances based on type and structure."""
 
 from uuid import UUID
-from md_dataset.models.dataset import WGCNA
+from md_dataset.models.dataset import WGCNADataset
 from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
@@ -25,7 +25,7 @@ _DATASET_REGISTRY = {
     (DatasetType.ENRICHMENT, dict): lambda run_id, dataset_type, \
             tables: EnrichmentDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.WGCNA, dict): lambda run_id, dataset_type, \
-            tables: WGCNA(run_id=run_id, dataset_type=dataset_type, **tables),
+            tables: WGCNADataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
 
 

@@ -597,21 +597,26 @@ class LegacyIntensityDataset(Dataset):
 
 class WGCNATableType(Enum):
     MODULE_ASSIGNMENTS = "module_assignments"
-    MODULE_EIGENGENES = "module_eigengenes"
+    MODULE_EIGENENTITIES = "module_eigenentities"
     MODULE_TRAIT_CORRELATION = "module_trait_correlation"
     SOFT_THRESHOLD = "soft_threshold"
     RUNTIME_METADATA = "runtime_metadata"
 
 
-class WGCNA(Dataset):
+class WGCNADataset(Dataset):
     """A WGCNA (Weighted Gene Co-expression Network Analysis) dataset.
 
     Attributes:
     ----------
     module_assignments : PandasDataFrame
         Entity → module label mapping (`M0` = unassigned; real modules `M1, M2, ...`).
-    module_eigengenes : PandasDataFrame
-        Per-sample first-principal-component score for each module.
+        First column is `entity`, holding the entity-type-specific label
+        (`GeneNames` for gene runs, `ProteinIds` for protein runs,
+        `ModifiedSequence` for peptide runs).
+    module_eigenentities : PandasDataFrame
+        Per-sample first-principal-component score for each module — the
+        module-level summary expression vector across samples. Equivalent of
+        WGCNA's "module eigengene" (PC1) generalised to any entity type.
     module_trait_correlation : PandasDataFrame
         Pearson r and p-value between each module eigengene and each trait
         (long format: module x trait). Empty if no trait was provided.
@@ -622,7 +627,7 @@ class WGCNA(Dataset):
         Package version, parameters used, selected β, module count.
     """
     module_assignments: pd.DataFrame
-    module_eigengenes: pd.DataFrame
+    module_eigenentities: pd.DataFrame
     module_trait_correlation: pd.DataFrame = None
     soft_threshold: pd.DataFrame = None
     runtime_metadata: pd.DataFrame = None
@@ -633,7 +638,7 @@ class WGCNA(Dataset):
 
     @model_validator(mode="before")
     def validate_dataframes(cls, values: dict) -> dict:
-        required_fields = ["module_assignments", "module_eigengenes"]
+        required_fields = ["module_assignments", "module_eigenentities"]
         for field_name in required_fields:
             value = values.get(field_name)
             if value is None:
@@ -654,7 +659,7 @@ class WGCNA(Dataset):
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
         tables = [
             (self._path(WGCNATableType.MODULE_ASSIGNMENTS), self.module_assignments),
-            (self._path(WGCNATableType.MODULE_EIGENGENES), self.module_eigengenes),
+            (self._path(WGCNATableType.MODULE_EIGENENTITIES), self.module_eigenentities),
         ]
         if self.module_trait_correlation is not None:
             tables.append(
@@ -676,8 +681,8 @@ class WGCNA(Dataset):
                 },
                 {
                     "id": str(uuid.uuid4()),
-                    "name": "module_eigengenes",
-                    "path": self._path(WGCNATableType.MODULE_EIGENGENES),
+                    "name": "module_eigenentities",
+                    "path": self._path(WGCNATableType.MODULE_EIGENENTITIES),
                 },
             ]
             if self.module_trait_correlation is not None:
