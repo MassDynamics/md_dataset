@@ -27,8 +27,12 @@ HONEYBADGER_KEY = os.environ.get("HONEYBADGER_KEY", "")
 
 MEMORY_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_MEMORY_REQUESTS", "2Gi")
 CPU_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_CPU_REQUESTS", "1000m")
+EPHEMERAL_STORAGE_REQUESTS = os.environ.get("PREFECT_DEPLOYMENT_EPHEMERAL_STORAGE_REQUESTS", "5Gi")
 MEMORY_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_MEMORY_LIMITS", "4Gi")
 CPU_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_CPU_LIMITS", "2000m")
+EPHEMERAL_STORAGE_LIMITS = os.environ.get("PREFECT_DEPLOYMENT_EPHEMERAL_STORAGE_LIMITS", "10Gi")
+
+IMAGE_PULL_POLICY = os.environ.get("IMAGE_PULL_POLICY", "Always"),
 
 # REQUIRED
 DOCKER_IMAGE = os.environ["DOCKER_IMAGE"]
@@ -73,15 +77,17 @@ def main() -> None:
         job_variables={
             "env": env_vars,
             "image": DOCKER_IMAGE,
-            "image_pull_policy": "Always",
+            "image_pull_policy": IMAGE_PULL_POLICY,
             "namespace": K8_NAMESPACE,
             "finished_job_ttl": 10 * 60,
             "pod_watch_timeout_seconds": 15 * 60,
             "service_account_name": K8_SERVICE_ACCOUNT_NAME,
             "cpu_request": CPU_REQUESTS,
             "memory_request": MEMORY_REQUESTS,
+            "ephemeral_storage_request": EPHEMERAL_STORAGE_REQUESTS,
             "cpu_limit": CPU_LIMITS,
             "memory_limit": MEMORY_LIMITS,
+            "ephemeral_storage_limit": EPHEMERAL_STORAGE_LIMITS,
             "pod_labels": {
                 "node-group": "fargate",
                 "env": STAGE,
