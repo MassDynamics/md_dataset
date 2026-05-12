@@ -24,9 +24,9 @@ classifiers = [
 dependencies = [
   "boto3 ~= 1.35.54",
   "pandas ~= 2.2.3",
-  "prefect ~= 3.2.1",
+  "prefect == 3.2.1",
   "prefect-aws ~= 0.5.7",
-  "pyarrow ~= 17.0.0",
+  "pyarrow ~= 24.0.0",
   "pydantic ~= 2.10.4",
   "deprecated",
   "md_form @ git+https://github.com/MassDynamics/md_form@v0.1.2-39"
