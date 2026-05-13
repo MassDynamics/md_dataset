@@ -26,6 +26,7 @@ class DatasetType(Enum):
     ANOVA = "ANOVA"
     ENRICHMENT = "ENRICHMENT"
     WGCNA = "WGCNA"
+    MOFA = "MOFA"
 
 class InputParams(ConditionalRequiredMixin, BaseModel):
   pass
@@ -711,4 +712,102 @@ class WGCNADataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: WGCNATableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class MOFATableType(Enum):
+    FACTOR_SCORES = "factor_scores"
+    FACTOR_LOADINGS = "factor_loadings"
+    VARIANCE_EXPLAINED = "variance_explained"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class MOFADataset(Dataset):
+    """A MOFA+ (Multi-Omics Factor Analysis) dataset.
+
+    Attributes:
+    ----------
+    factor_scores : PandasDataFrame
+        Per-sample coordinates in factor space.
+        Long format: replicate, factor, score.
+    factor_loadings : PandasDataFrame
+        Weight of each feature on each factor within its view.
+        Long format: view, GroupId, GroupLabel, factor, loading.
+    variance_explained : PandasDataFrame
+        Proportion of variance in each view explained by each factor.
+        Long format: view, factor, variance_r2.
+    runtime_metadata : PandasDataFrame
+        Package version, parameters used, view names, sample count.
+    """
+    factor_scores: pd.DataFrame
+    factor_loadings: pd.DataFrame
+    variance_explained: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["factor_scores", "factor_loadings", "variance_explained"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        runtime_metadata = values.get("runtime_metadata")
+        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
+            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
+                    got {type(runtime_metadata).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [
+            (self._path(MOFATableType.FACTOR_SCORES), self.factor_scores),
+            (self._path(MOFATableType.FACTOR_LOADINGS), self.factor_loadings),
+            (self._path(MOFATableType.VARIANCE_EXPLAINED), self.variance_explained),
+        ]
+        if self.runtime_metadata is not None:
+            tables.append((self._path(MOFATableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            result_tables = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "factor_scores",
+                    "path": self._path(MOFATableType.FACTOR_SCORES),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "factor_loadings",
+                    "path": self._path(MOFATableType.FACTOR_LOADINGS),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "variance_explained",
+                    "path": self._path(MOFATableType.VARIANCE_EXPLAINED),
+                },
+            ]
+            if self.runtime_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(MOFATableType.RUNTIME_METADATA),
+                })
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": result_tables,
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: MOFATableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
