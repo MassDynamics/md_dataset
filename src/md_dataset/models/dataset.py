@@ -11,8 +11,7 @@ from md_form.field_utils.conditional_validator import ConditionalRequiredMixin
 from md_form.field_utils.field_helpers import select_field
 from md_form.field_utils.rules_builder import is_required
 from md_form.field_utils.when import When
-
-from pydantic import BaseModel
+from pydantic import Field
 from pydantic import PrivateAttr
 from pydantic import model_validator
 
@@ -57,7 +56,7 @@ class InputDatasetTable(MdDatasetBaseModel):
 class InputDataset(MdDatasetBaseModel):
     id: uuid.UUID
     name: str
-    job_run_params: dict = {}
+    job_run_params: dict = Field(default_factory=dict)
     type: DatasetType
     tables: list[InputDatasetTable]
 
