@@ -29,7 +29,7 @@ dependencies = [
   "pyarrow ~= 24.0.0",
   "pydantic ~= 2.10.4",
   "deprecated",
-  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.2-44"
+  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.3-45"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = [""]
@@ -37,7 +37,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.11.11"
+version = "0.11.12"
 
 [project.optional-dependencies]
 r = [
