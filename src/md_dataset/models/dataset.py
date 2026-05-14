@@ -6,10 +6,12 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Literal
 import pandas as pd
+from md_form.field_utils import MdDatasetBaseModel
 from md_form.field_utils.conditional_validator import ConditionalRequiredMixin
 from md_form.field_utils.field_helpers import select_field
 from md_form.field_utils.rules_builder import is_required
 from md_form.field_utils.when import When
+
 from pydantic import BaseModel
 from pydantic import PrivateAttr
 from pydantic import model_validator
@@ -28,7 +30,7 @@ class DatasetType(Enum):
     WGCNA = "WGCNA"
     MOFA = "MOFA"
 
-class InputParams(ConditionalRequiredMixin, BaseModel):
+class InputParams(ConditionalRequiredMixin, MdDatasetBaseModel):
   pass
 
 class EntityInputParams(InputParams):
@@ -43,7 +45,7 @@ class EntityInputParams(InputParams):
       when=When.not_equals("input_datasets", None),
   )
 
-class InputDatasetTable(BaseModel):
+class InputDatasetTable(MdDatasetBaseModel):
     name: str
     bucket: str = None
     key: str = None
@@ -52,7 +54,7 @@ class InputDatasetTable(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-class InputDataset(BaseModel):
+class InputDataset(MdDatasetBaseModel):
     id: uuid.UUID
     name: str
     job_run_params: dict = {}
@@ -79,7 +81,7 @@ class IntensityTableType(Enum):
     PTM_SITES = "ptm_sites"
     DIANN_STATS = "diann_stats"
 
-class IntensityTable(BaseModel):
+class IntensityTable(MdDatasetBaseModel):
     type: IntensityTableType
     data: pd.DataFrame
 
@@ -99,7 +101,7 @@ class IntensityInputDataset(InputDataset):
         return next(filter(lambda table: table.name == IntensityTable.table_name(table_type, entity_type), \
                 self.tables), None)
 
-class Dataset(BaseModel, abc.ABC):
+class Dataset(MdDatasetBaseModel, abc.ABC):
     run_id: uuid.UUID
     dataset_type: DatasetType
 
@@ -111,7 +113,7 @@ class Dataset(BaseModel, abc.ABC):
     def dump(self) -> dict:
         pass
 
-class IntensityData(BaseModel):
+class IntensityData(MdDatasetBaseModel):
     entity: IntensityEntity
     tables: list[IntensityTable]
 
