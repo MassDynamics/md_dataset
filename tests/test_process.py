@@ -236,6 +236,13 @@ def run_md_upload_process(experiment_id: UUID, params: InputParams) -> dict: # n
                     IntensityTable(type=IntensityTableType.METADATA, data=metadata_table),
                     ],
                 ),
+            IntensityData(
+                entity=IntensityEntity.PTM,
+                tables = [
+                    IntensityTable(type=IntensityTableType.INTENSITY, data=intensity_table),
+                    IntensityTable(type=IntensityTableType.METADATA, data=metadata_table),
+                    ],
+                ),
     ]
 
 def test_run_md_upload_process(fake_file_manager: FileManager):
@@ -266,6 +273,14 @@ def test_run_md_upload_process(fake_file_manager: FileManager):
     assert UUID(result["tables"][4]["id"], version=4) is not None
     assert result["tables"][4]["name"] == "Peptide_Metadata"
     assert result["tables"][4]["path"] == f"job_runs/{result['run_id']}/Peptide_Metadata.parquet"
+
+    assert UUID(result["tables"][5]["id"], version=4) is not None
+    assert result["tables"][5]["name"] == "PTM_Intensity"
+    assert result["tables"][5]["path"] == f"job_runs/{result['run_id']}/PTM_Intensity.parquet"
+
+    assert UUID(result["tables"][6]["id"], version=4) is not None
+    assert result["tables"][6]["name"] == "PTM_Metadata"
+    assert result["tables"][6]["path"] == f"job_runs/{result['run_id']}/PTM_Metadata.parquet"
 
 @md_py
 def run_process_legacy(input_datasets: list[IntensityInputDataset], params: InputParams, \
