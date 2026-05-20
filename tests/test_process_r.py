@@ -12,7 +12,9 @@ from md_dataset.models.dataset import IntensityEntity
 from md_dataset.models.dataset import IntensityInputDataset
 from md_dataset.models.dataset import IntensityTableType
 from md_dataset.models.r import RFuncArgs
+from md_dataset.process import _scrub_na_character
 from md_dataset.process import md_r
+from md_dataset.process import recursive_conversion
 from md_dataset.storage import FileManager
 
 
@@ -151,3 +153,85 @@ def test_run_process_r_results(input_datasets: list[IntensityInputDataset], fake
     assert args[0][1][0] == f"job_runs/{result['run_id']}/Protein_Metadata.parquet"
     pd.testing.assert_frame_equal(args[0][1][1].reset_index(drop=True), \
             pd.DataFrame({"Test": ["First"], "Message": ["hello"]}))
+
+
+# ---------------------------------------------------------------------------
+# NA_character_ scrub at the rpy2 -> pandas boundary
+#
+# rpy2 leaves R `NA_character_` cells as `NACharacterType` instances inside
+# object-dtype pandas columns. pyarrow can't serialise those, so any character
+# column with NAs trips `ArrowTypeError: Expected bytes, got a
+# 'NACharacterType' object` during parquet write. The fix scrubs those
+# sentinels to Python `None` at the conversion boundary in
+# `recursive_conversion`. Non-NA character values must pass through verbatim.
+# ---------------------------------------------------------------------------
+
+def test_scrub_na_character_preserves_non_na_values():
+    """Only NACharacterType sentinels become None; real strings are untouched."""
+    from rpy2.rinterface import NA_Character
+
+    df = pd.DataFrame({
+        "name":  ["alpha", NA_Character, "gamma"],
+        "other": ["x",     "y",          NA_Character],
+        "n":     [1,       2,            3],
+    })
+
+    out = _scrub_na_character(df.copy())
+
+    # Real string values land exactly as they were.
+    assert out["name"].iloc[0] == "alpha"
+    assert out["name"].iloc[2] == "gamma"
+    assert out["other"].iloc[0] == "x"
+    assert out["other"].iloc[1] == "y"
+
+    # NA cells become None (proper null) — not NACharacterType anymore.
+    assert out["name"].iloc[1] is None
+    assert out["other"].iloc[2] is None
+
+    # Numeric column untouched.
+    assert list(out["n"]) == [1, 2, 3]
+
+
+def test_scrub_na_character_on_all_non_na_column_is_noop():
+    """A column with no NA sentinels must come out byte-identical."""
+    df = pd.DataFrame({"name": ["alpha", "beta", "gamma"]})
+
+    out = _scrub_na_character(df.copy())
+
+    pd.testing.assert_series_equal(out["name"], df["name"])
+
+
+def test_recursive_conversion_handles_na_character_dataframe():
+    """An R data.frame with NA_character_ converts cleanly and writes to parquet."""
+    import pyarrow as pa
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+
+    r_code = '''
+        data.frame(
+            name  = c("alpha", NA_character_, "gamma"),
+            other = c("x", "y", NA_character_),
+            n     = c(1L, 2L, 3L),
+            stringsAsFactors = FALSE
+        )
+    '''
+
+    with (ro.default_converter + pandas2ri.converter).context():
+        r_df = ro.r(r_code)
+        df = recursive_conversion(r_df)
+
+    # Non-NA cells preserved exactly as the R strings they were.
+    assert df["name"].iloc[0] == "alpha"
+    assert df["name"].iloc[2] == "gamma"
+    assert df["other"].iloc[0] == "x"
+    assert df["other"].iloc[1] == "y"
+
+    # NA cells are real Python nulls now, not NACharacterType.
+    assert df["name"].iloc[1] is None
+    assert df["other"].iloc[2] is None
+
+    # Integer column round-trips.
+    assert list(df["n"]) == [1, 2, 3]
+
+    # Previously raised ArrowTypeError — now succeeds.
+    pa.Table.from_pandas(df)
