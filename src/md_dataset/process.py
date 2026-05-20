@@ -19,6 +19,7 @@ from md_dataset.storage import get_s3_block
 if TYPE_CHECKING:
     from collections.abc import Callable
     from uuid import UUID
+    import pandas as pd
     from md_dataset.models.r import RFuncArgs
 
 P = ParamSpec("P")
@@ -221,7 +222,7 @@ def _is_intensity_data_structure(converted_list) -> bool: # noqa: ANN001
             "tables" in converted_list[0])
 
 
-def _scrub_na_character(df): # noqa: ANN001
+def _scrub_na_character(df: pd.DataFrame) -> pd.DataFrame:
     """Replace rpy2 NACharacterType sentinels with Python None.
 
     rpy2 leaves `NA_character_` cells as `NACharacterType` instances inside
@@ -270,8 +271,8 @@ def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     # Handle R data frames
     if hasattr(r_object, "colnames") and hasattr(r_object, "nrow"):
         logger.info("Convert R data frame to pandas DataFrame")
-        df = ro.conversion.get_conversion().rpy2py(r_object)
-        return _scrub_na_character(df)
+        frame = ro.conversion.get_conversion().rpy2py(r_object)
+        return _scrub_na_character(frame)
 
     logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)

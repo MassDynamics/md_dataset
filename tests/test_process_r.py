@@ -170,13 +170,13 @@ def test_scrub_na_character_preserves_non_na_values():
     """Only NACharacterType sentinels become None; real strings are untouched."""
     from rpy2.rinterface import NA_Character
 
-    df = pd.DataFrame({
+    frame = pd.DataFrame({
         "name":  ["alpha", NA_Character, "gamma"],
         "other": ["x",     "y",          NA_Character],
         "n":     [1,       2,            3],
     })
 
-    out = _scrub_na_character(df.copy())
+    out = _scrub_na_character(frame.copy())
 
     # Real string values land exactly as they were.
     assert out["name"].iloc[0] == "alpha"
@@ -194,11 +194,11 @@ def test_scrub_na_character_preserves_non_na_values():
 
 def test_scrub_na_character_on_all_non_na_column_is_noop():
     """A column with no NA sentinels must come out byte-identical."""
-    df = pd.DataFrame({"name": ["alpha", "beta", "gamma"]})
+    frame = pd.DataFrame({"name": ["alpha", "beta", "gamma"]})
 
-    out = _scrub_na_character(df.copy())
+    out = _scrub_na_character(frame.copy())
 
-    pd.testing.assert_series_equal(out["name"], df["name"])
+    pd.testing.assert_series_equal(out["name"], frame["name"])
 
 
 def test_recursive_conversion_handles_na_character_dataframe():
@@ -207,31 +207,31 @@ def test_recursive_conversion_handles_na_character_dataframe():
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
 
-    r_code = '''
+    r_code = """
         data.frame(
             name  = c("alpha", NA_character_, "gamma"),
             other = c("x", "y", NA_character_),
             n     = c(1L, 2L, 3L),
             stringsAsFactors = FALSE
         )
-    '''
+    """
 
     with (ro.default_converter + pandas2ri.converter).context():
         r_df = ro.r(r_code)
-        df = recursive_conversion(r_df)
+        frame = recursive_conversion(r_df)
 
     # Non-NA cells preserved exactly as the R strings they were.
-    assert df["name"].iloc[0] == "alpha"
-    assert df["name"].iloc[2] == "gamma"
-    assert df["other"].iloc[0] == "x"
-    assert df["other"].iloc[1] == "y"
+    assert frame["name"].iloc[0] == "alpha"
+    assert frame["name"].iloc[2] == "gamma"
+    assert frame["other"].iloc[0] == "x"
+    assert frame["other"].iloc[1] == "y"
 
     # NA cells are real Python nulls now, not NACharacterType.
-    assert df["name"].iloc[1] is None
-    assert df["other"].iloc[2] is None
+    assert frame["name"].iloc[1] is None
+    assert frame["other"].iloc[2] is None
 
     # Integer column round-trips.
-    assert list(df["n"]) == [1, 2, 3]
+    assert list(frame["n"]) == [1, 2, 3]
 
     # Previously raised ArrowTypeError — now succeeds.
-    pa.Table.from_pandas(df)
+    pa.Table.from_pandas(frame)
