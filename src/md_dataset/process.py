@@ -221,6 +221,33 @@ def _is_intensity_data_structure(converted_list) -> bool: # noqa: ANN001
             "tables" in converted_list[0])
 
 
+def _scrub_na_character(df): # noqa: ANN001
+    """Replace rpy2 NACharacterType sentinels with Python None.
+
+    rpy2 leaves `NA_character_` cells as `NACharacterType` instances inside
+    object-dtype pandas columns. pyarrow can't serialise those during parquet
+    write, so any character column with NAs trips
+    `ArrowTypeError: Expected bytes, got a 'NACharacterType' object`.
+
+    Walking object-dtype columns once per data frame and replacing those
+    sentinels with `None` makes them proper nulls in downstream parquet
+    output. Non-NA character values (real Python strings) are left
+    byte-identical. Numeric / integer / logical columns are untouched —
+    rpy2 maps their NAs correctly already.
+    """
+    from rpy2.rinterface import NACharacterType
+
+    if not hasattr(df, "columns"):
+        return df
+    for col in df.columns:
+        s = df[col]
+        if s.dtype == "object":
+            mask = s.map(lambda v: isinstance(v, NACharacterType))
+            if mask.any():
+                df.loc[mask, col] = None
+    return df
+
+
 def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     import rpy2.robjects as ro
     logger = get_run_logger()
@@ -243,7 +270,8 @@ def recursive_conversion(r_object) -> dict | list: # noqa: ANN001
     # Handle R data frames
     if hasattr(r_object, "colnames") and hasattr(r_object, "nrow"):
         logger.info("Convert R data frame to pandas DataFrame")
-        return ro.conversion.get_conversion().rpy2py(r_object)
+        df = ro.conversion.get_conversion().rpy2py(r_object)
+        return _scrub_na_character(df)
 
     logger.info("Convert: %s", type(r_object))
     return ro.conversion.get_conversion().rpy2py(r_object)
