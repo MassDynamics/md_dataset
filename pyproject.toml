@@ -29,6 +29,9 @@ dependencies = [
   "pyarrow ~= 24.0.0",
   "pydantic ~= 2.10.4",
   "deprecated",
+  # prefect 3.2.1 imports `importlib_metadata` (the backport) in
+  # workers/base.py without declaring it as a dependency, so we pin it here.
+  "importlib_metadata",
   "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.3-45"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
@@ -37,7 +40,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.11.14"
+version = "0.11.15"
 
 [project.optional-dependencies]
 r = [
