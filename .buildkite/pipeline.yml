@@ -1,23 +1,17 @@
 steps:
   - label: ":python: test"
     command: ./scripts/test
-    env:
-      CONDA_ENV_NAME: "md_dataset_package"
     agents:
       python-r-4.3: true
 
   - label: ":lint-roller: lint"
     command: ./scripts/lint
-    env:
-      CONDA_ENV_NAME: "md_dataset_package"
     agents:
       python-r-4.3: true
 
   - label: ":lock: audit"
     command: ./scripts/audit
     soft_fail: true # TODO: remove once outstanding prefect vulnerabilities are resolved
-    env:
-      CONDA_ENV_NAME: "md_dataset_package"
     agents:
       python-r-4.3: true
 
