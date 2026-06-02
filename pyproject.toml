@@ -32,11 +32,6 @@ dependencies = [
   # prefect 3.2.1 imports `importlib_metadata` (the backport) in
   # workers/base.py without declaring it as a dependency, so we pin it here.
   "importlib_metadata",
-  # prefect 3.2.1 only bounds starlette via fastapi, so a fresh resolve pulls
-  # starlette 1.x (a major rewrite prefect was not tested against), which makes
-  # the ephemeral API server slow/unreliable to boot under parallel tests. Cap
-  # to the 0.x line prefect 3.2.1 expects. Remove when prefect is upgraded.
-  "starlette < 1.0",
   "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-47"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
