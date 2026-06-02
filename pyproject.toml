@@ -40,7 +40,7 @@ license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
-version = "0.11.15"
+version = "0.11.16"
 
 [project.optional-dependencies]
 r = [
@@ -53,6 +53,7 @@ dev = [
     "coverage [toml]",
     "pbd",
     "protobuf>=4.25,<5.0",
+    "pip-audit",
     "pytest",
     "pytest-mock",
     "pytest-cov",
