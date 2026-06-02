@@ -52,7 +52,6 @@ dev = [
     "bump-my-version",
     "coverage [toml]",
     "pbd",
-    "protobuf>=4.25,<5.0",
     "pip-audit",
     "pytest",
     "pytest-mock",
