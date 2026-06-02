@@ -2,6 +2,8 @@
 
 set -e
 
+source "$(dirname "$0")/ensure-uv"
+
 echo "installing packages"
 uv sync --extra dev
 
