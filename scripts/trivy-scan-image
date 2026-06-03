@@ -27,7 +27,7 @@ if [[ ! -f "$IGNORE_FILE" ]]; then
 fi
 
 echo "== Checking .trivyignore expiry..."
-"${SCRIPT_DIR}/check_trivyignore_expiry.sh" "$IGNORE_FILE"
+"${SCRIPT_DIR}/trivy-check-expiry" "$IGNORE_FILE"
 
 echo "== Scanning docker image for vulnerabilities..."
 # Trivy v0.70.0 pinned by digest. To upgrade, run locally:

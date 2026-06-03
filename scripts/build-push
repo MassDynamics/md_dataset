@@ -19,7 +19,7 @@ docker build \
   --build-arg BASE_TAG=${tag} \
   -t ${image_tag} -t ${image_tag_latest} .
 
-"${SCRIPT_DIR}/scan-image-trivy" "${image_tag}" "${SCRIPT_DIR}/../.trivyignore"
+"${SCRIPT_DIR}/trivy-scan-image" "${image_tag}" "${SCRIPT_DIR}/../.trivyignore"
 
 dockerhub_username=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-username" --query "Parameter.Value" --output text)
 dockerhub_password=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-password" --with-decryption --query "Parameter.Value" --output text)
