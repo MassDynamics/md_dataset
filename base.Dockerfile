@@ -1,4 +1,4 @@
-FROM amazonlinux:2023.7.20250331.0
+FROM amazonlinux:2023.11.20260526.0
 
 RUN yum -y update
 
