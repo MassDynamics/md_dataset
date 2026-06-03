@@ -6,6 +6,12 @@
 
 export PATH="$HOME/.local/bin:$PATH"
 
+# The CI agents' system Python (/usr/local/bin/python3.11) is a CPython debug
+# build (`--with-pydebug`, see base.Dockerfile), which is several times slower
+# and makes the prefect ephemeral test server exceed its startup timeout. Force
+# uv to use an optimized, managed (python-build-standalone) interpreter instead.
+export UV_PYTHON_PREFERENCE=only-managed
+
 if ! command -v uv >/dev/null 2>&1; then
   echo "installing uv"
   curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$HOME/.local/bin" sh
