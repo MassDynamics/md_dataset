@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Scans a Docker image with Trivy for fixed HIGH/CRITICAL vulnerabilities,
+# honouring suppressions in a .trivyignore file. Exits 1 (e.g failing CI) if
+# any qualifying vulnerability is found, or if any suppression has expired.
+#
+# Trivy is pinned by digest; the image is cosign-verifiable. See the upgrade
+# steps in the comment below before bumping the version.
+#
+# Usage:
+#   ./scripts/shared/scan_image_trivy.sh <image_tag> <path/to/.trivyignore>
+
+set -euo pipefail
+
+IMAGE_TAG="${1:-}"
+IGNORE_FILE="${2:-}"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+if [[ -z "$IMAGE_TAG" || -z "$IGNORE_FILE" ]]; then
+  echo "Usage: $0 <image_tag> <path/to/.trivyignore>" >&2
+  exit 2
+fi
+
+if [[ ! -f "$IGNORE_FILE" ]]; then
+  echo "Ignore file not found: $IGNORE_FILE" >&2
+  exit 2
+fi
+
+echo "== Checking .trivyignore expiry..."
+"${SCRIPT_DIR}/check_trivyignore_expiry.sh" "$IGNORE_FILE"
+
+echo "== Scanning docker image for vulnerabilities..."
+# Trivy v0.70.0 pinned by digest. To upgrade, run locally:
+#   cosign verify aquasec/trivy:<new-version> \
+#     --certificate-identity-regexp '^https://github\.com/aquasecurity/trivy/' \
+#     --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+#   docker pull aquasec/trivy:<new-version>
+#   docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:<new-version>
+TRIVY_IMAGE=aquasec/trivy@sha256:be1190afcb28352bfddc4ddeb71470835d16462af68d310f9f4bca710961a41e
+
+docker run --rm -i \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "${HOME}/.cache/trivy:/root/.cache/trivy/" \
+  --entrypoint sh \
+  "${TRIVY_IMAGE}" \
+  -c "cat > /tmp/.trivyignore && exec trivy image --ignorefile /tmp/.trivyignore --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed ${IMAGE_TAG}" \
+  < "$IGNORE_FILE"
+
