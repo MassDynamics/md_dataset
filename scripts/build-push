@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-[[ -z "$BUILD_NUMBER" ]] && echo "BUILD_NUMBER must be set" && exit 1
+[[ -z "${BUILD_NUMBER:-}" ]] && echo "BUILD_NUMBER must be set" && exit 1
 [[ -z "$DOCKER_FILE" ]] && echo "DOCKER_FILE must be set" && exit 1
 [[ -z "$REPO_NAME" ]] && echo "REPO_NAME must be set" && exit 1
 
@@ -18,6 +18,8 @@ docker build \
   --file=$DOCKER_FILE \
   --build-arg BASE_TAG=${tag} \
   -t ${image_tag} -t ${image_tag_latest} .
+
+"${SCRIPT_DIR}/scan-image-trivy" "${image_tag}" "${SCRIPT_DIR}/../.trivyignore"
 
 dockerhub_username=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-username" --query "Parameter.Value" --output text)
 dockerhub_password=$(aws ssm get-parameter --name "/services/dockerhub/massdynamics-password" --with-decryption --query "Parameter.Value" --output text)
