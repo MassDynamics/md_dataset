@@ -8,7 +8,7 @@
 # steps in the comment below before bumping the version.
 #
 # Usage:
-#   ./scripts/shared/scan_image_trivy.sh <image_tag> <path/to/.trivyignore>
+#   ./scripts/trivy-scan-image <image_tag> <path/to/.trivyignore>
 
 set -euo pipefail
 
@@ -41,15 +41,20 @@ TRIVY_IMAGE=aquasec/trivy@sha256:be1190afcb28352bfddc4ddeb71470835d16462af68d310
 # Trivy's fs cache takes an exclusive lock. Parallel image builds on a shared
 # agent that mount the same cache dir collide ("cache may be in use by another
 # process"). Give each image its own cache dir (keyed off the repo part of the
-# tag) so concurrent scans don't clash, while still reusing cache across rebuilds.
+# tag) so concurrent scans don't clash, while still reusing the vuln DB across
+# rebuilds of that image.
 CACHE_DIR="${HOME}/.cache/trivy/$(printf '%s' "${IMAGE_TAG%%:*}" | tr '/:' '__')"
 mkdir -p "$CACHE_DIR"
 
+# `--cache-backend memory` keeps the analysed-layer (scan) cache in-process so it
+# never persists: each build scans a new tag, so that cache is never reused and
+# would only accumulate. The vuln DB still persists in CACHE_DIR and self-refreshes,
+# so each per-repo dir stays ~constant (just the DB) with no ongoing cleanup needed.
 docker run --rm -i \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v "${CACHE_DIR}:/root/.cache/trivy/" \
   --entrypoint sh \
   "${TRIVY_IMAGE}" \
-  -c "cat > /tmp/.trivyignore && exec trivy image --ignorefile /tmp/.trivyignore --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed ${IMAGE_TAG}" \
+  -c "cat > /tmp/.trivyignore && exec trivy image --cache-backend memory --ignorefile /tmp/.trivyignore --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed ${IMAGE_TAG}" \
   < "$IGNORE_FILE"
 
