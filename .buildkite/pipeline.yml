@@ -15,14 +15,6 @@ steps:
     agents:
       python-r-4.3: true
 
-  # TEMPORARY: capture why the ephemeral Prefect API server hangs on startup under
-  # uv. Non-blocking. Remove once the test ephemeral-server timeout is resolved.
-  - label: ":mag: diag-prefect (temp)"
-    command: ./scripts/diag-prefect
-    soft_fail: true
-    agents:
-      python-r-4.3: true
-
   - wait: ~
     key: prep
 
