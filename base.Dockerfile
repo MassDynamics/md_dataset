@@ -12,7 +12,7 @@ ARG PYTHON_VERSION=3.11.10
 RUN cd /opt/ && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
 RUN cd /opt/ && tar xzf Python-${PYTHON_VERSION}.tgz
 RUN cd /opt/Python-${PYTHON_VERSION} && \
-      ./configure --enable-optimizations --with-pydebug && \
+      ./configure --enable-optimizations && \
       make -j $(nproc) && \
       make altinstall
 
