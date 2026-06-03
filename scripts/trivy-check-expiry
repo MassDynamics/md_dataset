@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Fails if any CVE in .trivyignore is past its `# remove_after: YYYY_MM_DD`
+# expiry. The fix is likely live once the date has passed, so the suppression
+# should be removed. CVEs without a preceding `# remove_after:` are skipped.
+#
+# Usage:
+#   ./scripts/trivy-check-expiry path/to/.trivyignore
+
+set -e
+
+IGNORE_FILE="$1"
+
+if [[ -z "$IGNORE_FILE" || ! -f "$IGNORE_FILE" ]]; then
+  echo "Usage: $0 path/to/.trivyignore" >&2
+  exit 2
+fi
+
+TODAY=$(date -u +%Y_%m_%d)
+current_expiry=""
+bad=0
+
+while IFS= read -r line; do
+  if [[ "$line" == "# remove_after:"* ]]; then
+    read -r _ _ current_expiry <<< "$line"
+    continue
+  fi
+
+  if [[ -z "$line" || "$line" == "#"* ]]; then
+    continue
+  fi
+
+  if [[ -n "$current_expiry" && "$current_expiry" < "$TODAY" ]]; then
+    echo "Expired (remove_after $current_expiry): $line — remove from .trivyignore, the fix is likely live"
+    bad=1
+  fi
+done < "$IGNORE_FILE"
+
+exit "$bad"
+
