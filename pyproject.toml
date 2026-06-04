@@ -15,11 +15,8 @@ classifiers = [
     "Development Status :: 5 - Production",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
   "boto3 ~= 1.35.54",
@@ -35,7 +32,7 @@ dependencies = [
   "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-47"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
-keywords = [""]
+keywords = []
 license = {file = "LICENSE"}
 name = "md_dataset"
 readme = {file = "README.md", content-type = "text/markdown"}
@@ -62,7 +59,6 @@ dev = [
     "sphinx",
     "sphinx_rtd_theme",
     "sphinx-autoapi",
-    "tox",
     "myst_parser",
     "rpy2 ~= 3.5.17",
     "jupyter",
@@ -99,16 +95,6 @@ pythonpath = ["tests"]
 branch = true
 source = ["src/md_dataset"]
 command_line = "-m pytest"
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py38,py39,py310,py311,py312
-skip_missing_interpreters = true
-[testenv]
-commands = pytest
-extras = dev
-"""
 
 [tool.ruff]
 line-length = 120
