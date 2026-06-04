@@ -18,5 +18,6 @@ FROM ${BASE_IMAGE}
 # The base image already pins it, but re-assert here.
 RUN pip install --no-cache-dir --upgrade pip "setuptools>=78.1.1"
 COPY --from=build /usr/src/app/dist/md_dataset-*-py3-none-any.whl /tmp/
-RUN pip install --no-cache-dir /tmp/md_dataset-*-py3-none-any.whl && \
-    pip install --no-cache-dir 'md-dataset[r]'
+
+RUN whl=$(ls /tmp/md_dataset-*-py3-none-any.whl) && \
+    pip install --no-cache-dir "${whl}[r]"
