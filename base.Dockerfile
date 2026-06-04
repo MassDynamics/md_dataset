@@ -24,7 +24,10 @@ RUN cd /opt/ && wget https://bootstrap.pypa.io/get-pip.py && \
 ENV WORK_DIR="/usr/src/app"
 WORKDIR $WORK_DIR
 
-RUN pip install "cython<3.0.0" wheel
+# setuptools >= 78.1.1 fixes CVE-2022-40897, CVE-2024-6345, CVE-2025-47273.
+# get-pip bootstraps an older one into the runtime site-packages, so pin it here
+# in the base image; every downstream image inherits the patched version.
+RUN pip install "cython<3.0.0" wheel "setuptools>=78.1.1"
 RUN pip install "pyyaml==5.4.1" --no-build-isolation
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
