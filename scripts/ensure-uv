@@ -1,6 +1,7 @@
 # shellcheck shell=bash
-# Idempotently make `uv` available on PATH. The shared CI agents don't ship uv,
-# so install it on first use; subsequent builds reuse the cached binary.
+# Idempotently make a pinned `uv` available on PATH. The shared CI agents don't
+# reliably ship the version we want, so install it into ~/.local/bin (first on
+# PATH below) and reuse it across builds.
 #
 # Meant to be sourced, not executed.
 
@@ -12,9 +13,12 @@ export PATH="$HOME/.local/bin:$PATH"
 # uv to use an optimized, managed (python-build-standalone) interpreter instead.
 export UV_PYTHON_PREFERENCE=only-managed
 
-if ! command -v uv >/dev/null 2>&1; then
-  echo "installing uv"
-  curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$HOME/.local/bin" sh
+# Pin uv for reproducible resolver behaviour. Install it (or replace a different
+# version) into ~/.local/bin when the pinned version isn't already active.
+UV_VERSION=0.11.18
+if [ "$(uv --version 2>/dev/null | awk '{print $2}')" != "$UV_VERSION" ]; then
+  echo "installing uv ${UV_VERSION}"
+  curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR="$HOME/.local/bin" sh
 fi
 
 uv --version
