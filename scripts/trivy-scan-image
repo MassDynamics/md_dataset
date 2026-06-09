@@ -30,13 +30,13 @@ echo "== Checking .trivyignore expiry..."
 "${SCRIPT_DIR}/trivy-check-expiry" "$IGNORE_FILE"
 
 echo "== Scanning docker image for vulnerabilities..."
-# Trivy v0.70.0 pinned by digest. To upgrade, run locally:
+# Trivy v0.71.0 pinned by digest. To upgrade, run locally:
 #   cosign verify aquasec/trivy:<new-version> \
 #     --certificate-identity-regexp '^https://github\.com/aquasecurity/trivy/' \
 #     --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
 #   docker pull aquasec/trivy:<new-version>
 #   docker inspect --format='{{index .RepoDigests 0}}' aquasec/trivy:<new-version>
-TRIVY_IMAGE=aquasec/trivy@sha256:be1190afcb28352bfddc4ddeb71470835d16462af68d310f9f4bca710961a41e
+TRIVY_IMAGE=aquasec/trivy@sha256:016eae51fdcf989332a5404af7e8f625cd5d95d7c0907a221d080a996f556500
 
 # Trivy's fs cache takes an exclusive lock. Parallel image builds on a shared
 # agent that mount the same cache dir collide ("cache may be in use by another
