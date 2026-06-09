@@ -64,10 +64,11 @@ RUN yum install -y \
 
 # Re-apply OS security updates as a late, cache-busted layer so this pinned-base
 # image still picks up distro fixes without waiting for a newer amazonlinux tag.
-# CACHEBUST (the build number) forces it to re-run each build; the expensive R
-# build above stays cached.
+# AL2023 locks to a deterministic repo snapshot, so `--releasever=latest` is
+# needed to reach the current packages. CACHEBUST (the build number) forces it to
+# re-run each build; the expensive R build above stays cached.
 ARG CACHEBUST=unset
-RUN echo "cachebust: ${CACHEBUST}" && yum -y update && yum clean all
+RUN echo "cachebust: ${CACHEBUST}" && yum -y --releasever=latest update && yum clean all
 
 ENV LD_LIBRARY_PATH=/usr/local/lib64
 ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
