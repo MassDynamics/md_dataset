@@ -26,6 +26,7 @@ class DatasetType(Enum):
     PAIRWISE = "PAIRWISE"
     ANOVA = "ANOVA"
     ENRICHMENT = "ENRICHMENT"
+    ORA = "ORA"
     WGCNA = "WGCNA"
     MOFA = "MOFA"
 
@@ -290,6 +291,90 @@ class EnrichmentDataset(Dataset):
 
     def _path(self, table_type: EnrichmentTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+class ORATableType(Enum):
+    RESULTS = "results"
+    RUNTIME_METADATA = "runtime_metadata"
+    DATABASE_METADATA = "database_metadata"
+
+
+class ORADataset(Dataset):
+    """An ORA (Over-Representation Analysis) dataset.
+
+    Attributes:
+    ----------
+    results : PandasDataFrame
+        Per-pathway hypergeometric ORA results (Id, Name, Category,
+        Entities in List, Entities in Pathway, Foreground, Background,
+        GeneRatio, BgRatio, RichFactor, FoldEnrichment, ZScore, PValue,
+        AdjPValue, OverlapGenes).
+    runtime_metadata : PandasDataFrame
+        Parameters used for the run (species, database, engine,
+        background mode, interactor expansion, includeDisease, sizes,
+        padjMethod, etc.).
+    database_metadata : PandasDataFrame
+        Gene-set collection metadata (annotation_id, annotation_name,
+        annotation_description, items, size, linkout).
+    """
+    results: pd.DataFrame = None
+    runtime_metadata: pd.DataFrame = None
+    database_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        for optional in ("results", "runtime_metadata", "database_metadata"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = f"The field '{optional}' must be a pandas DataFrame if provided, but \
+                        got {type(value).__name__}."
+                raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = []
+        if self.results is not None:
+            tables.append((self._path(ORATableType.RESULTS), self.results))
+        if self.runtime_metadata is not None:
+            tables.append((self._path(ORATableType.RUNTIME_METADATA), self.runtime_metadata))
+        if self.database_metadata is not None:
+            tables.append((self._path(ORATableType.DATABASE_METADATA), self.database_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            result_tables = []
+            if self.results is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "ora_results",
+                    "path": self._path(ORATableType.RESULTS),
+                })
+            if self.runtime_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(ORATableType.RUNTIME_METADATA),
+                })
+            if self.database_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "database_metadata",
+                    "path": self._path(ORATableType.DATABASE_METADATA),
+                })
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": result_tables,
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: ORATableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
 
 class PairwiseTableType(Enum):
     RESULTS = "results"

@@ -9,6 +9,7 @@ from md_dataset.models.dataset import EnrichmentDataset
 from md_dataset.models.dataset import IntensityDataset
 from md_dataset.models.dataset import LegacyIntensityDataset
 from md_dataset.models.dataset import MOFADataset
+from md_dataset.models.dataset import ORADataset
 from md_dataset.models.dataset import PairwiseDataset
 from md_dataset.models.dataset import WGCNADataset
 
@@ -25,6 +26,8 @@ _DATASET_REGISTRY = {
             tables: DoseResponseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.ENRICHMENT, dict): lambda run_id, dataset_type, \
             tables: EnrichmentDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.ORA, dict): lambda run_id, dataset_type, \
+            tables: ORADataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.WGCNA, dict): lambda run_id, dataset_type, \
             tables: WGCNADataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.MOFA, dict): lambda run_id, dataset_type, \
