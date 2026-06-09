@@ -30,13 +30,12 @@ WORKDIR $WORK_DIR
 RUN pip install "cython<3.0.0" wheel "setuptools>=78.1.1"
 RUN pip install "pyyaml==5.4.1" --no-build-isolation
 
-# Re-apply OS security updates as a late, cache-busted layer so this pinned-base
-# image still picks up distro fixes (e.g. gnutls, libsolv) without waiting for a
-# newer amazonlinux tag. AL2023 pins to a locked repo snapshot for deterministic
-# builds, so a plain `yum update` stays within the base tag's frozen package set;
-# `--releasever=latest` pulls the current snapshot where the fixes live. CACHEBUST
-# (the build number) forces it to re-run each build; the compile layers stay cached.
-ARG CACHEBUST=unset
-RUN echo "cachebust: ${CACHEBUST}" && yum -y --releasever=latest update && yum clean all
+# Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
+# base tag ships (the latest amazonlinux image tag still carries e.g. gnutls and
+# libsolv CVEs). AL2023 uses deterministic, version-locked repos, so we pin an
+# explicit, recent releasever for reproducible, reviewable builds — bump it
+# deliberately to pick up newer distro fixes. The compile layers above stay
+# cached; changing the releasever re-runs this layer.
+RUN yum -y --releasever=2023.12.20260608 update && yum clean all
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
