@@ -30,4 +30,11 @@ WORKDIR $WORK_DIR
 RUN pip install "cython<3.0.0" wheel "setuptools>=78.1.1"
 RUN pip install "pyyaml==5.4.1" --no-build-isolation
 
+# Re-apply OS security updates as a late, cache-busted layer so this pinned-base
+# image still picks up distro fixes (e.g. gnutls, libsolv) without waiting for a
+# newer amazonlinux tag. CACHEBUST (the build number) forces it to re-run each
+# build; the expensive Python-compile layers above stay cached.
+ARG CACHEBUST=unset
+RUN echo "cachebust: ${CACHEBUST}" && yum -y update && yum clean all
+
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
