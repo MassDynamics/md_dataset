@@ -722,6 +722,7 @@ class MOFATableType(Enum):
     FACTOR_SCORES = "factor_scores"
     FACTOR_LOADINGS = "factor_loadings"
     VARIANCE_EXPLAINED = "variance_explained"
+    FACTOR_METADATA_ASSOCIATION = "factor_metadata_association"
     RUNTIME_METADATA = "runtime_metadata"
 
 
@@ -739,12 +740,18 @@ class MOFADataset(Dataset):
     variance_explained : PandasDataFrame
         Proportion of variance in each view explained by each factor.
         Long format: view, factor, variance_r2.
+    factor_metadata_association : PandasDataFrame
+        Post-hoc association of each factor with each selected sample-metadata
+        column (which factor tracks which experimental variable). Optional —
+        present only when the run was given sample metadata.
+        Long format: factor, metadata_column, metadata_type, r2, p_value, test.
     runtime_metadata : PandasDataFrame
         Package version, parameters used, view names, sample count.
     """
     factor_scores: pd.DataFrame
     factor_loadings: pd.DataFrame
     variance_explained: pd.DataFrame
+    factor_metadata_association: pd.DataFrame = None
     runtime_metadata: pd.DataFrame = None
     _dump_cache: dict = PrivateAttr(default=None)
 
@@ -763,11 +770,12 @@ class MOFADataset(Dataset):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
 
-        runtime_metadata = values.get("runtime_metadata")
-        if runtime_metadata is not None and not isinstance(runtime_metadata, pd.DataFrame):
-            msg = f"The field 'runtime_metadata' must be a pandas DataFrame if provided, but \
-                    got {type(runtime_metadata).__name__}."
-            raise TypeError(msg)
+        for optional in ("factor_metadata_association", "runtime_metadata"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = f"The field '{optional}' must be a pandas DataFrame if provided, but \
+                        got {type(value).__name__}."
+                raise TypeError(msg)
         return values
 
     def tables(self) -> list[tuple[str, pd.DataFrame]]:
@@ -776,6 +784,8 @@ class MOFADataset(Dataset):
             (self._path(MOFATableType.FACTOR_LOADINGS), self.factor_loadings),
             (self._path(MOFATableType.VARIANCE_EXPLAINED), self.variance_explained),
         ]
+        if self.factor_metadata_association is not None:
+            tables.append((self._path(MOFATableType.FACTOR_METADATA_ASSOCIATION), self.factor_metadata_association))
         if self.runtime_metadata is not None:
             tables.append((self._path(MOFATableType.RUNTIME_METADATA), self.runtime_metadata))
         return tables
@@ -799,6 +809,12 @@ class MOFADataset(Dataset):
                     "path": self._path(MOFATableType.VARIANCE_EXPLAINED),
                 },
             ]
+            if self.factor_metadata_association is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "factor_metadata_association",
+                    "path": self._path(MOFATableType.FACTOR_METADATA_ASSOCIATION),
+                })
             if self.runtime_metadata is not None:
                 result_tables.append({
                     "id": str(uuid.uuid4()),
