@@ -4,6 +4,7 @@ from uuid import UUID
 from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import DoseResponseCompareDataset
 from md_dataset.models.dataset import DoseResponseDataset
 from md_dataset.models.dataset import EnrichmentDataset
 from md_dataset.models.dataset import IntensityDataset
@@ -24,6 +25,8 @@ _DATASET_REGISTRY = {
             tables: AnovaDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.DOSE_RESPONSE, dict): lambda run_id, dataset_type, \
             tables: DoseResponseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.DOSE_RESPONSE_COMPARE, dict): lambda run_id, dataset_type, \
+            tables: DoseResponseCompareDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.ENRICHMENT, dict): lambda run_id, dataset_type, \
             tables: EnrichmentDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.ORA, dict): lambda run_id, dataset_type, \

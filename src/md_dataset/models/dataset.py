@@ -23,6 +23,7 @@ class DatasetType(Enum):
     INTENSITY = "INTENSITY"
     DOSE_RESPONSE = "DOSE_RESPONSE"
     DOSE_RESPONSE_AGGREGATE = "DOSE_RESPONSE_AGGREGATE"
+    DOSE_RESPONSE_COMPARE = "DOSE_RESPONSE_COMPARE"
     PAIRWISE = "PAIRWISE"
     ANOVA = "ANOVA"
     ENRICHMENT = "ENRICHMENT"
@@ -607,6 +608,116 @@ class DoseResponseDataset(Dataset):
 
     def _path(self, table_type: DoseResponseTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class DoseResponseCompareTableType(Enum):
+    OUTPUT_COMPARISONS = "output_comparisons"
+    OUTPUT_CURVES = "output_curves"
+    INPUT_DRC = "input_drc"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class DoseResponseCompareDataset(Dataset):
+    """A dose-response curve-comparison dataset.
+
+    A pairwise-style comparison of dose-response curves: every feature is
+    compared treatment-vs-control across one or more comparisons. Mirrors the
+    PAIRWISE convention (one ``output_comparisons`` row per feature, with each
+    comparison's statistics in columns suffixed by the comparison label, e.g.
+    ``MaxLog2FoldChange <treatment> - <control>``) while also carrying the
+    fitted display curves so a curve-comparison viewer can plot both curves.
+
+    Attributes:
+    ----------
+    output_comparisons : PandasDataFrame
+        One row per feature; per-comparison statistics in suffixed columns
+        (``MaxLog2FoldChange ...``, ``PValue ...``, ``AdjPValue ...``) plus the
+        entity-metadata columns (``GroupId``, ``GroupLabel``, ``GroupLabelType``,
+        ``GeneNames``, ``Description``, ``ProteinIds``).
+    output_curves : PandasDataFrame
+        Fitted control/compound curves over a dose grid (one row per
+        feature x comparison x condition x grid point).
+    input_drc : PandasDataFrame
+        Per feature x sample input table (optional; for debugging / re-fitting).
+    runtime_metadata : PandasDataFrame
+        Information about the dataset at runtime (parameters, fit method).
+    """
+    output_comparisons: pd.DataFrame
+    output_curves: pd.DataFrame
+    input_drc: pd.DataFrame = None
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = ["output_comparisons", "output_curves"]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        for optional in ("input_drc", "runtime_metadata"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = f"The field '{optional}' must be a pandas DataFrame if provided, but \
+                        got {type(value).__name__}."
+                raise TypeError(msg)
+        return values
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        tables = [
+            (self._path(DoseResponseCompareTableType.OUTPUT_COMPARISONS), self.output_comparisons),
+            (self._path(DoseResponseCompareTableType.OUTPUT_CURVES), self.output_curves),
+        ]
+        if self.input_drc is not None:
+            tables.append((self._path(DoseResponseCompareTableType.INPUT_DRC), self.input_drc))
+        if self.runtime_metadata is not None:
+            tables.append((self._path(DoseResponseCompareTableType.RUNTIME_METADATA), self.runtime_metadata))
+        return tables
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            result_tables = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "output_comparisons",
+                    "path": self._path(DoseResponseCompareTableType.OUTPUT_COMPARISONS),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "output_curves",
+                    "path": self._path(DoseResponseCompareTableType.OUTPUT_CURVES),
+                },
+            ]
+            if self.input_drc is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "input_drc",
+                    "path": self._path(DoseResponseCompareTableType.INPUT_DRC),
+                })
+            if self.runtime_metadata is not None:
+                result_tables.append({
+                    "id": str(uuid.uuid4()),
+                    "name": "runtime_metadata",
+                    "path": self._path(DoseResponseCompareTableType.RUNTIME_METADATA),
+                })
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": result_tables,
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: DoseResponseCompareTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
 
 class LegacyIntensityDataset(Dataset):
     """An intentisy dataset.
