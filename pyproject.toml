@@ -29,7 +29,7 @@ dependencies = [
   # prefect 3.2.1 imports `importlib_metadata` (the backport) in
   # workers/base.py without declaring it as a dependency, so we pin it here.
   "importlib_metadata",
-  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-47"
+  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-50"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = []
