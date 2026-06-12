@@ -1,7 +1,6 @@
 from uuid import UUID
 import pandas as pd
 import pytest
-from prefect.testing.utilities import prefect_test_harness
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 from md_dataset.models.dataset import DatasetType
@@ -20,12 +19,6 @@ from md_dataset.storage import FileManager
 # Test constants
 THREE_EXPECTED_TABLES_COUNT = 3
 FOUR_EXPECTED_TABLES_COUNT = 4
-
-
-@pytest.fixture(autouse=True, scope="session")
-def prefect_test_fixture():
-    with prefect_test_harness():
-        yield
 
 
 @pytest.fixture

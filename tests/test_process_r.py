@@ -1,7 +1,6 @@
 from uuid import UUID
 import pandas as pd
 import pytest
-from prefect.testing.utilities import prefect_test_harness
 from pytest_mock import MockerFixture
 from rpy2.robjects import conversion
 from rpy2.robjects import default_converter
@@ -37,12 +36,6 @@ def prepare_test_run_r(input_datasets: list[IntensityInputDataset], params: Test
             input_datasets[0].table(IntensityTableType.INTENSITY, IntensityEntity.PROTEIN).data, \
             input_datasets[0].table(IntensityTableType.METADATA, IntensityEntity.PROTEIN).data], \
             r_args=[params.message])
-
-
-@pytest.fixture(autouse=True, scope="session")
-def prefect_test_fixture():
-    with prefect_test_harness():
-        yield
 
 
 @pytest.fixture
