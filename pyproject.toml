@@ -21,14 +21,11 @@ classifiers = [
 dependencies = [
   "boto3 ~= 1.35.54",
   "pandas ~= 2.2.3",
-  "prefect == 3.2.1",
-  "prefect-aws ~= 0.5.7",
+  "prefect == 3.7.4",
+  "prefect-aws ~= 0.5.13",
   "pyarrow ~= 24.0.0",
   "pydantic ~= 2.10.4",
   "deprecated",
-  # prefect 3.2.1 imports `importlib_metadata` (the backport) in
-  # workers/base.py without declaring it as a dependency, so we pin it here.
-  "importlib_metadata",
   "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-50"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
@@ -54,7 +51,7 @@ dev = [
     "pytest-mock",
     "pytest-cov",
     "pytest-xdist",
-    "prefect-docker ~= 0.6.2",
+    "prefect-docker ~= 0.6.6",
     "ruff ~= 0.9.4",
     "sphinx",
     "sphinx_rtd_theme",
