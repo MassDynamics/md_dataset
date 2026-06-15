@@ -11,7 +11,6 @@ steps:
 
   - label: ":lock: audit"
     command: ./scripts/audit
-    soft_fail: true # TODO: remove once outstanding prefect vulnerabilities are resolved
     agents:
       python-r-4.3: true
 
