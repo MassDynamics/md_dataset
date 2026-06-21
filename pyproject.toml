@@ -21,7 +21,7 @@ classifiers = [
 dependencies = [
   "boto3 ~= 1.35.54",
   "pandas >=2.2.3,<4",
-  "prefect == 3.7.4",
+  "prefect >=3.7.5,<3.8",
   "prefect-aws ~= 0.5.13",
   "pyarrow ~= 24.0.0",
   "pydantic >=2.10.4,<3",
