@@ -2016,7 +2016,7 @@ requires-dist = [
     { name = "deprecated" },
     { name = "ipykernel", marker = "extra == 'dev'" },
     { name = "jupyter", marker = "extra == 'dev'" },
-    { name = "md-form", git = "https://github.com/MassDynamics/md_form?rev=pydantic-2.13-py314" },
+    { name = "md-form", git = "https://github.com/MassDynamics/md_form?rev=v0.2.4-54" },
     { name = "myst-parser", marker = "extra == 'dev'" },
     { name = "myst-parser", marker = "extra == 'docs'" },
     { name = "pandas", specifier = ">=2.2.3,<4" },
@@ -2048,7 +2048,7 @@ provides-extras = ["r", "dev", "docs", "publishing"]
 [[package]]
 name = "md-form"
 version = "0.2.4"
-source = { git = "https://github.com/MassDynamics/md_form?rev=pydantic-2.13-py314#9ca0fd57a13af65e36f0b863d0b1a5819984f9ab" }
+source = { git = "https://github.com/MassDynamics/md_form?rev=v0.2.4-54#19417f82ec0926e2f2702ddc1a294190a0e8eba0" }
 dependencies = [
     { name = "pandas" },
     { name = "prefect" },
