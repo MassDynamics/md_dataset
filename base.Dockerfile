@@ -34,12 +34,4 @@ RUN pip install "cython>=3.1" wheel "setuptools>=78.1.1"
 # C-API); 6.0.2 ships cp314 wheels.
 RUN pip install "pyyaml>=6.0.2"
 
-# Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
-# base tag ships (the latest amazonlinux image tag still carries e.g. gnutls and
-# libsolv CVEs). AL2023 uses deterministic, version-locked repos, so we pin an
-# explicit, recent releasever for reproducible, reviewable builds — bump it
-# deliberately to pick up newer distro fixes. The compile layers above stay
-# cached; changing the releasever re-runs this layer.
-RUN yum -y --releasever=2023.12.20260608 update && yum clean all
-
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
