@@ -34,4 +34,7 @@ RUN pip install "cython>=3.1" wheel "setuptools>=78.1.1"
 # C-API); 6.0.2 ships cp314 wheels.
 RUN pip install "pyyaml>=6.0.2"
 
+# Re-apply OS security updates from a newer AL2023 repo snapshot.
+RUN yum -y --releasever=2023.12.20260629 update && yum clean all
+
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
