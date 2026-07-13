@@ -803,6 +803,7 @@ class WGCNATableType(Enum):
     MODULE_ASSIGNMENTS = "module_assignments"
     MODULE_EIGENENTITIES = "module_eigenentities"
     MODULE_TRAIT_CORRELATION = "module_trait_correlation"
+    MODULE_MEMBERSHIP = "module_membership"
     SOFT_THRESHOLD = "soft_threshold"
     RUNTIME_METADATA = "runtime_metadata"
 
@@ -832,6 +833,7 @@ class WGCNADataset(Dataset):
     """
     module_assignments: pd.DataFrame
     module_eigenentities: pd.DataFrame
+    module_membership: pd.DataFrame
     module_trait_correlation: pd.DataFrame = None
     soft_threshold: pd.DataFrame = None
     runtime_metadata: pd.DataFrame = None
@@ -842,7 +844,7 @@ class WGCNADataset(Dataset):
 
     @model_validator(mode="before")
     def validate_dataframes(cls, values: dict) -> dict:
-        required_fields = ["module_assignments", "module_eigenentities"]
+        required_fields = ["module_assignments", "module_eigenentities", "module_membership"]
         for field_name in required_fields:
             value = values.get(field_name)
             if value is None:
@@ -864,6 +866,7 @@ class WGCNADataset(Dataset):
         tables = [
             (self._path(WGCNATableType.MODULE_ASSIGNMENTS), self.module_assignments),
             (self._path(WGCNATableType.MODULE_EIGENENTITIES), self.module_eigenentities),
+            (self._path(WGCNATableType.MODULE_MEMBERSHIP), self.module_membership),
         ]
         if self.module_trait_correlation is not None:
             tables.append(
@@ -887,6 +890,11 @@ class WGCNADataset(Dataset):
                     "id": str(uuid.uuid4()),
                     "name": "module_eigenentities",
                     "path": self._path(WGCNATableType.MODULE_EIGENENTITIES),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "module_membership",
+                    "path": self._path(WGCNATableType.MODULE_MEMBERSHIP),
                 },
             ]
             if self.module_trait_correlation is not None:
