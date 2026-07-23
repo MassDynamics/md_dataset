@@ -59,6 +59,7 @@ dev = [
     "myst_parser",
     "rpy2 ~= 3.5.17",
     "jupyter",
+    "jupyterlab>=4.6.2",
     "ipykernel",
 ]
 docs = [
