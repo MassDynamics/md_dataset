@@ -26,7 +26,7 @@ dependencies = [
   "pyarrow ~= 24.0.0",
   "pydantic >=2.10.4,<3",
   "deprecated",
-  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-66"
+  "md_form @ git+https://github.com/MassDynamics/md_form@v0.2.4-70"
 ]
 description = "Common package for integrating with Mass Dynamics workflows"
 keywords = []
