@@ -68,7 +68,7 @@ RUN yum install -y \
 # deliberately (keep it in step with base.Dockerfile) to pick up newer distro
 # fixes. The expensive R build above stays cached; changing the releasever re-runs
 # this layer.
-RUN yum -y --releasever=2023.12.20260608 update && yum clean all
+RUN yum -y --releasever=2023.12.20260727 update && yum clean all
 
 ENV LD_LIBRARY_PATH=/usr/local/lib64
 ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
