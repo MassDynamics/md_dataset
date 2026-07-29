@@ -32,7 +32,7 @@ steps:
     env:
       AWS_REGION: "ap-southeast-2"
       AWS_DEFAULT_REGION: "ap-southeast-2"
-      AWS_PROFILE: "aws-services-cli"
+      AWS_PROFILE: "eb-services-cli"
       BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
       DOCKER_FILE: "base.Dockerfile"
       REPO_NAME: "md_dataset_package_base"
