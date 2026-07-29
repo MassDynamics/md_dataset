@@ -96,7 +96,6 @@ steps:
     env:
       AWS_REGION: "ap-southeast-2"
       AWS_DEFAULT_REGION: "ap-southeast-2"
-      AWS_PROFILE: "eb-services-cli"
       BUILD_NUMBER: "${BUILDKITE_BUILD_NUMBER}"
       GIT_HASH: "${BUILDKITE_COMMIT}"
     agents:
