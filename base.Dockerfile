@@ -34,9 +34,10 @@ RUN pip install "cython>=3.1" wheel "setuptools>=78.1.1"
 # C-API); 6.0.2 ships cp314 wheels.
 RUN pip install "pyyaml>=6.0.2"
 
-# Re-apply OS security updates from a pinned AL2023 repo snapshot. Keep it at or
-# ahead of the FROM tag above: when a newer AL2023 snapshot lands before a new
-# base image tag, bump this alone to pick up the distro fixes early.
-RUN yum -y --releasever=2023.12.20260817 update && yum clean all
+# Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
+# base tag ships. 2023.12.20260831 has no Docker Hub tag yet but carries
+# openssl 3.5.7-2.amzn2023.0.2 (CVE-2026-14456) and kernel6.18-headers
+# 6.18.44-99.149 (CVE-2026-74580), both HIGH in the trivy image scan.
+RUN yum -y --releasever=2023.12.20260831 update && yum clean all
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"

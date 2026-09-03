@@ -1,0 +1,23 @@
+# Suppressions for the docker image scan (scripts/trivy-scan-image).
+#
+# Each entry needs a preceding `# remove_after: YYYY_MM_DD`; scripts/trivy-check-expiry
+# fails the build once that date passes, so a stale suppression can't outlive its fix.
+
+# pip's own vendored dependencies, reported via pip/_vendor/bom.cdx.json (a
+# CycloneDX SBOM that trivy parses as installed python packages). These are not
+# importable site-packages distributions — nothing but pip resolves them — so they
+# can only move when pip re-vendors upstream, not via `pip install`.
+#
+# CVE-2025-47273 is a path traversal in setuptools.package_index.PackageIndex. pip
+# vendors only pkg_resources out of setuptools 70.3.0; package_index.py is not in
+# the image at all, so the vulnerable code is absent. The real site-packages
+# setuptools is pinned >= 78.1.1 in base.Dockerfile and py.Dockerfile, which is what
+# guards against an actual vulnerable install.
+#
+# GHSA-6v7p-g79w-8964 is an out-of-bounds read in msgpack 1.1.2 on Unpacker reuse.
+# pip reaches it through cachecontrol when deserialising its own HTTP cache, so
+# triggering it needs an already-corrupted local pip cache. Fixed in msgpack 1.2.1,
+# pending a pip re-vendor.
+# remove_after: 2026_12_01
+CVE-2025-47273
+GHSA-6v7p-g79w-8964

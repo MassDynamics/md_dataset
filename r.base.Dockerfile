@@ -62,12 +62,13 @@ RUN yum install -y \
     libxcb libXau libXrender \
     && yum clean all
 
-# Re-apply OS security updates from a pinned AL2023 repo snapshot. AL2023 uses
-# deterministic, version-locked repos, so we pin an explicit, recent releasever
-# for reproducible, reviewable builds — bump it deliberately (keep it in step
-# with base.Dockerfile) to pick up newer distro fixes. The expensive R build
-# above stays cached; changing the releasever re-runs this layer.
-RUN yum -y --releasever=2023.12.20260817 update && yum clean all
+# Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
+# base tag ships. AL2023 uses deterministic, version-locked repos, so we pin an
+# explicit, recent releasever for reproducible, reviewable builds — bump it
+# deliberately (keep it in step with base.Dockerfile) to pick up newer distro
+# fixes. The expensive R build above stays cached; changing the releasever re-runs
+# this layer.
+RUN yum -y --releasever=2023.12.20260831 update && yum clean all
 
 ENV LD_LIBRARY_PATH=/usr/local/lib64
 ENV LD_LIBRARY_PATH=/usr/local/lib64/R/lib:/usr/lib64:/usr/local/lib64:$LD_LIBRARY_PATH
