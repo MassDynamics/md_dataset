@@ -1,4 +1,4 @@
-FROM amazonlinux:2023.12.20260710.0
+FROM amazonlinux:2023.12.20260817.0
 
 RUN yum -y update
 
@@ -34,7 +34,9 @@ RUN pip install "cython>=3.1" wheel "setuptools>=78.1.1"
 # C-API); 6.0.2 ships cp314 wheels.
 RUN pip install "pyyaml>=6.0.2"
 
-# Re-apply OS security updates from a newer AL2023 repo snapshot.
-RUN yum -y --releasever=2023.12.20260727 update && yum clean all
+# Re-apply OS security updates from a pinned AL2023 repo snapshot. Keep it at or
+# ahead of the FROM tag above: when a newer AL2023 snapshot lands before a new
+# base image tag, bump this alone to pick up the distro fixes early.
+RUN yum -y --releasever=2023.12.20260817 update && yum clean all
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
