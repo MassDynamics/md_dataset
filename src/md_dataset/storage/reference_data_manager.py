@@ -18,7 +18,7 @@ class ReferenceDataManager:
             client=get_s3_client(),
             default_bucket=os.getenv("REFERENCE_DATA_BUCKET_NAME"),
         )
-        self.prefix = "reference_data/"
+        self.prefix = "reference_data/upload/"
 
     def _resolve_key(self, reference_data_id: str) -> str:
         """Resolve the key of the first parquet file under a reference data directory.

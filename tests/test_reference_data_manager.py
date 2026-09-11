@@ -33,26 +33,28 @@ def test_load_parquet_to_df(mocker: MockerFixture, s3_client_mock: Client, \
     s3_client_mock.download_fileobj.side_effect = mock_download_fileobj
     s3_client_mock.list_objects_v2.return_value = {
         "Contents": [
-            {"Key": "reference_data/uniprot/"},
-            {"Key": "reference_data/uniprot/_SUCCESS"},
-            {"Key": "reference_data/uniprot/part-0.parquet"},
-            {"Key": "reference_data/uniprot/part-1.parquet"},
+            {"Key": "reference_data/upload/uniprot/"},
+            {"Key": "reference_data/upload/uniprot/_SUCCESS"},
+            {"Key": "reference_data/upload/uniprot/part-0.parquet"},
+            {"Key": "reference_data/upload/uniprot/part-1.parquet"},
         ],
     }
 
     result_df = reference_data_manager.load_parquet_to_df("uniprot")
     pd.testing.assert_frame_equal(result_df, test_df)
     s3_client_mock.list_objects_v2.assert_called_once_with(
-        Bucket="reference-bucket", Prefix="reference_data/uniprot/",
+        Bucket="reference-bucket", Prefix="reference_data/upload/uniprot/",
     )
     s3_client_mock.download_fileobj.assert_called_once_with(
-        "reference-bucket", "reference_data/uniprot/part-0.parquet", mocker.ANY,
+        "reference-bucket", "reference_data/upload/uniprot/part-0.parquet", mocker.ANY,
     )
 
 
 def test_load_parquet_to_df_no_parquet_raises(reference_data_manager: ReferenceDataManager, \
         s3_client_mock: Client):
-    s3_client_mock.list_objects_v2.return_value = {"Contents": [{"Key": "reference_data/uniprot/_SUCCESS"}]}
+    s3_client_mock.list_objects_v2.return_value = {
+        "Contents": [{"Key": "reference_data/upload/uniprot/_SUCCESS"}],
+    }
 
     with pytest.raises(FileNotFoundError, match="No parquet file found"):
         reference_data_manager.load_parquet_to_df("uniprot")
