@@ -31,22 +31,31 @@ def test_load_parquet_to_df(mocker: MockerFixture, s3_client_mock: Client, \
         fileobj.write(parquet_buffer.getvalue())
 
     s3_client_mock.download_fileobj.side_effect = mock_download_fileobj
+    s3_client_mock.list_objects_v2.return_value = {
+        "Contents": [
+            {"Key": "reference_data/uniprot/"},
+            {"Key": "reference_data/uniprot/_SUCCESS"},
+            {"Key": "reference_data/uniprot/part-0.parquet"},
+            {"Key": "reference_data/uniprot/part-1.parquet"},
+        ],
+    }
 
     result_df = reference_data_manager.load_parquet_to_df("uniprot")
     pd.testing.assert_frame_equal(result_df, test_df)
+    s3_client_mock.list_objects_v2.assert_called_once_with(
+        Bucket="reference-bucket", Prefix="reference_data/uniprot/",
+    )
     s3_client_mock.download_fileobj.assert_called_once_with(
-        "reference-bucket", "reference_data/uniprot.parquet", mocker.ANY,
+        "reference-bucket", "reference_data/uniprot/part-0.parquet", mocker.ANY,
     )
 
 
-def test_load_parquet_to_df_without_bucket_raises(mocker: MockerFixture, s3_client_mock: Client):
-    mocker.patch("md_dataset.storage.reference_data_manager.get_s3_client", return_value=s3_client_mock)
-    mocker.patch.dict("os.environ", {}, clear=True)
+def test_load_parquet_to_df_no_parquet_raises(reference_data_manager: ReferenceDataManager, \
+        s3_client_mock: Client):
+    s3_client_mock.list_objects_v2.return_value = {"Contents": [{"Key": "reference_data/uniprot/_SUCCESS"}]}
 
-    manager = ReferenceDataManager()
-
-    with pytest.raises(AttributeError, match="Source bucket not provided"):
-        manager.load_parquet_to_df("uniprot")
+    with pytest.raises(FileNotFoundError, match="No parquet file found"):
+        reference_data_manager.load_parquet_to_df("uniprot")
 
 
 def test_get_reference_data_manager(mocker: MockerFixture, s3_client_mock: Client):
