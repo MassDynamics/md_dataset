@@ -87,6 +87,19 @@ class FileManager:
         with self._file_download(bucket, key) as content:
             return pd.read_parquet(io.BytesIO(content), engine="pyarrow")
 
+    def load_csv_to_df(self, bucket: str, key: str) -> pd.DataFrame:
+        """Load a CSV file from S3 into a pandas DataFrame.
+
+        Args:
+            bucket: S3 bucket name
+            key: S3 object key
+
+        Returns:
+            Loaded pandas DataFrame
+        """
+        with self._file_download(bucket, key) as content:
+            return pd.read_csv(io.BytesIO(content))
+
     def save_tables(self, tables: list[tuple[str, pd.DataFrame]]) -> None:
         """Save multiple tables to S3 as parquet and CSV files.
 

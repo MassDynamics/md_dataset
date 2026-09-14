@@ -20,31 +20,32 @@ class ReferenceDataManager:
         )
         self.prefix = "reference_data/upload/"
 
-    def _resolve_key(self, reference_data_id: str) -> str:
-        """Resolve the key of the first parquet file under a reference data directory.
+    def _resolve_key(self, reference_data_id: str, extensions: tuple[str, ...]) -> str:
+        """Resolve the key of the first matching file under a reference data directory.
 
         Args:
             reference_data_id: Identifier of the reference data directory
+            extensions: File extensions to match, in priority order
 
         Returns:
-            The S3 key of the first parquet file found
+            The S3 key of the first matching file found
         """
         directory = f"{self.prefix}{reference_data_id}/"
         response = self.file_manager.client.list_objects_v2(
             Bucket=self.file_manager.default_bucket, Prefix=directory,
         )
         for obj in response.get("Contents", []):
-            if obj["Key"].endswith(".parquet"):
+            if obj["Key"].endswith(extensions):
                 return obj["Key"]
 
-        msg = f"No parquet file found for reference data '{reference_data_id}'"
+        msg = f"No {' or '.join(extensions)} file found for reference data '{reference_data_id}'"
         raise FileNotFoundError(msg)
 
-    def load_parquet_to_df(self, reference_data_id: str) -> pd.DataFrame:
-        """Load a reference data parquet file from S3 into a pandas DataFrame.
+    def load_tabular_data_to_df(self, reference_data_id: str) -> pd.DataFrame:
+        """Load reference data from S3 into a pandas DataFrame.
 
-        Resolves the first parquet file under the reference data directory and
-        loads it.
+        Resolves the first CSV or parquet file under the reference data directory
+        and loads it based on its extension.
 
         Args:
             reference_data_id: Identifier of the reference data to load
@@ -52,6 +53,8 @@ class ReferenceDataManager:
         Returns:
             Loaded pandas DataFrame
         """
-        key = self._resolve_key(reference_data_id)
+        key = self._resolve_key(reference_data_id, (".csv", ".parquet"))
         logger.debug("Download reference data: %s", key)
+        if key.endswith(".csv"):
+            return self.file_manager.load_csv_to_df(bucket=None, key=key)
         return self.file_manager.load_parquet_to_df(bucket=None, key=key)
