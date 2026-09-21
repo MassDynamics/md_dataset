@@ -1964,7 +1964,7 @@ wheels = [
 
 [[package]]
 name = "md-dataset"
-version = "0.17.12"
+version = "0.17.13"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
@@ -2029,7 +2029,7 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'dev'" },
     { name = "jupyter", marker = "extra == 'dev'" },
     { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.6.2" },
-    { name = "md-form", git = "https://github.com/MassDynamics/md_form?rev=v0.3.8-81" },
+    { name = "md-form", git = "https://github.com/MassDynamics/md_form?rev=v0.3.9-83" },
     { name = "myst-parser", marker = "extra == 'dev'" },
     { name = "myst-parser", marker = "extra == 'docs'" },
     { name = "pandas", specifier = ">=2.2.3,<4" },
@@ -2060,8 +2060,8 @@ provides-extras = ["r", "dev", "docs", "publishing"]
 
 [[package]]
 name = "md-form"
-version = "0.3.8"
-source = { git = "https://github.com/MassDynamics/md_form?rev=v0.3.8-81#fe3b4cc8736c7455a731147aac9c1bfe4b044dcb" }
+version = "0.3.9"
+source = { git = "https://github.com/MassDynamics/md_form?rev=v0.3.9-83#6344de68c010fb762359352bb38776110e0f8a3f" }
 dependencies = [
     { name = "pandas" },
     { name = "prefect" },
