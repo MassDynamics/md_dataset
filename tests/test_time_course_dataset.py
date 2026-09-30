@@ -14,7 +14,7 @@ def _stats() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "GroupId": ["1", "2", "1", "2", "1", "2"],
-            "test": ["along_x", "along_x", "along_x", "along_x", "group_difference", "group_difference"],
+            "test": ["along_x", "along_x", "along_x", "along_x", "trend_difference", "trend_difference"],
             "group": ["ctrl", "ctrl", "treated", "treated", None, None],
             "F": [3.2, np.nan, 1.1, 0.4, 2.5, np.nan],
             "df1": [3.0] * 6,

@@ -1055,10 +1055,11 @@ class TimeCourseDataset(Dataset):
     Attributes:
     ----------
     stats : PandasDataFrame
-        One row per entity and test: GroupId, test ("along_x" or "group_difference"), group,
+        One row per entity and test: GroupId, test ("along_x" or "trend_difference"), group,
         F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val, then entity metadata.
         df_residual is the same for every test of an entity; df_prior comes from the eBayes
-        fit behind that test, so a per-group "along_x" test can carry its own value.
+        fit behind that test, so a per-group "along_x" test can carry its own value. df1 is
+        per row, not per test: the number of tested coefficients, or NA when the entity's F is NA.
     curves : PandasDataFrame
         Fitted log2 profiles on a grid over the covariate range, long format:
         GroupId, group, x, fitted_log2. x is on the model scale of the covariate, log10 when
