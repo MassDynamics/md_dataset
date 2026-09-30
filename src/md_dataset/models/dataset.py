@@ -30,6 +30,7 @@ class DatasetType(Enum):
     ORA = "ORA"
     WGCNA = "WGCNA"
     MOFA = "MOFA"
+    TIME_COURSE = "TIME_COURSE"
 
 class InputParams(ConditionalRequiredMixin, MdDatasetBaseModel):
   pass
@@ -1037,4 +1038,81 @@ class MOFADataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: MOFATableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class TimeCourseTableType(Enum):
+    STATS = "stats"
+    CURVES = "curves"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class TimeCourseDataset(Dataset):
+    """A time-course dataset: moderated F-tests along a numeric sample variable, plus fitted profiles.
+
+    The variable is continuous (time, temperature, dose, ...).
+
+    Attributes:
+    ----------
+    stats : PandasDataFrame
+        One row per entity and test: GroupId, test ("along_x" or "group_difference"), group,
+        F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val, then entity metadata.
+        df_residual is the same for every test of an entity; df_prior comes from the eBayes
+        fit behind that test, so a per-group "along_x" test can carry its own value.
+    curves : PandasDataFrame
+        Fitted log2 profiles on a grid over the covariate range, long format:
+        GroupId, group, x, fitted_log2. x is on the model scale of the covariate, log10 when
+        log_transform_covariate is set, as recorded in runtime_metadata.curve_convention.
+    runtime_metadata : PandasDataFrame
+        Package versions, parameters used, design columns, knots.
+    """
+    stats: pd.DataFrame
+    curves: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        for field_name in ("stats", "curves"):
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+        value = values.get("runtime_metadata")
+        if value is not None and not isinstance(value, pd.DataFrame):
+            msg = (
+                "The field 'runtime_metadata' must be a pandas DataFrame if provided, "
+                f"but got {type(value).__name__}."
+            )
+            raise TypeError(msg)
+        return values
+
+    def _table_types(self) -> list[TimeCourseTableType]:
+        types = [TimeCourseTableType.STATS, TimeCourseTableType.CURVES]
+        if self.runtime_metadata is not None:
+            types.append(TimeCourseTableType.RUNTIME_METADATA)
+        return types
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(t), getattr(self, t.value)) for t in self._table_types()]
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {"id": str(uuid.uuid4()), "name": t.value, "path": self._path(t)}
+                    for t in self._table_types()
+                ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: TimeCourseTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"

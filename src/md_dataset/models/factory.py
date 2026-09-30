@@ -12,6 +12,7 @@ from md_dataset.models.dataset import LegacyIntensityDataset
 from md_dataset.models.dataset import MOFADataset
 from md_dataset.models.dataset import ORADataset
 from md_dataset.models.dataset import PairwiseDataset
+from md_dataset.models.dataset import TimeCourseDataset
 from md_dataset.models.dataset import WGCNADataset
 
 _DATASET_REGISTRY = {
@@ -35,6 +36,8 @@ _DATASET_REGISTRY = {
             tables: WGCNADataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.MOFA, dict): lambda run_id, dataset_type, \
             tables: MOFADataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.TIME_COURSE, dict): lambda run_id, dataset_type, \
+            tables: TimeCourseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
 
 
