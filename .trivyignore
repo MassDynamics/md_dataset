@@ -21,3 +21,12 @@
 # remove_after: 2026_12_01
 CVE-2025-47273
 GHSA-6v7p-g79w-8964
+
+# CVE-2026-97687 (HTTPS proxy TLS config override) and CVE-2026-97689 (unbounded
+# chunk-parser allocation) are in urllib3 2.7.0 as vendored by pip 26.2.1, the
+# latest pip. Fixed in urllib3 2.8.0, which md_dataset itself already locks; pip
+# only uses its copy for its own downloads at image build time. Pending a pip
+# re-vendor.
+# remove_after: 2026_11_01
+CVE-2026-97687
+CVE-2026-97689
