@@ -1050,22 +1050,30 @@ class TimeCourseTableType(Enum):
 class TimeCourseDataset(Dataset):
     """A time-course dataset: moderated F-tests along a numeric sample variable, plus fitted profiles.
 
-    The variable is continuous (time, temperature, dose, ...).
+    The variable is continuous (time, temperature, dose, ...). The columns of stats and curves
+    depend on the method, recorded in runtime_metadata.method: "spline" (moderated F-tests on a
+    natural spline) or "nparc" (NPARC sigmoid melting curves for thermal profiling).
 
     Attributes:
     ----------
     stats : PandasDataFrame
-        One row per entity and test: GroupId, test ("along_x" or "trend_difference"), group,
-        F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val, then entity metadata.
-        df_residual is the same for every test of an entity; df_prior comes from the eBayes
-        fit behind that test, so a per-group "along_x" test can carry its own value. df1 is
-        per row, not per test: the number of tested coefficients, or NA when the entity's F is NA.
+        One row per entity and test, then entity metadata.
+        spline: GroupId, test ("along_x", "trend_difference" or "curve_difference"), group,
+        F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val. df_residual is the same for
+        every test of an entity; df_prior comes from the eBayes fit behind that test, so a
+        per-group "along_x" test can carry its own value. df1 is per row, not per test: the
+        rank of the tested coefficients, or NA when the entity's F is NA.
+        nparc: GroupId, test ("melting_curve" or "curve_difference"), group, F, df1, df2,
+        P.Value, adj.P.Val, rss_null, rss_alt, Tm, Tm_sd, Pl, a, b, AUMC, RSS, n_fitted,
+        converged. The sigmoid columns are set on melting_curve rows and the test columns on
+        curve_difference rows.
     curves : PandasDataFrame
-        Fitted log2 profiles on a grid over the covariate range, long format:
-        GroupId, group, x, fitted_log2. x is on the model scale of the covariate, log10 when
+        Fitted profiles on a grid over the covariate range, long format: GroupId, group, x, then
+        fitted_log2 (spline) or fitted_fraction (nparc, the fraction of the lowest-temperature
+        abundance). For spline, x is on the model scale of the covariate, log10 when
         log_transform_covariate is set, as recorded in runtime_metadata.curve_convention.
     runtime_metadata : PandasDataFrame
-        Package versions, parameters used, design columns, knots.
+        Package versions, the method, parameters used, design columns, knots.
     """
     stats: pd.DataFrame
     curves: pd.DataFrame
