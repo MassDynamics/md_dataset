@@ -35,13 +35,13 @@ RUN pip install "cython>=3.1" wheel "setuptools>=78.1.1"
 RUN pip install "pyyaml>=6.0.2"
 
 # Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
-# base tag ships. 2023.12.20260928 has no Docker Hub tag yet but carries the
+# base tag ships. 2023.12.20260930 has no Docker Hub tag yet but carries the
 # HIGH fixes flagged by the trivy image scan: bluez-libs 5.62-2.amzn2023.0.7
 # (CVE-2026-19774), curl 8.21.0-5.amzn2023.0.2 (CVE-2026-80230), gdb
-# 16.3-1.amzn2023.0.2 (CVE-2026-13732), kernel6.18-headers 6.18.48-109.150
-# (CVE-2026-80844, CVE-2026-81000), pcre2 10.40-1.amzn2023.0.4
+# 16.3-1.amzn2023.0.2 (CVE-2026-13732), kernel6.18-headers 6.18.51-120.163
+# (CVE-2026-80844, CVE-2026-81000, CVE-2026-80521), pcre2 10.40-1.amzn2023.0.4
 # (CVE-2026-89161), rpm 4.16.1.3-29.amzn2023.0.8 (CVE-2026-78367,
 # CVE-2026-84233) and systemd 252.23-13.amzn2023 (CVE-2026-16742).
-RUN yum -y --releasever=2023.12.20260928 update && yum clean all
+RUN yum -y --releasever=2023.12.20260930 update && yum clean all
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
