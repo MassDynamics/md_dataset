@@ -78,6 +78,7 @@ class IntensityEntity(str, Enum):
     GENE = "Gene"
     METABOLITE = "Metabolite"
     PTM = "PTM"
+    PRECURSOR = "Precursor"
 
 class IntensityTableType(Enum):
     INTENSITY = "intensity"
