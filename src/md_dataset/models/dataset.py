@@ -31,6 +31,7 @@ class DatasetType(Enum):
     WGCNA = "WGCNA"
     MOFA = "MOFA"
     TIME_COURSE = "TIME_COURSE"
+    CAMERA_PR = "CAMERA_PR"
 
 class InputParams(ConditionalRequiredMixin, MdDatasetBaseModel):
   pass
@@ -1124,4 +1125,89 @@ class TimeCourseDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: TimeCourseTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class CameraPRTableType(Enum):
+    RESULTS = "results"
+    RUNTIME_METADATA = "runtime_metadata"
+    DATABASE_METADATA = "database_metadata"
+
+
+class CameraPRDataset(Dataset):
+    """A pre-ranked CAMERA (limma::cameraPR) enrichment dataset.
+
+    Same tables as EnrichmentDataset: the results table is stored as results.parquet and
+    exposed under the name "output_comparisons".
+
+    Tests gene sets against a single per-entity statistic (e.g. MOFA factor loadings or a
+    dose-response SpanData value) rather than against pairwise comparisons.
+
+    Attributes:
+    ----------
+    results : PandasDataFrame
+        Enrichment results per gene set, grouped by database.
+    runtime_metadata : PandasDataFrame
+        R and package versions, species, databases and enrichment method used.
+    database_metadata : PandasDataFrame
+        Gene set annotations (id, name, members, size) for each database.
+    """
+    results: pd.DataFrame
+    runtime_metadata: pd.DataFrame = None
+    database_metadata: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        value = values.get("results")
+        if value is None:
+            msg = "The field 'results' must be set and cannot be None."
+            raise ValueError(msg)
+        if not isinstance(value, pd.DataFrame):
+            msg = f"The field 'results' must be a pandas DataFrame, but got {type(value).__name__}."
+            raise TypeError(msg)
+        for optional in ("runtime_metadata", "database_metadata"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = (
+                    f"The field '{optional}' must be a pandas DataFrame if provided, "
+                    f"but got {type(value).__name__}."
+                )
+                raise TypeError(msg)
+        return values
+
+    def _table_types(self) -> list[CameraPRTableType]:
+        types = [CameraPRTableType.RESULTS]
+        if self.runtime_metadata is not None:
+            types.append(CameraPRTableType.RUNTIME_METADATA)
+        if self.database_metadata is not None:
+            types.append(CameraPRTableType.DATABASE_METADATA)
+        return types
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(t), getattr(self, t.value)) for t in self._table_types()]
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {"id": str(uuid.uuid4()), "name": self._table_name(t), "path": self._path(t)}
+                    for t in self._table_types()
+                ],
+            }
+        return self._dump_cache
+
+    @staticmethod
+    def _table_name(table_type: CameraPRTableType) -> str:
+        # Same table names as EnrichmentDataset, so ENRICHMENT consumers work unchanged.
+        if table_type is CameraPRTableType.RESULTS:
+            return "output_comparisons"
+        return table_type.value
+
+    def _path(self, table_type: CameraPRTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"

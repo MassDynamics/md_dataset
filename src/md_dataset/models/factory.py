@@ -2,6 +2,7 @@
 
 from uuid import UUID
 from md_dataset.models.dataset import AnovaDataset
+from md_dataset.models.dataset import CameraPRDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
 from md_dataset.models.dataset import DoseResponseCompareDataset
@@ -36,6 +37,8 @@ _DATASET_REGISTRY = {
             tables: WGCNADataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.MOFA, dict): lambda run_id, dataset_type, \
             tables: MOFADataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.CAMERA_PR, dict): lambda run_id, dataset_type, \
+            tables: CameraPRDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.TIME_COURSE, dict): lambda run_id, dataset_type, \
             tables: TimeCourseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
