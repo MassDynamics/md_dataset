@@ -39,11 +39,42 @@ def _curves() -> pd.DataFrame:
     )
 
 
+def _points() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "GroupId": ["1", "1", "2"],
+            "sample_name": ["s1", "s2", "s1"],
+            "group": ["ctrl"] * 3,
+            "x": [0.0, 24.0, 0.0],
+            "observed_log2": [21.3, 22.2, 20.9],
+            "imputed": [False, False, True],
+        },
+    )
+
+
 def _roundtrip(df: pd.DataFrame) -> pd.DataFrame:
     """Through parquet with the options FileManager.save_df_to_parquet uses."""
     buf = io.BytesIO()
     df.to_parquet(buf, engine="pyarrow", compression="gzip", index=False, row_group_size=16_000)
     return pd.read_parquet(io.BytesIO(buf.getvalue()), engine="pyarrow")
+
+
+def test_points_table_is_saved_between_curves_and_runtime_metadata():
+    run_id = uuid.uuid4()
+    meta = pd.DataFrame({"method": ["spline"]})
+    tables = {"stats": _stats(), "curves": _curves(), "points": _points(), "runtime_metadata": meta}
+    ds = create_dataset_from_run(run_id, DatasetType.TIME_COURSE, tables)
+    assert [t["name"] for t in ds.dump()["tables"]] == ["stats", "curves", "points", "runtime_metadata"]
+    for (_, df), original in zip(ds.tables(), tables.values(), strict=True):
+        pd.testing.assert_frame_equal(_roundtrip(df), original)
+
+
+def test_points_must_be_a_dataframe():
+    with pytest.raises(TypeError, match="'points' must be a pandas DataFrame"):
+        TimeCourseDataset(
+            run_id=uuid.uuid4(), dataset_type=DatasetType.TIME_COURSE, stats=_stats(), curves=_curves(),
+            points="nope",
+        )
 
 
 def test_factory_creates_time_course_and_tables_round_trip():

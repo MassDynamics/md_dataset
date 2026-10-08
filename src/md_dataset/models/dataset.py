@@ -1046,6 +1046,7 @@ class MOFADataset(Dataset):
 class TimeCourseTableType(Enum):
     STATS = "stats"
     CURVES = "curves"
+    POINTS = "points"
     RUNTIME_METADATA = "runtime_metadata"
 
 
@@ -1061,24 +1062,34 @@ class TimeCourseDataset(Dataset):
     stats : PandasDataFrame
         One row per entity and test, then entity metadata.
         spline: GroupId, test ("along_x", "trend_difference" or "curve_difference"), group,
-        F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val. df_residual is the same for
+        F, df1, df_residual, df_prior, AveExpr, P.Value, adj.P.Val, max_log2_change. df_residual is the same for
         every test of an entity; df_prior comes from the eBayes fit behind that test, so a
         per-group "along_x" test can carry its own value. df1 is per row, not per test: the
-        rank of the tested coefficients, or NA when the entity's F is NA.
+        rank of the tested coefficients, or NA when the entity's F is NA. max_log2_change is the
+        volcano's effect size, read off the fitted curves: on along_x the curve's largest change
+        from its value at the lowest x, on the tests between two groups the largest gap between
+        their curves; NA with more than two groups. runtime_metadata.effect_convention says which
+        group is subtracted.
         nparc: GroupId, test ("melting_curve" or "curve_difference"), group, F, df1, df2,
-        P.Value, adj.P.Val, rss_null, rss_alt, Tm, Tm_sd, Pl, a, b, AUMC, RSS, n_fitted,
+        P.Value, adj.P.Val, delta_Tm, rss_null, rss_alt, Tm, Tm_sd, Pl, a, b, AUMC, RSS, n_fitted,
         converged. The sigmoid columns are set on melting_curve rows and the test columns on
-        curve_difference rows.
+        curve_difference rows. delta_Tm, on curve_difference rows with two groups, is the Tm shift
+        between them, as runtime_metadata.effect_convention says.
     curves : PandasDataFrame
         Fitted profiles on a grid over the covariate range, long format: GroupId, group, x, then
         fitted_log2 (spline) or fitted_fraction (nparc, the fraction of the lowest-temperature
         abundance). For spline, x is on the model scale of the covariate, log10 when
         log_transform_covariate is set, as recorded in runtime_metadata.curve_convention.
+    points : PandasDataFrame, optional
+        The samples the curves were fitted to, on the scale of curves, long format: GroupId,
+        sample_name, group, x, then observed_log2 (spline) or observed_fraction (nparc), and
+        imputed. Technical replicates are already averaged. Absent from runs before it was added.
     runtime_metadata : PandasDataFrame
         Package versions, the method, parameters used, design columns, knots.
     """
     stats: pd.DataFrame
     curves: pd.DataFrame
+    points: pd.DataFrame = None
     runtime_metadata: pd.DataFrame = None
     _dump_cache: dict = PrivateAttr(default=None)
 
@@ -1095,17 +1106,20 @@ class TimeCourseDataset(Dataset):
             if not isinstance(value, pd.DataFrame):
                 msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
                 raise TypeError(msg)
-        value = values.get("runtime_metadata")
-        if value is not None and not isinstance(value, pd.DataFrame):
-            msg = (
-                "The field 'runtime_metadata' must be a pandas DataFrame if provided, "
-                f"but got {type(value).__name__}."
-            )
-            raise TypeError(msg)
+        for field_name in ("points", "runtime_metadata"):
+            value = values.get(field_name)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = (
+                    f"The field '{field_name}' must be a pandas DataFrame if provided, "
+                    f"but got {type(value).__name__}."
+                )
+                raise TypeError(msg)
         return values
 
     def _table_types(self) -> list[TimeCourseTableType]:
         types = [TimeCourseTableType.STATS, TimeCourseTableType.CURVES]
+        if self.points is not None:
+            types.append(TimeCourseTableType.POINTS)
         if self.runtime_metadata is not None:
             types.append(TimeCourseTableType.RUNTIME_METADATA)
         return types
