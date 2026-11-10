@@ -24,6 +24,10 @@ RUN cd /opt/ && wget https://bootstrap.pypa.io/get-pip.py && \
 ENV WORK_DIR="/usr/src/app"
 WORKDIR $WORK_DIR
 
+# pip >= 26.3 vendors urllib3 2.8.0, fixing CVE-2026-97687 and CVE-2026-97689. Pin
+# it explicitly so a cached get-pip layer can't leave an older pip in the image.
+RUN pip install --upgrade "pip>=26.3"
+
 # setuptools >= 78.1.1 fixes CVE-2022-40897, CVE-2024-6345, CVE-2025-47273.
 # get-pip bootstraps an older one into the runtime site-packages, so pin it here
 # in the base image; every downstream image inherits the patched version.
