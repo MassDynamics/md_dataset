@@ -10,6 +10,7 @@ from md_dataset.models.dataset import DoseResponseDataset
 from md_dataset.models.dataset import EnrichmentDataset
 from md_dataset.models.dataset import IntensityDataset
 from md_dataset.models.dataset import LegacyIntensityDataset
+from md_dataset.models.dataset import MixOmicsDiabloDataset
 from md_dataset.models.dataset import MOFADataset
 from md_dataset.models.dataset import ORADataset
 from md_dataset.models.dataset import PairwiseDataset
@@ -41,6 +42,8 @@ _DATASET_REGISTRY = {
             tables: CameraPRDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.TIME_COURSE, dict): lambda run_id, dataset_type, \
             tables: TimeCourseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.MIXOMICS_DIABLO, dict): lambda run_id, dataset_type, \
+            tables: MixOmicsDiabloDataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
 
 

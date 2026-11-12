@@ -32,6 +32,7 @@ class DatasetType(Enum):
     MOFA = "MOFA"
     TIME_COURSE = "TIME_COURSE"
     CAMERA_PR = "CAMERA_PR"
+    MIXOMICS_DIABLO = "MIXOMICS_DIABLO"
 
 class InputParams(ConditionalRequiredMixin, MdDatasetBaseModel):
   pass
@@ -1225,4 +1226,104 @@ class CameraPRDataset(Dataset):
         return table_type.value
 
     def _path(self, table_type: CameraPRTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class MixOmicsDiabloTableType(Enum):
+    SAMPLE_SCORES = "sample_scores"
+    COMPONENT_LOADINGS = "component_loadings"
+    LOADINGS_CONTRIBUTION = "loadings_contribution"
+    VARIANCE_EXPLAINED = "variance_explained"
+    RUNTIME_METADATA = "runtime_metadata"
+    TUNING_NCOMP = "tuning_ncomp"
+
+
+class MixOmicsDiabloDataset(Dataset):
+    """A mixOmics DIABLO (block.splsda) multi-omics dataset, produced by MDMixOmics.
+
+    Long tables from which the mixOmics DIABLO plots can be recreated. Table names match the
+    MDMixOmics runDiablo() output.
+
+    Attributes:
+    ----------
+    sample_scores : PandasDataFrame
+        Sample score per dataset and component, plus "weighted_average" rows across datasets.
+        Long format: view, dataset_id, entity, replicate, component, score, group.
+    component_loadings : PandasDataFrame
+        Every feature x component: loading, correlation with its dataset's component, whether it
+        was selected, and the training center and scale used for the feature.
+        Long format: view, dataset_id, entity, GroupId, GroupLabel, component, loading,
+        correlation, selected, center, scale.
+    loadings_contribution : PandasDataFrame
+        Mean and median per outcome class of each selected feature.
+        Long format: view, dataset_id, entity, GroupId, GroupLabel, group, mean, median.
+    variance_explained : PandasDataFrame
+        Per dataset and component: explained variance, variables kept, block weight, features.
+        Long format: view, dataset_id, entity, component, explained_variance, keep_x,
+        block_weight, n_features_input, n_features_used.
+    runtime_metadata : PandasDataFrame
+        One row: package versions, outcome, samples, subset and the model and tuning settings.
+    tuning_ncomp : PandasDataFrame
+        Optional, only when the number of components was tuned: cross-validated error rate by
+        vote, distance, measure and component (the perf() output).
+        Long format: vote, dist, measure, component, error_rate, error_rate_sd, chosen.
+    """
+    sample_scores: pd.DataFrame
+    component_loadings: pd.DataFrame
+    loadings_contribution: pd.DataFrame
+    variance_explained: pd.DataFrame
+    runtime_metadata: pd.DataFrame
+    tuning_ncomp: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        required_fields = [
+            "sample_scores", "component_loadings", "loadings_contribution", "variance_explained", "runtime_metadata",
+        ]
+        for field_name in required_fields:
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+        value = values.get("tuning_ncomp")
+        if value is not None and not isinstance(value, pd.DataFrame):
+            msg = f"The field 'tuning_ncomp' must be a pandas DataFrame if provided, but got {type(value).__name__}."
+            raise TypeError(msg)
+        return values
+
+    def _table_types(self) -> list[MixOmicsDiabloTableType]:
+        types = [
+            MixOmicsDiabloTableType.SAMPLE_SCORES,
+            MixOmicsDiabloTableType.COMPONENT_LOADINGS,
+            MixOmicsDiabloTableType.LOADINGS_CONTRIBUTION,
+            MixOmicsDiabloTableType.VARIANCE_EXPLAINED,
+            MixOmicsDiabloTableType.RUNTIME_METADATA,
+        ]
+        if self.tuning_ncomp is not None:
+            types.append(MixOmicsDiabloTableType.TUNING_NCOMP)
+        return types
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(t), getattr(self, t.value)) for t in self._table_types()]
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {"id": str(uuid.uuid4()), "name": t.value, "path": self._path(t)}
+                    for t in self._table_types()
+                ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: MixOmicsDiabloTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"
