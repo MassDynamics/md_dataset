@@ -40,7 +40,7 @@ RUN pip install "pyyaml>=6.0.2"
 
 # Re-apply OS security updates from a newer AL2023 repo snapshot than the pinned
 # base tag ships, to pick up the HIGH fixes flagged by the trivy image scan.
-# 2023.12.20261109 has no Docker Hub tag yet. Keep in step with r.base.Dockerfile.
-RUN yum -y --releasever=2023.12.20261109 update && yum clean all
+# 2023.12.20261117 has no Docker Hub tag yet. Keep in step with r.base.Dockerfile.
+RUN yum -y --releasever=2023.12.20261117 update && yum clean all
 
 ENV PYTHON_EXECUTABLE="/opt/Python-${PYTHON_VERSION}/python"
