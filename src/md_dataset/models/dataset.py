@@ -33,6 +33,7 @@ class DatasetType(Enum):
     TIME_COURSE = "TIME_COURSE"
     CAMERA_PR = "CAMERA_PR"
     MIXOMICS_DIABLO = "MIXOMICS_DIABLO"
+    DIMENSIONALITY_REDUCTION = "DIMENSIONALITY_REDUCTION"
 
 class InputParams(ConditionalRequiredMixin, MdDatasetBaseModel):
   pass
@@ -1326,4 +1327,98 @@ class MixOmicsDiabloDataset(Dataset):
         return self._dump_cache
 
     def _path(self, table_type: MixOmicsDiabloTableType) -> str:
+        return f"job_runs/{self.run_id}/{table_type.value}.parquet"
+
+
+class DimensionalityReductionTableType(Enum):
+    SCORES = "scores"
+    LOADINGS = "loadings"
+    VARIANCE_EXPLAINED = "variance_explained"
+    METADATA_ASSOCIATION = "metadata_association"
+    QC = "qc"
+    RUNTIME_METADATA = "runtime_metadata"
+
+
+class DimensionalityReductionDataset(Dataset):
+    """A dimensionality reduction dataset (PCA now; UMAP / t-SNE later).
+
+    The same table names are used for every method and for both axes. Each run has one
+    axis: "sample" (points are samples) or "feature" (points are entities). Rows carry an
+    `axis` column; sample rows fill `replicate`, feature rows fill `GroupId` / `GroupLabel`.
+
+    Attributes:
+    ----------
+    scores : PandasDataFrame
+        Position of each point on each component. Required.
+        Long format: axis, replicate, GroupId, GroupLabel, component, score.
+    runtime_metadata : PandasDataFrame
+        Method, axis, parameters, package version, filtering counts. Required.
+        Long format: key, value.
+    loadings : PandasDataFrame
+        Weight of the other axis on each component. Optional — PCA only.
+        Long format: axis, replicate, GroupId, GroupLabel, component, loading.
+    variance_explained : PandasDataFrame
+        Share of variance per component. Optional — PCA only.
+        Long format: view, component, variance_r2, cumulative_r2, eigenvalue.
+    metadata_association : PandasDataFrame
+        Association of each component with each sample metadata column. Optional —
+        sample axis only.
+        Long format: component, metadata_column, metadata_type, r2, p_value, p_adj, test, n.
+    qc : PandasDataFrame
+        QC metrics per point. Optional — present when QC metrics are on.
+        Long format: axis, replicate, GroupId, metric, value.
+    """
+    scores: pd.DataFrame
+    runtime_metadata: pd.DataFrame
+    loadings: pd.DataFrame = None
+    variance_explained: pd.DataFrame = None
+    metadata_association: pd.DataFrame = None
+    qc: pd.DataFrame = None
+    _dump_cache: dict = PrivateAttr(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @model_validator(mode="before")
+    def validate_dataframes(cls, values: dict) -> dict:
+        for field_name in ("scores", "runtime_metadata"):
+            value = values.get(field_name)
+            if value is None:
+                msg = f"The field '{field_name}' must be set and cannot be None."
+                raise ValueError(msg)
+            if not isinstance(value, pd.DataFrame):
+                msg = f"The field '{field_name}' must be a pandas DataFrame, but got {type(value).__name__}."
+                raise TypeError(msg)
+
+        for optional in ("loadings", "variance_explained", "metadata_association", "qc"):
+            value = values.get(optional)
+            if value is not None and not isinstance(value, pd.DataFrame):
+                msg = f"The field '{optional}' must be a pandas DataFrame if provided, but \
+                        got {type(value).__name__}."
+                raise TypeError(msg)
+        return values
+
+    def _present(self) -> list[DimensionalityReductionTableType]:
+        """Table types to persist, in a fixed order; optional ones only when supplied."""
+        return [
+            table_type for table_type in DimensionalityReductionTableType
+            if getattr(self, table_type.value) is not None
+        ]
+
+    def tables(self) -> list[tuple[str, pd.DataFrame]]:
+        return [(self._path(t), getattr(self, t.value)) for t in self._present()]
+
+    def dump(self) -> dict:
+        if self._dump_cache is None:
+            self._dump_cache = {
+                "type": self.dataset_type,
+                "run_id": self.run_id,
+                "tables": [
+                    {"id": str(uuid.uuid4()), "name": t.value, "path": self._path(t)}
+                    for t in self._present()
+                ],
+            }
+        return self._dump_cache
+
+    def _path(self, table_type: DimensionalityReductionTableType) -> str:
         return f"job_runs/{self.run_id}/{table_type.value}.parquet"

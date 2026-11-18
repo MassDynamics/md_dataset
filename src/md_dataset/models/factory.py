@@ -5,6 +5,7 @@ from md_dataset.models.dataset import AnovaDataset
 from md_dataset.models.dataset import CameraPRDataset
 from md_dataset.models.dataset import Dataset
 from md_dataset.models.dataset import DatasetType
+from md_dataset.models.dataset import DimensionalityReductionDataset
 from md_dataset.models.dataset import DoseResponseCompareDataset
 from md_dataset.models.dataset import DoseResponseDataset
 from md_dataset.models.dataset import EnrichmentDataset
@@ -44,6 +45,8 @@ _DATASET_REGISTRY = {
             tables: TimeCourseDataset(run_id=run_id, dataset_type=dataset_type, **tables),
     (DatasetType.MIXOMICS_DIABLO, dict): lambda run_id, dataset_type, \
             tables: MixOmicsDiabloDataset(run_id=run_id, dataset_type=dataset_type, **tables),
+    (DatasetType.DIMENSIONALITY_REDUCTION, dict): lambda run_id, dataset_type, \
+            tables: DimensionalityReductionDataset(run_id=run_id, dataset_type=dataset_type, **tables),
 }
 
 
